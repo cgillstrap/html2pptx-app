@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agile Ways of Working Activation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    .slide {
+      width: 960px;
+      height: 540px;
+      padding: 0;
+      background-color: #FFFFFF;
+      font-family: Arial, 'Segoe UI', sans-serif;
+      font-size: 12pt;
+      color: #1A1A1A;
+      overflow: hidden;
+      page-break-after: always;
+    }
+
+    /* ── Shared structural elements ── */
+    .section-label {
+      font-size: 8pt;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #6B2D8B;
+    }
+
+    .slide-inner {
+      padding: 40px 52px 32px 52px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide-header {
+      margin-bottom: 24px;
+    }
+
+    .slide-header h1 {
+      font-size: 22pt;
+      font-weight: bold;
+      color: #1A1A1A;
+      line-height: 1.2;
+      margin-top: 6px;
+    }
+
+    .slide-header p.subtitle {
+      font-size: 10pt;
+      color: #555555;
+      margin-top: 6px;
+    }
+
+    .accent-bar {
+      width: 48px;
+      height: 3px;
+      background-color: #F59B00;
+      margin: 8px 0 0 0;
+    }
+
+    /* ── SLIDE 1 – Enablers card grid ── */
+    .enabler-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      flex: 1;
+    }
+
+    .enabler-card {
+      background-color: #F7F2FB;
+      border-radius: 6px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .enabler-card .letter {
+      font-size: 18pt;
+      font-weight: bold;
+      color: #6B2D8B;
+      line-height: 1;
+    }
+
+    .enabler-card h3 {
+      font-size: 9pt;
+      font-weight: bold;
+      color: #1A1A1A;
+      line-height: 1.3;
+    }
+
+    .enabler-card p {
+      font-size: 8pt;
+      color: #555555;
+      line-height: 1.4;
+    }
+
+    .enabler-card .tag {
+      font-size: 7pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #FFFFFF;
+      background-color: #00BCD4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      width: fit-content;
+    }
+
+    /* ── SLIDE 2 – PPM Tooling ── */
+    .s2-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      flex: 1;
+    }
+
+    .s2-left {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .s2-right {
+      background-color: #F7F2FB;
+      border-radius: 6px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .s2-right h3 {
+      font-size: 11pt;
+      font-weight: bold;
+      color: #6B2D8B;
+    }
+
+    .criteria-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .criteria-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #00BCD4;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    .criteria-item p {
+      font-size: 9pt;
+      color: #333333;
+      line-height: 1.4;
+    }
+
+    .criteria-item strong {
+      color: #1A1A1A;
+    }
+
+    .tool-rec-box {
+      background-color: #6B2D8B;
+      border-radius: 6px;
+      padding: 16px 18px;
+    }
+
+    .tool-rec-box p.rec-label {
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #D9B3F0;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .tool-rec-box p.rec-value {
+      font-size: 14pt;
+      font-weight: bold;
+      color: #FFFFFF;
+    }
+
+    .tool-rec-box p.rec-sub {
+      font-size: 8pt;
+      color: #D9B3F0;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .tool-chip {
+      background-color: #FFFFFF;
+      border-radius: 4px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+
+    .tool-chip p.tool-name {
+      font-size: 9pt;
+      font-weight: bold;
+      color: #1A1A1A;
+    }
+
+    .tool-chip p.tool-role {
+      font-size: 7pt;
+      color: #777777;
+      margin-top: 2px;
+    }
+
+    /* ── SLIDE 3 – Activation journey ── */
+    .journey-sequence {
+      display: flex;
+      gap: 0;
+      flex: 1;
+      align-items: stretch;
+    }
+
+    .journey-step {
+      flex: 1;
+      background-color: #F7F2FB;
+      border-radius: 6px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: static;
+    }
+
+    .journey-step.highlight {
+      background-color: #6B2D8B;
+    }
+
+    .journey-step.highlight h3,
+    .journey-step.highlight p,
+    .journey-step.highlight li {
+      color: #FFFFFF;
+    }
+
+    .journey-step.highlight .phase-label {
+      color: #D9B3F0;
+    }
+
+    .journey-arrow {
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+      font-size: 16pt;
+      color: #6B2D8B;
+      font-weight: bold;
+    }
+
+    .phase-label {
+      font-size: 7pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6B2D8B;
+    }
+
+    .step-num {
+      font-size: 20pt;
+      font-weight: bold;
+      color: #D9B3F0;
+      line-height: 1;
+    }
+
+    .journey-step.highlight .step-num {
+      color: #FFFFFF;
+    }
+
+    .journey-step h3 {
+      font-size: 9pt;
+      font-weight: bold;
+      color: #1A1A1A;
+      line-height: 1.3;
+    }
+
+    .journey-step ul {
+      padding-left: 12px;
+    }
+
+    .journey-step li {
+      font-size: 7.5pt;
+      color: #444444;
+      line-height: 1.5;
+    }
+
+    .timeline-bar {
+      height: 4px;
+      background-color: #F0E6F7;
+      border-radius: 2px;
+      margin-bottom: 16px;
+    }
+
+    .timeline-bar-fill {
+      height: 4px;
+      background-color: #6B2D8B;
+      border-radius: 2px;
+      width: 60%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       SLIDE 1 — Agile Ways of Working: Key Enablers
+  ════════════════════════════════════════════════ -->
+  <section class="slide" data-slide-number="1" data-layout="card-grid"
+           data-title="Agile Ways of Working: Key Enablers"
+           data-notes="Five enablers underpin the activation of agile ways of working. Each is a discrete workstream with its own deliverables and owners.">
+    <div class="slide-inner">
+      <div class="slide-header">
+        <span class="section-label">02 Agile Ways of Working</span>
+        <h1>Five enablers underpin the shift to agile ways of working</h1>
+        <div class="accent-bar"></div>
+        <p class="subtitle">Each enabler is a discrete workstream — together they build the capability, tooling, and culture for sustained agile delivery.</p>
+      </div>
+
+      <div class="enabler-grid">
+
+        <div class="enabler-card">
+          <span class="letter">A</span>
+          <h3>Agile Methods Playbook</h3>
+          <p>A single reference guide defining how teams plan, execute, and govern delivery using agile practices.</p>
+          <span class="tag">Foundation</span>
+        </div>
+
+        <div class="enabler-card">
+          <span class="letter">B</span>
+          <h3>Agile PPM Tooling</h3>
+          <p>The right toolset to manage demand, prioritise backlogs, and give leadership real-time portfolio visibility.</p>
+          <span class="tag">Technology</span>
+        </div>
+
+        <div class="enabler-card">
+          <span class="letter">C</span>
+          <h3>Agile Coaching</h3>
+          <p>Embedded coaches working alongside Business and IT teams to build agile muscle and resolve blockers early.</p>
+          <span class="tag">People</span>
+        </div>
+
+        <div class="enabler-card">
+          <span class="letter">D</span>
+          <h3>Agile Training</h3>
+          <p>Targeted learning programmes designed and delivered for different roles — from product owners to engineers.</p>
+          <span class="tag">Capability</span>
+        </div>
+
+        <div class="enabler-card">
+          <span class="letter">E</span>
+          <h3>Modern Engineering</h3>
+          <p>DevOps practices, CI/CD pipelines, and engineering standards that make iterative delivery technically feasible.</p>
+          <span class="tag">Engineering</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════
+       SLIDE 2 — PPM Tooling: The case for Atlassian
+  ════════════════════════════════════════════════ -->
+  <section class="slide" data-slide-number="2" data-layout="two-column"
+           data-title="PPM Tooling Recommendation: Atlassian"
+           data-notes="Jira Align is the recommended PPM tool. It is already in use across parts of the organisation and integrates natively with the broader Atlassian suite.">
+    <div class="slide-inner">
+      <div class="slide-header">
+        <span class="section-label">02 Agile Ways of Working — Enabler B</span>
+        <h1>Atlassian is the recommended PPM toolset</h1>
+        <div class="accent-bar"></div>
+        <p class="subtitle">A single, integrated platform that connects strategy to delivery — from portfolio planning to engineering execution.</p>
+      </div>
+
+      <div class="s2-body">
+
+        <div class="s2-left">
+
+          <div class="tool-rec-box">
+            <p class="rec-label">Recommended platform</p>
+            <p class="rec-value">Atlassian Suite</p>
+            <p class="rec-sub">Jira Align + Jira Software + Confluence — already in use in parts of the organisation, well-supported, and purpose-built for agile at scale.</p>
+          </div>
+
+          <div class="tool-grid">
+            <div class="tool-chip">
+              <p class="tool-name">Jira Align</p>
+              <p class="tool-role">Portfolio &amp; strategy</p>
+            </div>
+            <div class="tool-chip">
+              <p class="tool-name">Jira Software</p>
+              <p class="tool-role">Team delivery</p>
+            </div>
+            <div class="tool-chip">
+              <p class="tool-name">Confluence</p>
+              <p class="tool-role">Playbook &amp; docs</p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="s2-right">
+          <h3>Why Atlassian wins on the key criteria</h3>
+
+          <div class="criteria-item">
+            <div class="criteria-dot"></div>
+            <p><strong>Scalability.</strong> Jira Align connects team-level sprints to enterprise portfolio roadmaps, giving leadership consolidated visibility without manual reporting.</p>
+          </div>
+          <div class="criteria-item">
+            <div class="criteria-dot"></div>
+            <p><strong>Existing adoption.</strong> Jira is already in use in parts of the organisation — lower change burden and faster time to value than a net-new platform.</p>
+          </div>
+          <div class="criteria-item">
+            <div class="criteria-dot"></div>
+            <p><strong>Native integration.</strong> Seamless data flow across Align, Jira Software, and Confluence eliminates the need to bridge separate tools via custom connectors.</p>
+          </div>
+          <div class="criteria-item">
+            <div class="criteria-dot"></div>
+            <p><strong>Complementary tooling.</strong> The wider Atlassian ecosystem (e.g. Confluence for the Ways of Working Playbook) supports adjacent workstreams at no additional complexity.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════
+       SLIDE 3 — Activation Journey
+  ════════════════════════════════════════════════ -->
+  <section class="slide" data-slide-number="3" data-layout="sequence"
+           data-title="Activating the Agile Enablers: The Journey"
+           data-notes="The five enablers are activated in a phased sequence. Foundations (A, B) are established first; coaching and training (C, D) are deployed as teams begin delivery; modern engineering (E) matures over time.">
+    <div class="slide-inner">
+      <div class="slide-header">
+        <span class="section-label">02 Agile Ways of Working — Activation Roadmap</span>
+        <h1>Activating the enablers in sequence builds lasting agile capability</h1>
+        <div class="accent-bar"></div>
+      </div>
+
+      <div class="timeline-bar">
+        <div class="timeline-bar-fill"></div>
+      </div>
+
+      <div class="journey-sequence">
+
+        <div class="journey-step">
+          <span class="phase-label">Phase 1 · Weeks 1–4</span>
+          <span class="step-num">A</span>
+          <h3>Define the playbook</h3>
+          <ul>
+            <li>Document agile principles and standards</li>
+            <li>Define sprint, backlog, and governance model</li>
+            <li>Publish on Confluence as living reference</li>
+          </ul>
+        </div>
+
+        <div class="journey-arrow">→</div>
+
+        <div class="journey-step highlight">
+          <span class="phase-label">Phase 1 · Weeks 2–6</span>
+          <span class="step-num">B</span>
+          <h3>Configure PPM tooling</h3>
+          <ul>
+            <li>Stand up Jira Align and Jira Software</li>
+            <li>Migrate demand into structured backlog</li>
+            <li>Connect portfolio view to team boards</li>
+          </ul>
+        </div>
+
+        <div class="journey-arrow">→</div>
+
+        <div class="journey-step">
+          <span class="phase-label">Phase 2 · Weeks 4–12</span>
+          <span class="step-num">C</span>
+          <h3>Deploy agile coaches</h3>
+          <ul>
+            <li>Embed coaches in priority product teams</li>
+            <li>Run sprint ceremonies alongside teams</li>
+            <li>Coach business product owners in parallel</li>
+          </ul>
+        </div>
+
+        <div class="journey-arrow">→</div>
+
+        <div class="journey-step">
+          <span class="phase-label">Phase 2 · Weeks 6–14</span>
+          <span class="step-num">D</span>
+          <h3>Deliver training</h3>
+          <ul>
+            <li>Role-based agile training for all IT staff</li>
+            <li>Product owner bootcamp for Business leads</li>
+            <li>Certification pathways for key roles</li>
+          </ul>
+        </div>
+
+        <div class="journey-arrow">→</div>
+
+        <div class="journey-step">
+          <span class="phase-label">Phase 3 · Ongoing</span>
+          <span class="step-num">E</span>
+          <h3>Mature engineering</h3>
+          <ul>
+            <li>Introduce CI/CD pipelines per team</li>
+            <li>Establish code quality and test standards</li>
+            <li>Scale DevOps practices across platforms</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

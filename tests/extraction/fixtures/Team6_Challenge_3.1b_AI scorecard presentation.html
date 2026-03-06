@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Last-Mile Orchestration — KPI System & Value Capture (Executive)</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --accenture-purple:#A100FF;
+    --accenture-dark-purple:#7B00CC;
+    --accenture-light-purple:#C77DFF;
+    --accenture-black:#000;
+    --accenture-gray:#323232;
+    --accenture-light-gray:#F5F5F5;
+    --accenture-white:#FFF;
+    --accent-blue:#00D1FF;
+    --accent-green:#00E676;
+    --accent-orange:#FF6B35;
+    --accent-red:#FF1744;
+    --border:rgba(161,0,255,0.14);
+  }
+
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    line-height:1.55;
+    color:var(--accenture-gray);
+    background:linear-gradient(135deg,#f5f5f5 0%,#e8e8e8 100%);
+    overflow-x:hidden;
+  }
+
+  /* Layout wrapper */
+  .container{
+    max-width:1440px;margin:0 auto;background:#fff;
+    box-shadow:0 10px 40px rgba(161,0,255,0.15);
+    animation:fadeIn 0.6s ease-out;
+    position:relative;
+  }
+
+  @keyframes fadeIn{
+    from{opacity:0;transform:translateY(18px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+
+  /* Header */
+  header{
+    background:linear-gradient(135deg,var(--accenture-purple) 0%,var(--accenture-dark-purple) 100%);
+    color:#fff;
+    padding:56px 60px 74px;
+    position:relative;
+    overflow:hidden;
+  }
+  header::before{
+    content:'';
+    position:absolute;
+    top:-50%;
+    right:-12%;
+    width:620px;height:620px;
+    background:radial-gradient(circle,rgba(255,255,255,0.12) 0%,transparent 70%);
+    animation:pulse 4.2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{transform:scale(1);opacity:.55}
+    50%{transform:scale(1.12);opacity:.32}
+  }
+  .header-content{position:relative;z-index:1}
+  .accenture-logo{
+    font-size:30px;font-weight:800;letter-spacing:2px;margin-bottom:22px;text-transform:lowercase;
+  }
+  .accenture-logo::after{content:'>';color:var(--accent-blue);margin-left:4px}
+  header h1{font-size:40px;font-weight:800;margin-bottom:10px;letter-spacing:-1px;line-height:1.15}
+  header .subtitle{font-size:17px;opacity:.95;font-weight:300;margin-bottom:14px}
+  header .timestamp{
+    font-size:13px;opacity:.85;font-weight:300;display:inline-block;
+    padding:8px 16px;background:rgba(255,255,255,0.12);
+    border-radius:20px;backdrop-filter:blur(10px)
+  }
+
+  /* Sticky tab bar (reference format) */
+  .nav-tabs{
+    background:var(--accenture-black);
+    padding:0 60px;
+    display:flex;gap:4px;overflow-x:auto;
+    position:sticky;top:0;z-index:100;
+    box-shadow:0 4px 12px rgba(0,0,0,0.12);
+  }
+  .nav-tab{
+    padding:18px 26px;background:transparent;border:none;
+    color:rgba(255,255,255,.72);
+    cursor:pointer;font-size:13px;font-weight:750;
+    text-transform:uppercase;letter-spacing:.6px;
+    transition:all .28s ease;border-bottom:3px solid transparent;white-space:nowrap;
+  }
+  .nav-tab:hover{color:#fff;background:rgba(255,255,255,.06)}
+  .nav-tab.active{
+    color:#fff;border-bottom-color:var(--accenture-purple);
+    background:rgba(161,0,255,.10)
+  }
+
+  /* Content area */
+  .content{padding:56px 60px}
+
+  .tab-content{display:none;animation:slideIn .42s ease-out}
+  .tab-content.active{display:block}
+  @keyframes slideIn{
+    from{opacity:0;transform:translateX(-16px)}
+    to{opacity:1;transform:translateX(0)}
+  }
+
+  /* Section headings */
+  .section{margin-bottom:56px}
+  h2{
+    font-size:30px;font-weight:850;color:var(--accenture-black);
+    margin-bottom:22px;position:relative;padding-bottom:14px;
+  }
+  h2::after{
+    content:'';
+    position:absolute;bottom:0;left:0;width:86px;height:4px;
+    background:linear-gradient(90deg,var(--accenture-purple),var(--accent-blue));
+    border-radius:2px;
+  }
+  h3{
+    font-size:19px;font-weight:720;color:var(--accenture-gray);
+    margin:26px 0 14px;display:flex;align-items:center;gap:12px;
+  }
+  h3::before{
+    content:'';width:6px;height:22px;background:var(--accenture-purple);border-radius:3px;
+  }
+
+  /* Exec summary */
+  .exec-summary{
+    background:linear-gradient(135deg,rgba(161,0,255,.05) 0%,rgba(0,209,255,.05) 100%);
+    border-left:6px solid var(--accenture-purple);
+    padding:34px;margin-bottom:44px;font-size:15.5px;line-height:1.85;
+    border-radius:0 12px 12px 0;
+    box-shadow:0 4px 20px rgba(161,0,255,.08);
+    position:relative;overflow:hidden;
+  }
+  .exec-summary::before{
+    content:'';
+    position:absolute;top:16px;right:18px;
+    width:64px;height:64px;border-radius:16px;
+    background:linear-gradient(135deg,rgba(161,0,255,.18),rgba(0,209,255,.12));
+    transform:rotate(12deg);
+    opacity:.55;
+  }
+  .exec-summary strong{
+    color:var(--accenture-purple);
+    font-size:17px;display:block;margin-bottom:10px;
+  }
+
+  /* Stat cards */
+  .stats-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:22px;margin:28px 0 10px;
+  }
+  .stat-card{
+    background:linear-gradient(135deg,var(--accenture-purple),var(--accenture-dark-purple));
+    color:#fff;padding:28px;border-radius:16px;
+    box-shadow:0 8px 24px rgba(161,0,255,.25);
+    position:relative;overflow:hidden;transition:all .28s ease;
+  }
+  .stat-card:hover{transform:translateY(-4px) scale(1.01);box-shadow:0 12px 30px rgba(161,0,255,.35)}
+  .stat-card::before{
+    content:'';position:absolute;top:-55%;right:-55%;
+    width:240px;height:240px;background:radial-gradient(circle,rgba(255,255,255,.22) 0%,transparent 70%);
+  }
+  .stat-label{font-size:12px;text-transform:uppercase;letter-spacing:1px;opacity:.9;margin-bottom:10px}
+  .stat-value{font-size:34px;font-weight:850;line-height:1.05}
+  .stat-sub{margin-top:10px;font-size:13px;opacity:.9}
+
+  /* Cards */
+  .card{
+    background:#fff;border-radius:12px;padding:28px;margin-bottom:22px;
+    box-shadow:0 4px 16px rgba(0,0,0,.06);
+    border:1px solid var(--border);transition:all .28s ease;
+  }
+  .card:hover{box-shadow:0 8px 28px rgba(161,0,255,.15);transform:translateY(-2px)}
+  .card-header{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--accenture-light-gray);
+  }
+
+  /* Badges */
+  .badge{
+    display:inline-block;padding:6px 14px;border-radius:20px;
+    font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.5px;
+    box-shadow:0 2px 6px rgba(0,0,0,.15)
+  }
+  .badge-high{background:linear-gradient(135deg,#FF1744,#D50000);color:#fff}
+  .badge-moderate{background:linear-gradient(135deg,#FFB300,#FF6F00);color:#fff}
+  .badge-low{background:linear-gradient(135deg,#00E676,#00C853);color:#fff}
+  .badge-med{background:linear-gradient(135deg,#FF6B35,#F44336);color:#fff}
+
+  /* Lists */
+  ul{list-style:none;margin-left:0}
+  ul li{
+    margin-bottom:14px;padding-left:32px;position:relative;line-height:1.7;transition:all .18s ease;
+  }
+  ul li:hover{padding-left:36px}
+  ul li:before{
+    content:'▸';position:absolute;left:8px;color:var(--accenture-purple);font-weight:900;font-size:18px;
+  }
+
+  /* Tables */
+  table{
+    width:100%;border-collapse:separate;border-spacing:0;margin:18px 0;
+    font-size:13.5px;border-radius:12px;overflow:hidden;
+    box-shadow:0 4px 16px rgba(0,0,0,.06);
+  }
+  thead{background:linear-gradient(135deg,var(--accenture-black),var(--accenture-gray));color:#fff}
+  th{
+    padding:16px 14px;text-align:left;font-weight:750;font-size:11px;
+    text-transform:uppercase;letter-spacing:1px;
+  }
+  td{padding:16px 14px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+  tbody tr{background:#fff;transition:all .18s ease}
+  tbody tr:nth-child(even){background:rgba(161,0,255,.02)}
+  tbody tr:hover{background:rgba(161,0,255,.08);transform:scale(1.01);box-shadow:0 2px 8px rgba(161,0,255,.10)}
+  .align-right{text-align:right}
+  .small{font-size:12px;color:#666}
+  .muted{color:#666}
+
+  /* Recommendation blocks with toggle */
+  .recommendation{
+    background:linear-gradient(135deg,rgba(161,0,255,.03),rgba(0,209,255,.03));
+    border:2px solid rgba(161,0,255,.18);
+    border-radius:16px;padding:28px;margin-bottom:18px;
+    position:relative;overflow:hidden;transition:all .28s ease;cursor:pointer;
+  }
+  .recommendation:hover{border-color:var(--accenture-purple);box-shadow:0 10px 24px rgba(161,0,255,.18);transform:translateY(-3px)}
+  .recommendation::before{
+    content:'';position:absolute;top:0;left:0;width:6px;height:100%;
+    background:linear-gradient(180deg,var(--accenture-purple),var(--accent-blue));
+  }
+  .recommendation h3{margin:0;color:var(--accenture-black);font-size:19px;display:flex;align-items:center}
+  .recommendation h3::before{display:none}
+  .rank{
+    display:inline-flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--accenture-purple),var(--accenture-dark-purple));
+    color:#fff;width:40px;height:40px;border-radius:50%;
+    font-weight:850;margin-right:14px;font-size:17px;
+    box-shadow:0 4px 12px rgba(161,0,255,.3);
+  }
+  .recommendation p{margin-top:12px;line-height:1.7;color:var(--accenture-gray);padding-left:54px}
+  .toggle-content{max-height:0;overflow:hidden;transition:max-height .38s ease}
+  .toggle-content.expanded{max-height:3200px}
+  .toggle-btn{
+    background:var(--accenture-purple);color:#fff;border:none;
+    padding:11px 22px;border-radius:24px;cursor:pointer;
+    font-weight:720;font-size:13px;margin-top:14px;margin-left:54px;
+    transition:all .26s ease;box-shadow:0 4px 12px rgba(161,0,255,.28);
+  }
+  .toggle-btn:hover{background:var(--accenture-dark-purple);transform:translateY(-2px);box-shadow:0 6px 16px rgba(161,0,255,.38)}
+
+  /* Chart containers */
+  .chart-container{
+    margin:22px 0;padding:22px;background:var(--accenture-light-gray);
+    border-radius:12px;border:1px solid rgba(0,0,0,.04);
+  }
+  .chart-title{display:flex;justify-content:space-between;align-items:flex-end;gap:14px}
+  .chart-title h3{margin:0}
+  .chart-sub{font-size:13px;color:#666;margin-top:4px}
+  .chart-flex{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:start}
+  .chart-note{
+    padding:14px 16px;border-radius:10px;background:#fff;border:1px solid rgba(161,0,255,.15);
+    font-size:13px;line-height:1.55;
+  }
+  .chart-note strong{color:var(--accenture-purple)}
+
+  /* Controls */
+  .controls{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px
+  }
+  .pill{
+    border:1px solid rgba(161,0,255,.25);background:#fff;border-radius:999px;
+    padding:8px 12px;display:flex;gap:10px;align-items:center;
+  }
+  .pill label{font-size:12px;color:#555;font-weight:650}
+  select,input[type="range"],input[type="text"]{font:inherit}
+  select{
+    border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:8px 10px;background:#fff;
+  }
+  input[type="text"]{
+    border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:10px 12px;min-width:260px;
+  }
+  .scenario-btn{
+    border:1px solid var(--accenture-purple);background:#fff;color:var(--accenture-purple);
+    padding:9px 14px;border-radius:999px;font-weight:800;font-size:12px;cursor:pointer;
+    transition:all .2s ease;
+  }
+  .scenario-btn.active{background:var(--accenture-purple);color:#fff}
+  .kpi-inline{
+    display:flex;gap:14px;flex-wrap:wrap;margin-top:12px
+  }
+  .kpi-chip{
+    background:#fff;border:1px solid rgba(161,0,255,.18);border-radius:14px;
+    padding:12px 14px;min-width:220px;
+  }
+  .kpi-chip .label{font-size:12px;color:#666;text-transform:uppercase;letter-spacing:.9px;font-weight:750}
+  .kpi-chip .value{font-size:26px;font-weight:900;color:#111;margin-top:6px}
+  .delta{font-size:12px;font-weight:850;margin-left:8px}
+  .delta.up{color:var(--accent-green)}
+  .delta.down{color:var(--accent-red)}
+
+  /* Tooltip */
+  .tooltip{
+    position:fixed;pointer-events:none;
+    background:#111;color:#fff;border-radius:10px;
+    padding:10px 12px;font-size:12px;line-height:1.35;
+    box-shadow:0 10px 26px rgba(0,0,0,.25);
+    opacity:0;transform:translateY(6px);
+    transition:opacity .12s ease, transform .12s ease;
+    max-width:320px;z-index:999;
+  }
+  .tooltip.show{opacity:1;transform:translateY(0)}
+  .tooltip strong{color:#fff}
+  .tooltip .muted{color:rgba(255,255,255,.75)}
+
+  /* Data notes callout */
+  .data-notes{
+    border-left:6px solid var(--accent-orange);
+    background:linear-gradient(135deg,rgba(255,107,53,.06),rgba(255,174,0,.06));
+    padding:18px 18px;border-radius:0 12px 12px 0;
+    box-shadow:0 4px 18px rgba(255,107,53,.10);
+    margin-top:18px;font-size:13.5px;
+  }
+  .data-notes strong{color:#B04422}
+
+  /* Footer */
+  footer{
+    background:var(--accenture-black);color:#fff;padding:34px 60px;text-align:center;
+  }
+  .footer-logo{
+    font-size:22px;font-weight:850;letter-spacing:2px;margin-bottom:10px;text-transform:lowercase;
+  }
+  .footer-logo::after{content:'>';color:var(--accent-blue);margin-left:4px}
+  .footer-text{font-size:12.5px;opacity:.72}
+
+  @media (max-width:1024px){
+    header{padding:44px 40px 64px}
+    .nav-tabs{padding:0 20px}
+    .content{padding:40px}
+    header h1{font-size:32px}
+    .chart-flex{grid-template-columns:1fr}
+  }
+  @media (max-width:768px){
+    header{padding:34px 22px 56px}
+    .content{padding:22px}
+    header h1{font-size:26px}
+    .nav-tab{padding:14px 14px;font-size:12px}
+    input[type="text"]{min-width:100%}
+    footer{padding:26px 22px}
+  }
+
+  @media print{
+    .nav-tabs{display:none}
+    .toggle-btn{display:none}
+    .container{box-shadow:none}
+    body{background:#fff}
+    .tab-content{display:block !important}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-content">
+      <div class="accenture-logo">accenture</div>
+      <h1>AI Last-Mile Orchestration — KPI System & Value Capture</h1>
+      <div class="subtitle">Board-ready scorecard, value leakage controls, and deployment roadmap</div>
+      <div class="timestamp">Generated: <span id="timestamp"></span></div>
+    </div>
+  </header>
+
+  <nav class="nav-tabs" aria-label="Tabs">
+    <button class="nav-tab active" data-tab="overview">Overview</button>
+    <button class="nav-tab" data-tab="principles">Design Principles</button>
+    <button class="nav-tab" data-tab="scorecard">Scorecard</button>
+    <button class="nav-tab" data-tab="insights">Insights</button>
+    <button class="nav-tab" data-tab="impact">Impact</button>
+    <button class="nav-tab" data-tab="roadmap">Roadmap</button>
+    <button class="nav-tab" data-tab="appendix">Appendix</button>
+  </nav>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="tab-content active" id="overview">
+      <div class="exec-summary">
+        <strong>Executive Summary</strong>
+        This KPI system is designed to prove (and protect) a <b>5–8% last-mile cost per stop opportunity</b> by measuring whether <b>AI is embedded in decision rights</b> (routing/dispatch), not whether dashboards exist. The board test is simple: <b>Cost/Stop ↓ 5–8%</b> with <b>OTD stable</b>, and <b>AI route penetration &gt;75%</b> while <b>manual override falls below 20%</b> — indicating structural orchestration, not local optimisation.
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Primary Economic Lever</div>
+          <div class="stat-value">Cost / Stop</div>
+          <div class="stat-sub">Direct EBIT line-of-sight to last-mile unit economics</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Value Capture Gate</div>
+          <div class="stat-value">AI Penetration</div>
+          <div class="stat-sub">% routes AI-optimised (decision rights)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Leakage Control</div>
+          <div class="stat-value">Override Rate</div>
+          <div class="stat-sub">Culture + workflow adoption (value suppression)</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Decision Framing</h2>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 style="margin:0">What leadership needs to approve</h3>
+            <span class="badge badge-high">Decision Ask</span>
+          </div>
+          <ul>
+            <li><b>Adopt the Tiered Orchestration Scorecard</b> as the performance spine (Board / Ops / Intelligence).</li>
+            <li><b>Re-align incentives</b> to algorithmic adherence (AI penetration + override rate) with OTD guardrails.</li>
+            <li><b>Shift from country P&amp;L local maxima</b> to network contribution + variance compression targets.</li>
+          </ul>
+
+          <div class="data-notes">
+            <strong>Data notes (Illustrative):</strong>
+            Assumptions used for value sizing: last mile = <b>45%</b> of cost base; AI reduces LM costs by <b>5–8%</b>. Implied EBIT uplift shown as <b>~150–300bps</b> depending on baseline margin and capture. Replace with client baseline margin and audited LM cost base for final quantification.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRINCIPLES -->
+    <div class="tab-content" id="principles">
+      <div class="section">
+        <h2>Design Principles</h2>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 style="margin:0">Principles that prevent KPI inflation and protect EBIT capture</h3>
+            <span class="badge badge-moderate">Governance</span>
+          </div>
+          <ul>
+            <li><b>Direct EBIT line of sight:</b> Tier 1 KPIs must mathematically connect to last-mile <b>cost/stop or cost/parcel</b>.</li>
+            <li><b>AI embedded in decision rights:</b> Measure where algorithms <b>control routing + dispatch</b>, not where analytics inform humans.</li>
+            <li><b>Network-level optimisation:</b> Reward <b>variance compression</b> and density economics, not country local maxima.</li>
+            <li><b>Intelligence density over asset density:</b> Track AI penetration, learning speed, overrides — not fleet size/headcount.</li>
+            <li><b>Leading + structural indicators:</b> AI penetration, override rate, forecast accuracy predict margin expansion before EBIT moves.</li>
+            <li><b>Minimal KPI inflation:</b> Strict subset of existing KPIs; only two structurally necessary new metrics introduced.</li>
+          </ul>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-title">
+            <div>
+              <h3 style="margin:0">Principle-to-Outcome Map</h3>
+              <div class="chart-sub">What this shows / why it matters</div>
+            </div>
+            <span class="badge badge-low">Leading Indicators</span>
+          </div>
+
+          <div class="chart-flex" style="margin-top:14px">
+            <div class="card" style="margin:0">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Principle</th>
+                    <th>Primary KPI Signal</th>
+                    <th>Economic Risk if Missing</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><b>Direct EBIT line-of-sight</b></td>
+                    <td>Cost/Stop, Cost/Parcel</td>
+                    <td>Measures activity not value; no margin accountability</td>
+                  </tr>
+                  <tr>
+                    <td><b>AI decision rights</b></td>
+                    <td>% Routes AI-Optimised, Override Rate</td>
+                    <td>Theoretical value, low capture; “AI as dashboard”</td>
+                  </tr>
+                  <tr>
+                    <td><b>Network optimisation</b></td>
+                    <td>Variance in Cost/Stop, Stops/Route</td>
+                    <td>Country silos preserve dispersion; density benefits diluted</td>
+                  </tr>
+                  <tr>
+                    <td><b>Leading indicators</b></td>
+                    <td>Forecast Accuracy, Data Latency</td>
+                    <td>EBIT improvement arrives late; slow learning edge</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="chart-note">
+              <strong>So what:</strong> The KPI spine is designed to answer one board question:
+              <b>“Are we structurally capturing AI value?”</b><br><br>
+              <span class="muted">Board test:</span> <b>Cost/Stop ↓ 5–8%</b> + <b>OTD stable</b> + <b>AI &gt;75%</b> + <b>Override &lt;20%</b>.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCORECARD -->
+    <div class="tab-content" id="scorecard">
+      <div class="section">
+        <h2>New Last-Mile Orchestration Scorecard</h2>
+
+        <div class="controls">
+          <div class="pill">
+            <label for="kpiSearch">Search KPIs</label>
+            <input id="kpiSearch" type="text" placeholder="e.g., AI, OTD, Forecast, Override" />
+          </div>
+          <div class="pill">
+            <label for="tierFilter">Tier</label>
+            <select id="tierFilter">
+              <option value="all">All</option>
+              <option value="1">Tier 1 (Board)</option>
+              <option value="2">Tier 2 (Ops + AI)</option>
+              <option value="3">Tier 3 (Compounding)</option>
+            </select>
+          </div>
+          <div class="pill">
+            <label>Tip</label>
+            <span class="small">Hover KPI names for “economic linkage”</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 style="margin:0">Tiered KPI Portfolio</h3>
+            <span class="badge badge-high">Board + Ops</span>
+          </div>
+
+          <table id="scorecardTable">
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>KPI</th>
+                <th>Source</th>
+                <th>Rationale</th>
+                <th>Owner</th>
+              </tr>
+            </thead>
+            <tbody id="scorecardBody"></tbody>
+          </table>
+
+          <div class="data-notes" style="margin-top:14px">
+            <strong>Two new metrics only:</strong> <b>% Routes AI-Optimised</b> and <b>Manual Override Rate</b>. Everything else is retained/refined from existing KPI systems.
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-title">
+            <div>
+              <h3 style="margin:0">Tier 1 “Board Test” Dashboard</h3>
+              <div class="chart-sub">Illustrative targets — replace with client baselines</div>
+            </div>
+            <span class="badge badge-moderate">Illustrative</span>
+          </div>
+
+          <div class="chart-flex" style="margin-top:14px">
+            <div class="card" style="margin:0">
+              <canvas id="boardBars" width="820" height="360" aria-label="Tier 1 KPI bars" role="img"></canvas>
+              <div class="small muted" style="margin-top:10px">
+                Caption: Green = within target band; Amber = close; Red = outside. Targets are illustrative.
+              </div>
+            </div>
+            <div class="chart-note">
+              <strong>What this shows:</strong> Whether orchestration is “real” vs “pilot theatre”.<br><br>
+              <strong>Why it matters:</strong> AI penetration without override control typically caps captured savings at <b>3–4%</b> of last-mile costs (illustrative), even when algorithms exist.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="tab-content" id="insights">
+      <div class="section">
+        <h2>Key Insights</h2>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 style="margin:0">Critical insight</h3>
+            <span class="badge badge-high">Value Leakage</span>
+          </div>
+          <p>
+            Most value leakage risk sits in <b>Refine/Reinvent</b> KPIs — not Retain. Country-level measures can systematically
+            suppress network density economics and delay visibility of AI value capture.
+          </p>
+        </div>
+
+        <div class="controls">
+          <div class="pill">
+            <label for="regionSelect">Region view</label>
+            <select id="regionSelect">
+              <option value="network">Network (All Countries)</option>
+              <option value="north">North (Illustrative)</option>
+              <option value="central">Central (Illustrative)</option>
+              <option value="south">South (Illustrative)</option>
+            </select>
+          </div>
+          <div class="pill">
+            <label>View</label>
+            <button class="scenario-btn active" data-view="variance" id="viewVarianceBtn">Variance</button>
+            <button class="scenario-btn" data-view="density" id="viewDensityBtn">Density</button>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-title">
+            <div>
+              <h3 style="margin:0">Network Standardisation Signal</h3>
+              <div class="chart-sub">Variance compression and density economics (illustrative)</div>
+            </div>
+            <span class="badge badge-low">Leading structural</span>
+          </div>
+
+          <div class="chart-flex" style="margin-top:14px">
+            <div class="card" style="margin:0">
+              <canvas id="varianceLine" width="820" height="360" aria-label="Variance line chart" role="img"></canvas>
+              <div class="small muted" style="margin-top:10px">
+                Caption: Illustrative trend showing how variance compression precedes EBIT movement.
+              </div>
+            </div>
+            <div class="chart-note">
+              <strong>What this shows:</strong> Whether the network is converging on standardised operating performance.<br><br>
+              <strong>Why it matters:</strong> Persistent dispersion usually indicates <b>country-level local maxima</b> and undermines regional density.
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-title">
+            <div>
+              <h3 style="margin:0">KPI Rationalisation Heat Map</h3>
+              <div class="chart-sub">Retain / Refine / Reinvent with structural risk</div>
+            </div>
+            <span class="badge badge-moderate">Governance</span>
+          </div>
+
+          <div class="card" style="margin-top:14px">
+            <table>
+              <thead>
+                <tr>
+                  <th>KPI</th>
+                  <th>Category</th>
+                  <th>Structural Risk if Unchanged</th>
+                  <th>Economic Potential</th>
+                  <th>Required Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><b>Cost per Stop</b></td><td><span class="badge badge-low">Retain</span></td><td>None</td><td>Primary lever of 5–8% LM cost reduction</td><td>Maintain standard definition</td></tr>
+                <tr><td><b>Cost per Parcel</b></td><td><span class="badge badge-low">Retain</span></td><td>None</td><td>Converts productivity into EBIT impact</td><td>Ensure segmentation clarity</td></tr>
+                <tr><td><b>Stops per Route</b></td><td><span class="badge badge-low">Retain</span></td><td>Gaming risk without guardrails</td><td>High fixed cost dilution</td><td>Monitor with OTD guardrail</td></tr>
+                <tr><td><b>Vehicle Utilisation</b></td><td><span class="badge badge-moderate">Refine</span></td><td>Encourages asset hoarding</td><td>Moderate</td><td>Shift to route-level utilisation</td></tr>
+                <tr><td><b>Route Plan Adherence</b></td><td><span class="badge badge-moderate">Refine</span></td><td>AI embedding invisible</td><td>High value capture</td><td>Measure vs AI plan</td></tr>
+                <tr><td><b>Country EBIT (unadjusted)</b></td><td><span class="badge badge-high">Reinvent</span></td><td>Local optimisation fragments system</td><td>Suppresses 30–50% AI value capture (illustrative)</td><td>Replace with network contribution</td></tr>
+                <tr><td><b>Headcount Reduction</b></td><td><span class="badge badge-high">Reinvent</span></td><td>Defensive culture vs AI adoption</td><td>High — slows embedding</td><td>Replace with Cost/Stop + AI metrics</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMPACT -->
+    <div class="tab-content" id="impact">
+      <div class="section">
+        <h2>Economic Impact & Sensitivity</h2>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 style="margin:0">Scenario controls (live)</h3>
+            <span class="badge badge-moderate">Interactive</span>
+          </div>
+
+          <div class="controls">
+            <div class="pill">
+              <label>Scenario</label>
+              <button class="scenario-btn active" data-scenario="base" id="scBase">Base</button>
+              <button class="scenario-btn" data-scenario="upside" id="scUp">Upside</button>
+              <button class="scenario-btn" data-scenario="downside" id="scDown">Downside</button>
+            </div>
+
+            <div class="pill">
+              <label for="overrideSlider">Manual Override Rate</label>
+              <input id="overrideSlider" type="range" min="0" max="50" step="1" value="25" />
+              <span id="overrideLabel" class="small"><b>25%</b></span>
+            </div>
+
+            <div class="pill">
+              <label for="lmShare">Last-mile share of cost base</label>
+              <input id="lmShare" type="range" min="30" max="55" step="1" value="45" />
+              <span id="lmShareLabel" class="small"><b>45%</b></span>
+            </div>
+          </div>
+
+          <div class="kpi-inline">
+            <div class="kpi-chip">
+              <div class="label">Theoretical LM Cost Reduction</div>
+              <div class="value" id="kpiTheoretical">6.5%</div>
+              <div class="small muted">From AI orchestration (scenario)</div>
+            </div>
+            <div class="kpi-chip">
+              <div class="label">Captured LM Reduction (after leakage)</div>
+              <div class="value" id="kpiCaptured">3.6%</div>
+              <div class="small muted">Leakage driven by override behaviour</div>
+            </div>
+            <div class="kpi-chip">
+              <div class="label">Implied EBIT Lift</div>
+              <div class="value" id="kpiEbit">+210 bps</div>
+              <div class="small muted">Illustrative conversion, replace with baseline margin</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-title">
+            <div>
+              <h3 style="margin:0">Value Bridge (Waterfall)</h3>
+              <div class="chart-sub">From theoretical AI benefit to captured EBIT lift (illustrative)</div>
+            </div>
+            <span class="badge badge-high">Decision-useful</span>
+          </div>
+
+          <div class="chart-flex" style="margin-top:14px">
+            <div class="card" style="margin:0">
+              <canvas id="waterfall" width="820" height="360" aria-label="Waterfall chart" role="img"></canvas>
+              <div class="small muted" style="margin-top:10px">
+                Caption: The largest “negative bar” is typically overrides (culture + workflow), not model accuracy.
+              </div>
+            </div>
+            <div class="chart-note">
+              <strong>Now what:</strong> Treat override reduction as a <b>value capture program</b> (training, guardrails, decision rights) — not change management theatre.<br><br>
+              <span class="muted">Executive guardrail:</span> maintain <b>OTD</b> while driving unit cost down.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROADMAP -->
+    <div class="tab-content" id="roadmap">
+      <div class="section">
+        <h2>Must-Win Challenges & Roadmap</h2>
+
+        <div class="recommendation" onclick="toggleDetails(this)">
+          <h3><span class="rank">1</span>Unified Last-Mile Data Spine</h3>
+          <p><b>Barrier:</b> Data fragmentation &amp; signal latency</p>
+          <p><b>KPIs:</b> Forecast Accuracy (D-1), Data Latency, Model Refresh Cycle</p>
+          <p><b>Failure signal:</b> Forecast accuracy &lt;85%; no intraday re-optimisation</p>
+          <button class="toggle-btn">Show Implementation Details</button>
+          <div class="toggle-content">
+            <h3>Now what (0–90 days):</h3>
+            <ul>
+              <li>Single “plan vs actual” event schema across depots (common IDs: route, stop, parcel)</li>
+              <li>Define latency SLA by decision type (dispatch, re-route, exception)</li>
+              <li>Introduce refresh cadence KPI with automated alerts</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="recommendation" onclick="toggleDetails(this)">
+          <h3><span class="rank">2</span>AI as Default Decision Engine</h3>
+          <p><b>Barrier:</b> Workflow embedding vs analytics layering</p>
+          <p><b>KPIs:</b> % Routes AI-Optimised, Manual Override Rate, Route Adherence</p>
+          <p><b>Failure signal:</b> AI &gt;70% but override &gt;25%</p>
+          <button class="toggle-btn">Show Implementation Details</button>
+          <div class="toggle-content">
+            <h3>Now what (0–90 days):</h3>
+            <ul>
+              <li>Redesign dispatcher UI: “AI default” with reason-coded override</li>
+              <li>Introduce depot-level override league tables + coaching</li>
+              <li>Guardrails: OTD, safety, compliance thresholds prevent gaming</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="recommendation" onclick="toggleDetails(this)">
+          <h3><span class="rank">3</span>Shift from Country P&amp;L to Network Economics</h3>
+          <p><b>Barrier:</b> Local autonomy vs regional density</p>
+          <p><b>KPIs:</b> Variance in Cost/Stop, Stops/Route, Miles/Stop</p>
+          <p><b>Failure signal:</b> Persistent cross-country dispersion</p>
+          <button class="toggle-btn">Show Implementation Details</button>
+          <div class="toggle-content">
+            <h3>Now what (30–180 days):</h3>
+            <ul>
+              <li>Define “network contribution” metric (mix + density normalised)</li>
+              <li>Introduce variance targets (Std. Dev.) alongside mean performance</li>
+              <li>Decision rights: where network can override local targets to protect density</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="recommendation" onclick="toggleDetails(this)">
+          <h3><span class="rank">4</span>Incentive Realignment Toward Algorithmic Performance</h3>
+          <p><b>Barrier:</b> Cultural resistance</p>
+          <p><b>KPIs:</b> Manual Override Rate, AI Adoption by Depot, Dispatch Productivity</p>
+          <p><b>Failure signal:</b> High overrides in high-tenure depots</p>
+          <button class="toggle-btn">Show Implementation Details</button>
+          <div class="toggle-content">
+            <h3>Now what (30–180 days):</h3>
+            <ul>
+              <li>Update scorecards: reward adherence + outcomes (cost/stop, OTD)</li>
+              <li>Separate “override allowed” categories (safety/compliance) from discretionary overrides</li>
+              <li>HR/ops joint governance: depot coaching plans tied to override metrics</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-title">
+            <div>
+              <h3 style="margin:0">Deployment Roadmap</h3>
+              <div class="chart-sub">0–30 / 30–90 / 90–180 days</div>
+            </div>
+            <span class="badge badge-low">Pragmatic</span>
+          </div>
+
+          <div class="card" style="margin-top:14px">
+            <table>
+              <thead>
+                <tr>
+                  <th>0–30 days</th>
+                  <th>30–90 days</th>
+                  <th>90–180 days</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <ul>
+                      <li>Lock KPI definitions + ownership</li>
+                      <li>Instrument override reasons</li>
+                      <li>Baseline AI penetration &amp; OTD guardrails</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ul>
+                      <li>Roll out AI-default dispatcher workflow</li>
+                      <li>Incentive pilots (override + adherence)</li>
+                      <li>Latency SLAs + refresh cadence operationalised</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ul>
+                      <li>Scale AI &gt;75% routes</li>
+                      <li>Variance compression targets by region</li>
+                      <li>Network contribution metrics replace silo KPIs</li>
+                    </ul>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- APPENDIX -->
+    <div class="tab-content" id="appendix">
+      <div class="section">
+        <h2>Appendix — Assumptions, Definitions, Sources</h2>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 style="margin:0">Key assumptions (Illustrative)</h3>
+            <span class="badge badge-moderate">Illustrative</span>
+          </div>
+          <ul>
+            <li>Last mile = <b>45%</b> of cost base.</li>
+            <li>AI orchestration reduces last-mile costs by <b>5–8%</b> (theoretical).</li>
+            <li>If override rate remains <b>&gt;25%</b>, captured savings likely capped at <b>3–4%</b> of last-mile costs.</li>
+            <li>Implied EBIT lift shown as <b>~150–300bps</b> depending on baseline margin (not provided).</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 style="margin:0">Definitions</h3>
+            <span class="badge badge-low">KPI Glossary</span>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Term</th><th>Definition</th><th>Why it matters</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>% Routes AI-Optimised</b></td>
+                <td>% of routes where algorithm controls routing + dispatch decisions</td>
+                <td>Separates “dashboard AI” from decision-right AI</td>
+              </tr>
+              <tr>
+                <td><b>Manual Override Rate</b></td>
+                <td>% of AI decisions overridden by humans (reason-coded)</td>
+                <td>Primary value leakage mechanism</td>
+              </tr>
+              <tr>
+                <td><b>Variance in Cost/Stop</b></td>
+                <td>Cross-country dispersion (e.g., Std. Dev.) of cost/stop</td>
+                <td>Tracks network-level optimisation vs silo behaviour</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 style="margin:0">Sources</h3>
+            <span class="badge badge-low">Internal</span>
+          </div>
+          <p class="small muted">
+            Source material provided by user (design principles, tiered KPI scorecard, rationalisation, must-win challenges, economic framing).
+            No external benchmarks were used; replace illustrative assumptions with audited baselines.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-logo">accenture</div>
+    <div class="footer-text">© 2026 Accenture. Executive material. Illustrative where stated.</div>
+  </footer>
+</div>
+
+<div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
+
+<script>
+/* =========================
+   Embedded data (required)
+========================= */
+const data = {
+  meta: { date: new Date() },
+  assumptions: { lmSharePct: 45, theoreticalLmSavePct: { base: 6.5, upside: 8.0, downside: 5.0 } },
+  kpis: [
+    // Tier 1
+    { tier: 1, kpi: "Cost per Stop (Last Mile)", source: "Existing", rationale: "Primary unit cost driver", econ: "Direct lever on 40–50% cost base", owner: "Surface Ops" },
+    { tier: 1, kpi: "Cost per Parcel (Last Mile)", source: "Existing", rationale: "Density + mix normalization", econ: "Converts productivity to margin impact", owner: "Finance + Surface Ops" },
+    { tier: 1, kpi: "Stops per Route per Day", source: "Existing", rationale: "Density monetization", econ: "Fixed cost dilution driver", owner: "Surface Ops" },
+    { tier: 1, kpi: "On-Time Delivery (OTD)", source: "Existing", rationale: "Protects revenue during cost optimization", econ: "Maintains yield integrity", owner: "Surface Ops" },
+    { tier: 1, kpi: "% Routes AI-Optimized", source: "New (1/2)", rationale: "Scale of orchestration", econ: "Determines realized vs theoretical cost lift", owner: "IT/Data + Surface Ops" },
+
+    // Tier 2
+    { tier: 2, kpi: "Miles per Stop", source: "Existing", rationale: "Routing efficiency", econ: "Fuel + labor time cost", owner: "Network Planning" },
+    { tier: 2, kpi: "Vehicle Utilization (Route-Level)", source: "Existing (Refined)", rationale: "Asset productivity", econ: "Fixed cost absorption", owner: "Surface Ops" },
+    { tier: 2, kpi: "Forecast Accuracy (D-1)", source: "Existing", rationale: "Planning precision", econ: "Reduces idle time & overtime", owner: "Network Planning" },
+    { tier: 2, kpi: "Route Plan Adherence (to AI Plan)", source: "Existing (Refined)", rationale: "Execution discipline", econ: "Prevents cost leakage", owner: "Surface Ops" },
+    { tier: 2, kpi: "Manual Override Rate", source: "New (2/2)", rationale: "Cultural adoption", econ: "High overrides suppress EBIT lift", owner: "Surface Ops + HR" },
+    { tier: 2, kpi: "Redelivery Rate", source: "Existing", rationale: "Failed first attempt cost", econ: "Labor + service cost driver", owner: "Surface Ops" },
+    { tier: 2, kpi: "Dispatch Productivity", source: "Existing (Refined)", rationale: "Automation leverage", econ: "Labor cost efficiency", owner: "Surface Ops" },
+
+    // Tier 3
+    { tier: 3, kpi: "Variance in Cost per Stop Across Countries", source: "Derived", rationale: "Network standardization", econ: "Variance compression = system optimization", owner: "Finance" },
+    { tier: 3, kpi: "Model Refresh Cycle Time", source: "Existing", rationale: "Learning velocity", econ: "Sustained optimization edge", owner: "IT/Data" },
+    { tier: 3, kpi: "Data Latency (Plan vs Actual Feedback)", source: "Existing", rationale: "Signal speed", econ: "Enables intraday re-optimization", owner: "IT/Data" },
+    { tier: 3, kpi: "AI Adoption Rate by Depot", source: "Derived", rationale: "Cultural penetration", econ: "Predicts override reduction", owner: "Surface Ops" }
+  ],
+
+  // Illustrative dashboard inputs for Tier 1 bars
+  board: {
+    metrics: [
+      { key: "Cost/Stop change", value: -4.8, targetMin: -8.0, targetMax: -5.0, unit: "%", tooltip: "Target: ↓5–8% (unit cost). Direct EBIT line-of-sight." },
+      { key: "OTD", value: 95.1, targetMin: 95.0, targetMax: 99.0, unit: "%", tooltip: "Guardrail: service must stay stable while cost reduces." },
+      { key: "AI routes", value: 72, targetMin: 75, targetMax: 100, unit: "%", tooltip: "Measures decision-right AI penetration (not dashboard usage)." },
+      { key: "Override rate", value: 28, targetMin: 0, targetMax: 20, unit: "%", tooltip: "Value leakage control: aim <20% (reason-coded exceptions)." },
+      { key: "Stops/Route", value: 112, targetMin: 110, targetMax: 130, unit: "", tooltip: "Density monetisation: increases fixed cost dilution (watch OTD)." }
+    ]
+  },
+
+  // Illustrative time series (variance / density)
+  insights: {
+    series: {
+      network: {
+        variance: [18, 17, 16, 14.5, 13.8, 12.2, 11.5, 10.7, 10.1, 9.6],
+        density:  [98, 100, 103, 104, 106, 108, 110, 111, 113, 114]
+      },
+      north:   { variance: [16, 15.8, 15.2, 14.0, 13.2, 12.0, 11.2, 10.8, 10.2, 9.8], density: [96, 98, 100, 101, 103, 105, 107, 109, 110, 112] },
+      central: { variance: [19, 18.6, 17.5, 16.0, 15.0, 13.9, 13.1, 12.2, 11.3, 10.6], density: [99, 101, 103, 105, 106, 107, 109, 110, 112, 113] },
+      south:   { variance: [22, 21.0, 19.8, 18.7, 17.4, 16.1, 15.2, 14.6, 13.9, 13.2], density: [94, 95, 96, 97, 98, 100, 101, 103, 104, 105] }
+    },
+    xLabels: ["M1","M2","M3","M4","M5","M6","M7","M8","M9","M10"]
+  }
+};
+
+/* =========================
+   Init timestamp
+========================= */
+document.getElementById('timestamp').textContent = data.meta.date.toLocaleString('en-GB', {
+  year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'
+});
+
+/* =========================
+   Tabs
+========================= */
+const tabs = document.querySelectorAll('.nav-tab');
+const tabContents = document.querySelectorAll('.tab-content');
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    const targetTab = tab.getAttribute('data-tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    tabContents.forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(targetTab).classList.add('active');
+    // re-render charts for layout stability
+    requestAnimationFrame(() => {
+      drawBoardBars();
+      drawVarianceChart();
+      drawWaterfall();
+    });
+  });
+});
+
+/* =========================
+   Toggle details
+========================= */
+function toggleDetails(element){
+  const content = element.querySelector('.toggle-content');
+  const btn = element.querySelector('.toggle-btn');
+  if(!content || !btn) return;
+
+  if(content.classList.contains('expanded')){
+    content.classList.remove('expanded');
+    btn.textContent = 'Show Implementation Details';
+  }else{
+    content.classList.add('expanded');
+    btn.textContent = 'Hide Implementation Details';
+  }
+}
+
+/* =========================
+   Tooltip (for charts + KPI names)
+========================= */
+const tooltip = document.getElementById('tooltip');
+function showTip(x,y,html){
+  tooltip.innerHTML = html;
+  tooltip.style.left = (x + 12) + 'px';
+  tooltip.style.top  = (y + 12) + 'px';
+  tooltip.classList.add('show');
+}
+function hideTip(){ tooltip.classList.remove('show'); }
+
+/* =========================
+   Scorecard render + filter
+========================= */
+const scorecardBody = document.getElementById('scorecardBody');
+function renderScorecard(){
+  scorecardBody.innerHTML = '';
+  const q = (document.getElementById('kpiSearch').value || '').toLowerCase();
+  const tier = document.getElementById('tierFilter').value;
+
+  const filtered = data.kpis.filter(row => {
+    const matchesTier = (tier === 'all') ? true : (String(row.tier) === tier);
+    const blob = `${row.tier} ${row.kpi} ${row.source} ${row.rationale} ${row.owner}`.toLowerCase();
+    const matchesSearch = blob.includes(q);
+    return matchesTier && matchesSearch;
+  });
+
+  filtered.forEach(row => {
+    const tr = document.createElement('tr');
+
+    const tdTier = document.createElement('td');
+    tdTier.innerHTML = `<b>${row.tier}</b>`;
+    tr.appendChild(tdTier);
+
+    const tdKpi = document.createElement('td');
+    tdKpi.innerHTML = `<span class="kpi-name" data-tip="${escapeHtml(row.econ)}"><b>${escapeHtml(row.kpi)}</b></span>`;
+    tr.appendChild(tdKpi);
+
+    const tdSrc = document.createElement('td'); tdSrc.textContent = row.source; tr.appendChild(tdSrc);
+    const tdRat = document.createElement('td'); tdRat.textContent = row.rationale; tr.appendChild(tdRat);
+    const tdOwn = document.createElement('td'); tdOwn.textContent = row.owner; tr.appendChild(tdOwn);
+
+    scorecardBody.appendChild(tr);
+  });
+
+  // attach hover tooltips
+  document.querySelectorAll('.kpi-name').forEach(el => {
+    el.addEventListener('mousemove', (e) => showTip(e.clientX, e.clientY, `<strong>Economic linkage</strong><div class="muted">${el.getAttribute('data-tip')}</div>`));
+    el.addEventListener('mouseleave', hideTip);
+  });
+}
+function escapeHtml(s){
+  return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
+}
+
+// Debounce
+function debounce(fn, ms){
+  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
+}
+document.getElementById('kpiSearch').addEventListener('input', debounce(renderScorecard, 120));
+document.getElementById('tierFilter').addEventListener('change', renderScorecard);
+
+/* =========================
+   Canvas helpers
+========================= */
+function dprCanvas(canvas){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = Math.floor(rect.width * dpr);
+  canvas.height = Math.floor(rect.height * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return ctx;
+}
+function roundRect(ctx, x,y,w,h,r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr, y);
+  ctx.arcTo(x+w, y, x+w, y+h, rr);
+  ctx.arcTo(x+w, y+h, x, y+h, rr);
+  ctx.arcTo(x, y+h, x, y, rr);
+  ctx.arcTo(x, y, x+w, y, rr);
+  ctx.closePath();
+}
+
+/* =========================
+   Chart 1: Board bars (bar chart)
+========================= */
+const boardCanvas = document.getElementById('boardBars');
+let boardHit = []; // for tooltip hit-testing
+
+function drawBoardBars(){
+  if(!boardCanvas) return;
+  const ctx = dprCanvas(boardCanvas);
+  const w = boardCanvas.getBoundingClientRect().width;
+  const h = boardCanvas.getBoundingClientRect().height;
+
+  ctx.clearRect(0,0,w,h);
+
+  // layout
+  const pad = {l:40,r:18,t:18,b:38};
+  const plotW = w - pad.l - pad.r;
+  const plotH = h - pad.t - pad.b;
+
+  // title axis
+  ctx.fillStyle = '#333';
+  ctx.font = '12px Arial';
+
+  // normalize values to 0..100 scale visually (mix of signed/unsigned)
+  // For Cost/Stop change: map from -10..0
+  // For others: map 0..100 or 0..150
+  const metrics = data.board.metrics;
+
+  const barW = plotW / metrics.length * 0.72;
+  const gap = plotW / metrics.length * 0.28;
+
+  boardHit = [];
+
+  metrics.forEach((m, i) => {
+    const x0 = pad.l + i*(barW+gap) + gap/2;
+    const baseY = pad.t + plotH;
+
+    // scale
+    let vNorm, tMinNorm, tMaxNorm, min=0, max=100;
+    let labelVal = `${m.value}${m.unit}`;
+    if(m.key === "Cost/Stop change"){
+      min = -10; max = 0;
+      vNorm = (m.value - min) / (max - min);
+      tMinNorm = (m.targetMin - min) / (max - min);
+      tMaxNorm = (m.targetMax - min) / (max - min);
+      labelVal = `${m.value.toFixed(1)}${m.unit}`;
+    } else if(m.key === "Stops/Route"){
+      min = 80; max = 140;
+      vNorm = (m.value - min) / (max - min);
+      tMinNorm = (m.targetMin - min) / (max - min);
+      tMaxNorm = (m.targetMax - min) / (max - min);
+    } else {
+      min = 0; max = 100;
+      vNorm = (m.value - min) / (max - min);
+      tMinNorm = (m.targetMin - min) / (max - min);
+      tMaxNorm = (m.targetMax - min) / (max - min);
+    }
+    vNorm = Math.max(0, Math.min(1, vNorm));
+    tMinNorm = Math.max(0, Math.min(1, tMinNorm));
+    tMaxNorm = Math.max(0, Math.min(1, tMaxNorm));
+
+    // target band
+    const bandTop = baseY - plotH * tMaxNorm;
+    const bandBot = baseY - plotH * tMinNorm;
+    ctx.fillStyle = 'rgba(161,0,255,0.08)';
+    ctx.fillRect(x0, bandTop, barW, bandBot - bandTop);
+
+    // bar height
+    const barH = plotH * vNorm;
+    const y0 = baseY - barH;
+
+    // colour based on in band
+    const inBand = (vNorm >= tMinNorm && vNorm <= tMaxNorm);
+    const nearBand = (!inBand) && (Math.abs(vNorm - tMinNorm) < 0.08 || Math.abs(vNorm - tMaxNorm) < 0.08);
+    let fill = '#FF1744';
+    if(inBand) fill = '#00C853';
+    else if(nearBand) fill = '#FFB300';
+
+    // bar
+    ctx.fillStyle = fill;
+    roundRect(ctx, x0, y0, barW, barH, 12);
+    ctx.fill();
+
+    // value label on bar
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(labelVal, x0 + barW/2, Math.max(y0 + 16, pad.t + 16));
+
+    // axis label
+    ctx.fillStyle = '#333';
+    ctx.font = '11px Arial';
+    ctx.textAlign = 'center';
+    const label = m.key.replace(' change','');
+    ctx.fillText(label, x0 + barW/2, baseY + 20);
+
+    boardHit.push({x:x0,y:y0,w:barW,h:barH, tip:`<strong>${escapeHtml(m.key)}</strong><div class="muted">${escapeHtml(m.tooltip)}</div>`});
+  });
+
+  // y axis line (subtle)
+  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t);
+  ctx.lineTo(pad.l, pad.t + plotH);
+  ctx.stroke();
+}
+
+// hover tooltip for bars
+if(boardCanvas){
+  boardCanvas.addEventListener('mousemove', (e)=>{
+    const rect = boardCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const hit = boardHit.find(b => x>=b.x && x<=b.x+b.w && y>=b.y && y<=b.y+b.h);
+    if(hit) showTip(e.clientX, e.clientY, hit.tip);
+    else hideTip();
+  });
+  boardCanvas.addEventListener('mouseleave', hideTip);
+}
+
+/* =========================
+   Chart 2: Variance line (line chart) with tabbed view
+========================= */
+let currentView = 'variance';
+const varianceCanvas = document.getElementById('varianceLine');
+
+function drawVarianceChart(){
+  if(!varianceCanvas) return;
+  const ctx = dprCanvas(varianceCanvas);
+  const w = varianceCanvas.getBoundingClientRect().width;
+  const h = varianceCanvas.getBoundingClientRect().height;
+  ctx.clearRect(0,0,w,h);
+
+  const pad = {l:44,r:20,t:18,b:34};
+  const plotW = w - pad.l - pad.r;
+  const plotH = h - pad.t - pad.b;
+
+  const region = document.getElementById('regionSelect')?.value || 'network';
+  const series = data.insights.series[region][currentView];
+  const xLabels = data.insights.xLabels;
+
+  const minV = Math.min(...series);
+  const maxV = Math.max(...series);
+  const vPad = (maxV-minV) * 0.12 || 1;
+  const lo = minV - vPad;
+  const hi = maxV + vPad;
+
+  // grid
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  for(let i=0;i<=4;i++){
+    const y = pad.t + (plotH/4)*i;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+plotW,y); ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,pad.t+plotH); ctx.lineTo(pad.l+plotW,pad.t+plotH); ctx.stroke();
+
+  // line
+  const pts = series.map((v,i)=>{
+    const x = pad.l + (plotW*(i/(series.length-1)));
+    const y = pad.t + plotH*(1 - ((v-lo)/(hi-lo)));
+    return {x,y,v,i};
+  });
+
+  // area
+  const grad = ctx.createLinearGradient(0,pad.t,0,pad.t+plotH);
+  grad.addColorStop(0,'rgba(161,0,255,0.20)');
+  grad.addColorStop(1,'rgba(0,209,255,0.08)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pad.t+plotH);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x, pad.t+plotH);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = '#A100FF';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  pts.forEach((p,idx)=> idx===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+  ctx.stroke();
+
+  // points
+  ctx.fillStyle = '#A100FF';
+  pts.forEach(p=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,4.2,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth=2; ctx.stroke();
+  });
+
+  // labels
+  ctx.fillStyle = '#333';
+  ctx.font = '11px Arial';
+  ctx.textAlign = 'center';
+  xLabels.forEach((lbl,i)=>{
+    if(i%2===0){
+      const x = pad.l + (plotW*(i/(xLabels.length-1)));
+      ctx.fillText(lbl, x, pad.t + plotH + 22);
+    }
+  });
+
+  // y labels
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#555';
+  for(let i=0;i<=4;i++){
+    const v = lo + ((hi-lo)/4)*(4-i);
+    const y = pad.t + (plotH/4)*i;
+    ctx.fillText(v.toFixed(1), pad.l - 8, y + 4);
+  }
+
+  // legend
+  const label = currentView === 'variance' ? 'Cost/Stop variance (Std. Dev.)' : 'Stops/Route proxy (density)';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#333';
+  ctx.fillText(`${region.toUpperCase()} — ${label}`, pad.l, pad.t + 14);
+
+  // hover tooltip
+  varianceCanvas.onmousemove = (e)=>{
+    const rect = varianceCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const nearest = pts.reduce((best,p)=> Math.abs(p.x-x) < Math.abs(best.x-x) ? p : best, pts[0]);
+    if(Math.abs(nearest.x-x) < 18){
+      const tip = `<strong>${escapeHtml(region.toUpperCase())}</strong>
+        <div class="muted">${escapeHtml(label)}</div>
+        <div style="margin-top:6px"><b>${escapeHtml(xLabels[nearest.i])}:</b> ${nearest.v.toFixed(1)}</div>`;
+      showTip(e.clientX, e.clientY, tip);
+    } else hideTip();
+  };
+  varianceCanvas.onmouseleave = hideTip;
+}
+
+// view buttons
+document.getElementById('viewVarianceBtn')?.addEventListener('click', ()=>{
+  currentView='variance';
+  document.getElementById('viewVarianceBtn').classList.add('active');
+  document.getElementById('viewDensityBtn').classList.remove('active');
+  drawVarianceChart();
+});
+document.getElementById('viewDensityBtn')?.addEventListener('click', ()=>{
+  currentView='density';
+  document.getElementById('viewDensityBtn').classList.add('active');
+  document.getElementById('viewVarianceBtn').classList.remove('active');
+  drawVarianceChart();
+});
+document.getElementById('regionSelect')?.addEventListener('change', drawVarianceChart);
+
+/* =========================
+   Impact model + waterfall (waterfall chart)
+========================= */
+let scenario = 'base';
+
+function theoreticalSavePct(){
+  return data.assumptions.theoreticalLmSavePct[scenario];
+}
+// leakage function: override drives capture rate
+// captureRate = clamp(0.35 .. 0.95) with override 0..50
+function captureRate(overridePct){
+  const r = 0.95 - (overridePct/50)*0.60; // 0%->0.95, 50%->0.35
+  return Math.max(0.35, Math.min(0.95, r));
+}
+
+// simple EBIT bps conversion (Illustrative):
+// total cost reduction = lmShare * capturedLmSave
+// convert to bps using multiplier range; here use 60 bps per 1% total cost reduction (illustrative)
+function ebitBps(totalCostReductionPct){
+  return Math.round(totalCostReductionPct * 60); // illustrative conversion
+}
+
+const wfCanvas = document.getElementById('waterfall');
+
+function updateImpact(){
+  const override = Number(document.getElementById('overrideSlider').value);
+  const lmShare = Number(document.getElementById('lmShare').value);
+
+  document.getElementById('overrideLabel').innerHTML = `<b>${override}%</b>`;
+  document.getElementById('lmShareLabel').innerHTML = `<b>${lmShare}%</b>`;
+
+  const theo = theoreticalSavePct(); // %
+  const capRate = captureRate(override);
+  const captured = theo * capRate;
+
+  // total cost reduction percent
+  const totalCostRed = (lmShare/100) * (captured/100) * 100;
+
+  const bps = ebitBps(totalCostRed);
+
+  document.getElementById('kpiTheoretical').textContent = `${theo.toFixed(1)}%`;
+  document.getElementById('kpiCaptured').textContent = `${captured.toFixed(1)}%`;
+  document.getElementById('kpiEbit').textContent = `+${bps} bps`;
+
+  drawWaterfall({theo, captured, capRate, lmShare, totalCostRed, bps, override});
+}
+
+function drawWaterfall(model){
+  if(!wfCanvas) return;
+  const ctx = dprCanvas(wfCanvas);
+  const w = wfCanvas.getBoundingClientRect().width;
+  const h = wfCanvas.getBoundingClientRect().height;
+  ctx.clearRect(0,0,w,h);
+
+  const pad = {l:40,r:18,t:18,b:40};
+  const plotW = w - pad.l - pad.r;
+  const plotH = h - pad.t - pad.b;
+
+  // Build bars:
+  // 1) Theoretical LM benefit (positive)
+  // 2) Leakage from overrides (negative)
+  // 3) Captured LM benefit (result)
+  // 4) Total cost reduction (result scaled)
+  const theo = model ? model.theo : theoreticalSavePct();
+  const override = model ? model.override : Number(document.getElementById('overrideSlider')?.value || 25);
+  const lmShare = model ? model.lmShare : Number(document.getElementById('lmShare')?.value || 45);
+  const capR = model ? model.capRate : captureRate(override);
+  const captured = model ? model.captured : (theo*capR);
+  const leakage = theo - captured; // %
+  const totalCostRed = model ? model.totalCostRed : (lmShare/100)*(captured/100)*100;
+  const bps = model ? model.bps : ebitBps(totalCostRed);
+
+  const items = [
+    {label:"Theoretical LM saving", val: theo, color:"#00C853", tip:"Theoretical last-mile cost reduction from AI orchestration (scenario)."},
+    {label:"Leakage (overrides)", val: -leakage, color:"#FF1744", tip:"Lost value due to manual overrides and non-adherence (culture + workflow)."},
+    {label:"Captured LM saving", val: captured, color:"#A100FF", tip:"Realised last-mile reduction after leakage (capture rate)."},
+    {label:"Total cost reduction", val: totalCostRed, color:"#00D1FF", tip:"Total cost reduction = LM share × captured LM saving."}
+  ];
+
+  // Y scale based on absolute range
+  const maxAbs = Math.max(...items.map(d => Math.abs(d.val)), 1);
+  const yMax = maxAbs * 1.35;
+  const yMin = -maxAbs * 1.05;
+
+  function yMap(v){
+    return pad.t + plotH*(1 - ((v - yMin)/(yMax - yMin)));
+  }
+
+  // axes
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t);
+  ctx.lineTo(pad.l, pad.t+plotH);
+  ctx.lineTo(pad.l+plotW, pad.t+plotH);
+  ctx.stroke();
+
+  // zero line
+  const y0 = yMap(0);
+  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath(); ctx.moveTo(pad.l, y0); ctx.lineTo(pad.l+plotW, y0); ctx.stroke();
+
+  const barW = plotW / items.length * 0.62;
+  const gap = plotW / items.length * 0.38;
+  const hit = [];
+
+  // bars
+  items.forEach((d,i)=>{
+    const x = pad.l + i*(barW+gap) + gap/2;
+    const yTop = yMap(Math.max(d.val,0));
+    const yBot = yMap(Math.min(d.val,0));
+    const bh = Math.max(2, yBot - yTop);
+
+    ctx.fillStyle = d.color;
+    roundRect(ctx, x, yTop, barW, bh, 12);
+    ctx.fill();
+
+    // label
+    ctx.fillStyle = '#333';
+    ctx.font = '11px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(d.label, x + barW/2, pad.t + plotH + 22);
+
+    // value
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px Arial';
+    const vTxt = `${d.val.toFixed(1)}%`;
+    ctx.fillText(vTxt, x + barW/2, (d.val>=0 ? yTop+18 : yBot-10));
+
+    hit.push({x,y:yTop,w:barW,h:bh, tip:`<strong>${escapeHtml(d.label)}</strong><div class="muted">${escapeHtml(d.tip)}</div><div style="margin-top:6px"><b>Value:</b> ${vTxt}</div>`});
+  });
+
+  // title + callout
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#333';
+  ctx.font = '12px Arial';
+  ctx.fillText(`Scenario: ${scenario.toUpperCase()} | Override: ${override}% | Capture: ${(capR*100).toFixed(0)}% | Implied EBIT: +${bps} bps`, pad.l, pad.t + 14);
+
+  wfCanvas.onmousemove = (e)=>{
+    const rect = wfCanvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const h = hit.find(b => mx>=b.x && mx<=b.x+b.w && my>=b.y && my<=b.y+b.h);
+    if(h) showTip(e.clientX, e.clientY, h.tip);
+    else hideTip();
+  };
+  wfCanvas.onmouseleave = hideTip;
+}
+
+// scenario buttons
+function setScenario(next){
+  scenario = next;
+  document.querySelectorAll('[data-scenario]').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`[data-scenario="${next}"]`)?.classList.add('active');
+  updateImpact();
+}
+document.getElementById('scBase')?.addEventListener('click', ()=>setScenario('base'));
+document.getElementById('scUp')?.addEventListener('click', ()=>setScenario('upside'));
+document.getElementById('scDown')?.addEventListener('click', ()=>setScenario('downside'));
+
+document.getElementById('overrideSlider')?.addEventListener('input', debounce(updateImpact, 60));
+document.getElementById('lmShare')?.addEventListener('input', debounce(updateImpact, 60));
+
+/* =========================
+   Init
+========================= */
+renderScorecard();
+drawBoardBars();
+drawVarianceChart();
+updateImpact();
+
+// Resize rerender
+window.addEventListener('resize', debounce(()=>{
+  drawBoardBars();
+  drawVarianceChart();
+  drawWaterfall();
+}, 120));
+</script>
+</body>
+</html>

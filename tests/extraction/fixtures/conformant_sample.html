@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agile Ways of Working</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    .slide {
+      width: 960px;
+      height: 540px;
+      padding: 48px 56px;
+      background-color: #FFFFFF;
+      font-family: Arial, 'Segoe UI', sans-serif;
+      font-size: 12pt;
+      color: #000000;
+      overflow: hidden;
+      page-break-after: always;
+    }
+
+    .slide-dark {
+      background-color: #000000;
+      color: #FFFFFF;
+    }
+
+    h1 { font-size: 28pt; font-weight: 600; color: #000000; }
+    h3 { font-size: 13pt; font-weight: 700; color: #000000; }
+    .subtitle { font-size: 14pt; color: #818180; }
+    .tag { font-size: 9pt; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #A100FF; }
+
+    .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card {
+      background-color: #F1F1EF;
+      border: 1px solid #CFCFCF;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .card h3 { font-size: 13pt; font-weight: 700; margin-bottom: 6px; }
+    .card p { font-size: 11pt; color: #818180; line-height: 1.6; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .col h3 { font-size: 14pt; font-weight: 700; margin-bottom: 8px; }
+    .col p { font-size: 11pt; color: #818180; line-height: 1.6; }
+    .tool-item {
+      background-color: #F1F1EF;
+      border: 1px solid #CFCFCF;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+
+    .sequence { display: flex; gap: 8px; }
+    .step {
+      flex: 1;
+      background-color: #F1F1EF;
+      border: 1px solid #CFCFCF;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .step-number { font-size: 9pt; font-weight: 800; text-transform: uppercase; color: #A100FF; }
+    .step-title { font-size: 12pt; font-weight: 700; }
+    .step-duration { font-size: 9pt; font-weight: 700; color: #A100FF; }
+    .step li { font-size: 10pt; color: #818180; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <!-- SLIDE 1: Card Grid -->
+  <section class="slide" data-slide-number="1" data-layout="card-grid"
+           data-title="Key Enablers">
+    <span class="tag">Foundation</span>
+    <h1>Key enablers of agile ways of working</h1>
+    <p class="subtitle">The building blocks that power a high-performing agile organisation</p>
+    <div class="card-grid">
+      <div class="card">
+        <h3>Agile leadership and culture</h3>
+        <p>Leaders who champion iterative thinking, psychological safety, and servant leadership.</p>
+      </div>
+      <div class="card">
+        <h3>Cross-functional teams</h3>
+        <p>Empowered, self-organising teams with end-to-end accountability and reduced handoffs.</p>
+      </div>
+      <div class="card">
+        <h3>Iterative delivery cadence</h3>
+        <p>Short sprint cycles with regular inspect-and-adapt loops driving continuous improvement.</p>
+      </div>
+      <div class="card">
+        <h3>Transparent prioritisation</h3>
+        <p>A single ranked backlog visible to all stakeholders with value-driven prioritisation.</p>
+      </div>
+      <div class="card">
+        <h3>Integrated tooling</h3>
+        <p>A connected toolchain that eliminates silos with automated pipelines and dashboards.</p>
+      </div>
+      <div class="card">
+        <h3>Outcome-based metrics</h3>
+        <p>Measurement focused on value delivered, not activity. OKRs and team health indicators.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2: Two-Column / Title-Body -->
+  <section class="slide" data-slide-number="2" data-layout="two-column"
+           data-title="PPM Toolset">
+    <span class="tag">Tooling</span>
+    <h1>The right PPM toolset matters</h1>
+    <p class="subtitle">Why the right platform accelerates agile project and portfolio management</p>
+    <div class="two-col">
+      <div class="col">
+        <h3>Recommended stack</h3>
+        <div class="tool-item">
+          <p><strong>Jira</strong> — End-to-end work tracking from epics to tasks. Backlog management and sprint planning.</p>
+        </div>
+        <div class="tool-item">
+          <p><strong>Jira Align</strong> — Enterprise-scale agility connecting team execution to portfolio strategy.</p>
+        </div>
+        <div class="tool-item">
+          <p><strong>Confluence</strong> — Living documentation and collaborative spaces alongside the work.</p>
+        </div>
+      </div>
+      <div class="col">
+        <h3>Key benefits</h3>
+        <p>Native agile workflows with built-in Scrum, Kanban, and SAFe support.</p>
+        <p>A <strong>single source of truth</strong> reducing tool sprawl and data silos.</p>
+        <p>Real-time dashboards giving leadership portfolio transparency without status-report overhead.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: Sequence -->
+  <section class="slide" data-slide-number="3" data-layout="sequence"
+           data-title="Activation Journey"
+           data-notes="Walk through each phase — emphasise that Phase 1 sets the foundation for everything else.">
+    <span class="tag">Roadmap</span>
+    <h1>The journey to activate agile enablers</h1>
+    <p class="subtitle">A phased approach to embedding agile ways of working across the organisation</p>
+    <div class="sequence">
+      <div class="step">
+        <div class="step-number">Phase 01</div>
+        <div class="step-title">Assess and align</div>
+        <ul>
+          <li>Agile maturity assessment</li>
+          <li>Stakeholder alignment workshops</li>
+          <li>Define target operating model</li>
+          <li>Identify pilot teams</li>
+        </ul>
+        <div class="step-duration">Weeks 1-4</div>
+      </div>
+      <div class="step">
+        <div class="step-number">Phase 02</div>
+        <div class="step-title">Foundation and tooling</div>
+        <ul>
+          <li>Configure Jira and Confluence</li>
+          <li>Define workflow standards</li>
+          <li>Stand up agile ceremonies</li>
+          <li>Launch pilot sprints</li>
+        </ul>
+        <div class="step-duration">Weeks 5-10</div>
+      </div>
+      <div class="step">
+        <div class="step-number">Phase 03</div>
+        <div class="step-title">Scale and embed</div>
+        <ul>
+          <li>Roll out to additional teams</li>
+          <li>Activate portfolio tooling</li>
+          <li>Integrate CI/CD pipelines</li>
+          <li>Embed coaching</li>
+        </ul>
+        <div class="step-duration">Weeks 11-20</div>
+      </div>
+      <div class="step">
+        <div class="step-number">Phase 04</div>
+        <div class="step-title">Optimise and sustain</div>
+        <ul>
+          <li>Continuous retrospectives</li>
+          <li>Leadership agile reviews</li>
+          <li>Evolve tooling</li>
+          <li>Measure business outcomes</li>
+        </ul>
+        <div class="step-duration">Ongoing</div>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Electron build output
+dist/
+out/
+build/
+
+# Generated PPTX files (conversion output)
+*.pptx
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment / config overrides
+.env
+.env.local
+
+# Future: user config persistence (stored in app data, not project)
+# Future: electron-builder artifacts
+*.exe
+*.msi
+*.nsis
+*.blockmap

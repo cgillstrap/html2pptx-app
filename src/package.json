@@ -1,0 +1,21 @@
+{
+  "name": "html2pptx-app",
+  "version": "0.1.0",
+  "description": "Drag-and-drop HTML to PowerPoint converter for consultants",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "npx electron-mocha --renderer test/**/*.test.js --timeout 10000"
+  },
+  "dependencies": {
+    "pptxgenjs": "^4.0.1"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-mocha": "^13.0.0",
+    "chai": "^4.4.0"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "private": true
+}

@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Executive Workshop Agenda — Slides</title>
+  <style>
+    :root{
+      --accent:#A100FF;         /* Accenture purple */
+      --accent-dark:#6F00B7;
+      --text:#111827;
+      --muted:#6B7280;
+      --bg:#F7F7FB;
+      --card:#FFFFFF;
+      --line:#E5E7EB;
+      --shadow: 0 8px 24px rgba(17,24,39,.08);
+      --radius: 14px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+      color:var(--text);
+      background:linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+    }
+
+    /* Top bar */
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:10;
+      background:rgba(255,255,255,.92);
+      backdrop-filter:saturate(180%) blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+    .topbar-inner{
+      max-width:1100px;
+      margin:0 auto;
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex;
+      align-items:flex-end;
+      gap:10px;
+      min-width: 240px;
+    }
+    .brand-mark{
+      width:10px;
+      height:28px;
+      border-radius:10px;
+      background:linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
+      box-shadow: 0 6px 18px rgba(161,0,255,.25);
+    }
+    .brand h1{
+      font-size:14px;
+      margin:0;
+      letter-spacing:.2px;
+      font-weight:700;
+    }
+    .brand .sub{
+      font-size:12px;
+      color:var(--muted);
+      margin-left:2px;
+      font-weight:500;
+    }
+
+    /* Tabs */
+    .tabs{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .tab-btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:600;
+      cursor:pointer;
+      transition: all .15s ease;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .tab-btn:hover{ border-color:#D1D5DB; transform: translateY(-1px); }
+    .tab-btn[aria-selected="true"]{
+      border-color: rgba(161,0,255,.35);
+      background: rgba(161,0,255,.08);
+      color: #3b0764;
+    }
+    .pill{
+      width:22px;height:22px;border-radius:999px;
+      display:inline-flex;align-items:center;justify-content:center;
+      background: rgba(161,0,255,.14);
+      color:#3b0764;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    /* Slide frame */
+    .wrap{
+      max-width:1100px;
+      margin:22px auto 28px;
+      padding:0 18px;
+    }
+    .slide{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:30px 34px 22px;
+      min-height: 610px; /* feels like a slide */
+      position:relative;
+      overflow:hidden;
+    }
+    .slide::before{
+      content:"";
+      position:absolute;
+      top:0; left:0; right:0;
+      height:6px;
+      background:linear-gradient(90deg, var(--accent) 0%, #00B3FF 100%);
+    }
+
+    .slide-title{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
+      margin: 6px 0 18px;
+    }
+    .slide-title h2{
+      margin:0;
+      font-size:28px;
+      line-height:1.15;
+      letter-spacing:-.2px;
+      font-weight:800;
+    }
+    .tag{
+      border:1px solid rgba(161,0,255,.25);
+      background:rgba(161,0,255,.07);
+      color:#3b0764;
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      white-space:nowrap;
+      margin-top:2px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap:18px;
+    }
+    .card{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:16px 16px 14px;
+      background:#fff;
+    }
+    .card h3{
+      margin:0 0 10px;
+      font-size:14px;
+      letter-spacing:.2px;
+      color:#111827;
+      font-weight:800;
+      text-transform:uppercase;
+    }
+    .bullets{
+      margin:0;
+      padding-left:18px;
+      color:#111827;
+      line-height:1.35;
+      font-size:14px;
+    }
+    .bullets li{ margin: 7px 0; }
+    .muted{ color:var(--muted); }
+
+    .flow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:8px;
+    }
+    .chip{
+      border:1px solid rgba(161,0,255,.22);
+      background:rgba(161,0,255,.06);
+      color:#3b0764;
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    /* Table styling */
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border:1px solid var(--line);
+      border-radius:12px;
+      font-size:13px;
+    }
+    thead th{
+      text-align:left;
+      background: rgba(161,0,255,.06);
+      color:#3b0764;
+      padding:12px 12px;
+      font-weight:800;
+      border-bottom:1px solid var(--line);
+    }
+    tbody td{
+      padding:12px 12px;
+      border-bottom:1px solid var(--line);
+      vertical-align:top;
+    }
+    tbody tr:last-child td{ border-bottom:none; }
+    .col-obj{ width:35%; }
+    .col-dec{ width:22%; }
+
+    /* Footer */
+    .footer{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      margin-top:18px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .footer .conf{
+      font-weight:700;
+      color:#374151;
+    }
+
+    /* Tab panels */
+    .panel{ display:none; }
+    .panel.active{ display:block; }
+
+    @media (max-width: 900px){
+      .grid{ grid-template-columns:1fr; }
+      .slide{ padding:22px 18px 18px; min-height: auto; }
+      .slide-title h2{ font-size:22px; }
+      .brand{ min-width:auto; }
+      .topbar-inner{ align-items:flex-start; }
+      .tabs{ justify-content:flex-start; }
+    }
+
+    @media print{
+      .topbar{ position:static; }
+      .tabs{ display:none; }
+      .panel{ display:block !important; }
+      .slide{ box-shadow:none; }
+      body{ background:#fff; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar" role="banner">
+    <div class="topbar-inner">
+      <div class="brand" aria-label="Accenture branding header">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+          <h1>Accenture Strategy <span class="sub">| Executive Workshop Agenda</span></h1>
+        </div>
+      </div>
+
+      <nav class="tabs" aria-label="Slide tabs">
+        <button class="tab-btn" id="tab-1" role="tab" aria-selected="true" aria-controls="panel-1">
+          <span class="pill">1</span> Slide 1 — Objective & Outcomes
+        </button>
+        <button class="tab-btn" id="tab-2" role="tab" aria-selected="false" aria-controls="panel-2">
+          <span class="pill">2</span> Slide 2 — Agenda & Decision Architecture
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap" role="main">
+    <!-- Slide 1 -->
+    <section class="panel active" id="panel-1" role="tabpanel" aria-labelledby="tab-1">
+      <article class="slide" aria-label="Slide 1">
+        <div class="slide-title">
+          <h2>From Reinvention Narrative to Investment Decision</h2>
+          <div class="tag">CEO / COO Executive Workshop</div>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <h3>Executive Workshop Objective</h3>
+            <p style="margin:0;font-size:15px;line-height:1.35;">
+              Align on the <b>1–2 AI-powered reinvention bets</b> that deliver defensible margin expansion in Europe and
+              authorize <b>Phase 1</b> execution.
+            </p>
+
+            <div style="height:12px"></div>
+            <h3>Why This Session Matters Now</h3>
+            <ul class="bullets">
+              <li>Europe margin pressure is structural; integration complexity (incl. TNT) persists.</li>
+              <li>Competitive intensity rising (Amazon + digital-native benchmarks).</li>
+              <li>Capital discipline: cannot fund everything; need scalable, margin-accretive bets.</li>
+              <li>Readiness gaps must be closed before scale to avoid operational disruption.</li>
+            </ul>
+
+            <div style="height:12px"></div>
+            <h3>Workshop Design Logic</h3>
+            <div class="flow" aria-label="Workshop flow chips">
+              <span class="chip">Context</span>
+              <span class="chip">Tension</span>
+              <span class="chip">Solution</span>
+              <span class="chip">Proof</span>
+              <span class="chip">Commitment</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>By the End of the Session, We Will Have</h3>
+            <ul class="bullets">
+              <li><b>Selected</b> the primary reinvention bet (and defined a conditional second bet).</li>
+              <li><b>Agreed</b> a funding envelope and stage gates tied to readiness KPIs.</li>
+              <li><b>Defined</b> sequencing (Now / Next / Later) and key dependencies.</li>
+              <li><b>Established</b> governance: sponsor, cadence, and 90-day milestones.</li>
+              <li><b>Aligned</b> on Board narrative: impact, risk mitigation, and timing.</li>
+            </ul>
+
+            <div style="height:14px"></div>
+            <div class="card" style="border-color: rgba(161,0,255,.25); background: rgba(161,0,255,.04);">
+              <h3 style="color:#3b0764;">Decision Output</h3>
+              <p style="margin:0;font-size:14px;line-height:1.35;">
+                Clear commitment on <b>Strategic Direction</b>, <b>Sequencing</b>, <b>Funding</b>, and <b>Governance</b>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer" aria-label="Slide footer">
+          <div class="conf">Confidential — Prepared by Accenture Strategy</div>
+          <div class="muted">© Accenture. All rights reserved.</div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Slide 2 -->
+    <section class="panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2">
+      <article class="slide" aria-label="Slide 2">
+        <div class="slide-title">
+          <h2>Agenda & Decision Architecture</h2>
+          <div class="tag">3-Hour Decision Workshop</div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px;">
+          <h3>Agenda</h3>
+          <table role="table" aria-label="Agenda table">
+            <thead>
+              <tr>
+                <th>Segment</th>
+                <th class="col-obj">Objective</th>
+                <th class="col-dec">Decision Lever</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>Decision Framing</b></td>
+                <td>Align on criteria, mandate, and what must be decided today.</td>
+                <td>Define success metrics & decision rules.</td>
+              </tr>
+              <tr>
+                <td><b>Structural Case</b></td>
+                <td>Establish urgency and Europe margin gap context.</td>
+                <td>Confirm need to act + constraints (TNT, capital).</td>
+              </tr>
+              <tr>
+                <td><b>Economic & Sensitivity Review</b></td>
+                <td>Validate financial credibility; stress-test assumptions.</td>
+                <td>Agree “bankable” vs “speculative” value bands.</td>
+              </tr>
+              <tr>
+                <td><b>Feasibility & Risk Mitigation</b></td>
+                <td>Surface readiness gates, integration risk, operational safeguards.</td>
+                <td>Define gating KPIs + stage-gate funding logic.</td>
+              </tr>
+              <tr>
+                <td><b>Accenture Client Proof</b></td>
+                <td>Build confidence via relevant client story archetypes.</td>
+                <td>Neutralize “we tried this before” objection.</td>
+              </tr>
+              <tr>
+                <td><b>Capital Prioritization</b></td>
+                <td>Compare initiatives; force trade-offs.</td>
+                <td>Rank Primary / Conditional / Defer.</td>
+              </tr>
+              <tr>
+                <td><b>Decision & Commitment</b></td>
+                <td>Lock direction and authorize Phase 1.</td>
+                <td>Approve funding envelope + sponsor.</td>
+              </tr>
+              <tr>
+                <td><b>Governance & Next Phase</b></td>
+                <td>Confirm owners, 90-day milestones, and Board update plan.</td>
+                <td>Launch execution + operating cadence.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <h3>Objections We Will Address Head-On</h3>
+            <ul class="bullets">
+              <li>“ROI assumptions are too aggressive.”</li>
+              <li>“Operational risk is too high.”</li>
+              <li>“Capital is constrained.”</li>
+              <li>“Data confidence is insufficient.”</li>
+              <li>“We’ve tried this before.”</li>
+            </ul>
+            <p class="muted" style="margin:10px 0 0;">
+              Each objection is paired to an evidence segment, mitigation plan, and relevant client-story proof point.
+            </p>
+          </div>
+
+          <div class="card" style="border-color: rgba(161,0,255,.25); background: rgba(161,0,255,.04);">
+            <h3 style="color:#3b0764;">Decision Moment</h3>
+            <p style="margin:0;font-size:14px;line-height:1.35;">
+              <b>If we fund only one initiative this year, which delivers the most defensible 5-year margin impact?</b>
+            </p>
+            <div style="height:10px"></div>
+            <ul class="bullets">
+              <li>Silent 1–5 scoring by each executive</li>
+              <li>Live anonymized results + divergence reconciliation</li>
+              <li>Commitment: Primary / Conditional / Defer</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer" aria-label="Slide footer">
+          <div class="conf">Confidential — Prepared by Accenture Strategy</div>
+          <div class="muted">© Accenture. All rights reserved.</div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+      const panels = Array.from(document.querySelectorAll('.panel'));
+
+      function activateTab(tabId){
+        tabs.forEach(btn => {
+          const isActive = btn.id === tabId;
+          btn.setAttribute('aria-selected', String(isActive));
+        });
+        panels.forEach(p => p.classList.remove('active'));
+        const activePanel = document.getElementById(
+          document.getElementById(tabId).getAttribute('aria-controls')
+        );
+        if (activePanel) activePanel.classList.add('active');
+      }
+
+      tabs.forEach(btn => {
+        btn.addEventListener('click', () => activateTab(btn.id));
+        btn.addEventListener('keydown', (e) => {
+          const idx = tabs.indexOf(btn);
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            const next = tabs[(idx + 1) % tabs.length];
+            next.focus(); activateTab(next.id);
+          } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            const prev = tabs[(idx - 1 + tabs.length) % tabs.length];
+            prev.focus(); activateTab(prev.id);
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+# How we built the LPM Value Storyboard
+## A reference conversation for AI-assisted strategy and design work
+
+> **What this is:** A documented walkthrough of a real working session where we used Claude to develop a client-facing storyboard from raw inputs (annual reports, internal methodology, prior deliverables) through to branded slide decks. Use this as a reference for how to structure your own engagements.
+>
+> **Time from first prompt to final output:** Single session
+>
+> **What was produced:**
+> 1. A narrative storyboard framework (5-beat structure with audience-specific flexing guidance)
+> 2. An unbranded 12-slide HTML deck ready for PowerPoint conversion
+> 3. An Accenture-branded 12-slide HTML deck following full brand token compliance
+>
+> **Documents provided during the session:**
+> - Client annual report (Barclays PLC Annual Report 2025 — public document)
+> - Internal methodology (CFO&EV Value Realization Practitioner's Guide)
+> - Prior deliverable (Funding Model Strategy Final Deliverable Packet)
+> - Technical Output Profile (HTML-to-PPTX conversion constraints)
+> - Presentation Design Principles (medium-agnostic visual communication guide)
+> - Brand Token Layer: Accenture (visual identity tokens)
+
+---
+
+## The approach — what worked and why
+
+### Phase 1: Context and direction setting (no documents yet)
+
+The opening prompt explained the situation in plain language:
+- Who the client is (large UK universal bank, well-meaning but slow and bureaucratic)
+- What the engagement is about (agile ways of working for technical delivery)
+- What specifically was needed (help explaining lean portfolio management to business users)
+- What the problem was with existing materials (too technical, too SAFe-indexed, not connecting with business users)
+- What the desired output was (a short storyboard for senior business stakeholders)
+- What kind of help was needed first (strategy and consulting framing, not design yet)
+
+**Why this worked:** The prompt didn't ask for slides. It asked for thinking about how to approach the problem. This let the AI develop the intellectual framework before committing to any format.
+
+**The AI's initial response** proposed a five-beat narrative structure (situation → complication → question → answer → path forward) and asked clarifying questions about audience, collateral, and specific pain points.
+
+---
+
+### Phase 2: Document upload and synthesis
+
+Three documents were uploaded together:
+1. Barclays PLC Annual Report 2025 (client context)
+2. CFO&EV Value Realization Practitioner's Guide (internal methodology)
+3. Funding Model Strategy Final Deliverable Packet (prior client deliverable)
+
+The prompt was simple: *"Have a read and tell me what you think."*
+
+**Why this worked:** Rather than asking the AI to immediately produce output from the documents, asking for analysis first achieved two things:
+- Validated that the AI understood the material correctly
+- Surfaced connections between documents that informed the storyboard
+
+**The AI's response** analysed each document separately, then synthesised across all three to refine the storyboard. Key insights it drew:
+- From the annual report: Barclays' own "Simpler, Better, More balanced" language as an anchor; the five-division structure as context; specific financial targets to reference
+- From the VR Guide: The 56% value shortfall statistic; the concept of a Value Realization Office; the value tree framework (to be simplified)
+- From the Funding Model Strategy: The crawl-walk-run maturity model; the "Scale of Change" framing device; the two-prong approach; the contrast between current and future state
+
+---
+
+### Phase 3: Audience and routing clarification
+
+When asked about audience, the response explained the bottom-up approach:
+- First round: COOs of each division + their Portfolio leads
+- Second round: Divisional CEOs
+- Third round: Group ExCo (CEO and team)
+- Parallel track: CIOs (who hold the agile/LPM technical agenda)
+
+The request was for a **common framing deck** that works across all tiers, with deep dives developed separately for each segment later.
+
+**Why this mattered:** This shaped the entire content strategy. The deck needed to lead with strategic logic (for CEOs/ExCo) while embedding enough operational specificity (for COOs/Portfolio leads) that both audiences feel served. The storyboard was designed with "audience flex" notes at each beat explaining how to adjust emphasis without changing slides.
+
+---
+
+### Phase 4: Storyboard creation
+
+The AI produced a detailed narrative storyboard as a markdown artifact, covering:
+- Five beats with key messages, slide concepts, what goes on each slide, narrative notes, and audience-specific flexing guidance
+- Appendix topics for each audience segment
+- Design and tone principles
+
+**Key design decisions documented in the storyboard:**
+- Lead with client's own language and targets, not methodology
+- No SAFe terminology or framework branding
+- Portfolio management analogy as the central rhetorical device
+- Understated confidence — let the logic do the work
+- Minimal text, maximum clarity per slide
+
+---
+
+### Phase 5: Slide deck creation (unbranded)
+
+Two constraint documents were provided:
+1. **Technical Output Profile** — HTML-to-PPTX conversion rules (supported elements, CSS properties, layout patterns, unsupported features)
+2. **Presentation Design Principles** — visual communication guidance (hierarchy, typography, colour, data presentation, content density)
+
+The prompt: *"Let's work on the wireframe. Read and follow all constraints in the attached documents. Where the documents conflict with your default behaviour, the documents take precedence."*
+
+**What was produced:** A 12-slide HTML file following all technical constraints (960x540px slides, supported CSS only, no gradients/shadows/animations, proper section structure) and design principles (one message per slide, 50% whitespace target, clear hierarchy, varied pacing).
+
+---
+
+### Phase 6: Brand application
+
+The Accenture Brand Token Layer document was provided with the prompt: *"I want to keep this as is, but cut another version in our own branding."*
+
+**What changed in the branded version:**
+- Colour palette remapped entirely (navy → black for dark mode; blue accents → purple spectrum)
+- Typography switched to Graphik/GT Sectra Fine (with Arial fallback)
+- Containers changed from bordered to filled (#F1F1EF, no border) per "fill OR outline" rule
+- Contrast blocks redesigned (red/blue → neutral grey/lightest purple) to stay within brand palette
+- GT Sectra Fine applied to the key quote on slide 7 (its only permitted use: callouts and quotes)
+- Greater Than symbol added to every slide after cover
+- All border-radius removed ("squares, not circles")
+- "Purple with purpose" applied — accent colour only where it has communicative intent
+- Semantic CSS class structure using brand token naming for easy retheming
+
+**What stayed the same:** All content, all narrative structure, all slide sequencing. The brand layer is purely visual — it doesn't change what we say, only how it looks.
+
+---
+
+## Principles for replicating this approach
+
+### 1. Separate thinking from production
+Don't ask for slides in your first prompt. Ask for strategic thinking first. The narrative structure should be solid before any visual work begins.
+
+### 2. Provide rich context, then ask for synthesis
+Upload relevant documents and ask the AI to analyse them before producing output. The connections it draws across documents often surface insights you wouldn't get from working with each document in isolation.
+
+### 3. Be specific about audience and routing
+Who will see this, in what order, and what decisions are they making? This shapes tone, density, and emphasis more than any design choice.
+
+### 4. Use constraint documents to control quality
+The three-document system (Technical Profile + Design Principles + Brand Tokens) gives the AI precise guardrails. Without these, output quality is inconsistent. With them, the AI produces work that is technically valid, visually sound, and brand-compliant in a single pass.
+
+### 5. Layer the brand last
+Build content and structure first on a neutral palette. Apply brand tokens as a final step. This keeps the intellectual work clean and makes it easy to produce multiple branded versions from the same source.
+
+### 6. Iterate on substance, not formatting
+When reviewing AI output, focus feedback on the argument, the narrative flow, and whether the content resonates with your audience. Don't spend time on visual polish until the substance is right.
+
+---
+
+## Document sequence for your own sessions
+
+When starting a new engagement, provide documents in this order:
+
+```
+Prompt 1:  Context and what you need (plain language, no documents)
+           → AI responds with approach and clarifying questions
+
+Prompt 2:  Source documents (client materials, methodology, prior work)
+           → AI analyses and synthesises
+
+Prompt 3:  Audience and routing details
+           → AI refines approach for specific stakeholders
+
+Prompt 4:  Request storyboard / narrative structure
+           → AI produces narrative framework
+
+Prompt 5:  Attach Technical Output Profile + Design Principles
+           Request slide deck
+           → AI produces unbranded deck within constraints
+
+Prompt 6:  Attach Brand Token Layer
+           Request branded version
+           → AI produces branded deck
+```
+
+Each step builds on the previous one. Skipping steps (e.g., jumping straight to "make me slides") produces significantly weaker output because the AI hasn't built the intellectual foundation.
+
+---
+
+## Artifacts produced in this session
+
+| Artifact | Type | Description |
+|---|---|---|
+| LPM Value Storyboard — Common Framing Deck | Markdown | Full narrative structure with 5 beats, audience flex notes, appendix topics, and design principles |
+| LPM Value Storyboard — Slide Deck v1 | HTML (960x540) | 12-slide unbranded deck, PPTX-conversion ready |
+| LPM Value Storyboard — Accenture Branded v1 | HTML (960x540) | 12-slide Accenture-branded deck, PPTX-conversion ready |
+| This document | Markdown | Process reference for replication |
+
+---
+
+*Session date: February 2026*

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lean Portfolio Management (LPM) — Value-led storyboard (Accenture)</title>
+  <style>
+    /*
+      Compliant with:
+      - <File>uc1-guardrails.md</File>: single-file HTML for PPT conversion, slide boundary convention, supported elements, 960x540 fixed frame.
+      - <File>doc2-design-principles.md</File>: one key message per slide, strong hierarchy, whitespace.
+      - <File>doc3-brand-tokens.md</File>: Accenture light mode tokens, purple with purpose, squares not circles, logo/greater-than marker on every slide.
+    */
+
+    /* Brand token classes (Accenture light mode) */
+    .brand-bg-primary { background-color: #FFFFFF; }
+    .brand-bg-secondary { background-color: #F1F1EF; }
+    .brand-bg-accent { background-color: #A100FF; }
+
+    .brand-text-primary { color: #000000; }
+    .brand-text-secondary { color: #818180; }
+    .brand-text-accent { color: #A100FF; }
+    .brand-text-inverse { color: #FFFFFF; }
+
+    .brand-border { border: 1px solid #CFCFCF; }
+    .brand-border-accent { border: 1px solid #A100FF; }
+
+    .brand-font-heading { font-family: 'Graphik', Arial, sans-serif; font-weight: 600; }
+    .brand-font-body { font-family: 'Graphik', Arial, sans-serif; font-weight: 400; }
+
+    /* Slide frame */
+    body { margin: 0; background: #FFFFFF; }
+    section.slide {
+      width: 960px;
+      height: 540px;
+      box-sizing: border-box;
+      padding: 40px;
+      margin: 0;
+      overflow: hidden;
+      background: #FFFFFF;
+      position: relative;
+    }
+
+    /* Type hierarchy (scaled down for 960x540 while maintaining ratios) */
+    h1 { margin: 0 0 16px 0; font-size: 34px; line-height: 1.15; }
+    h2 { margin: 0 0 14px 0; font-size: 24px; line-height: 1.2; }
+    h3 { margin: 0 0 10px 0; font-size: 16px; line-height: 1.25; }
+    p { margin: 0 0 10px 0; font-size: 14px; line-height: 1.45; }
+    ul, ol { margin: 0 0 10px 18px; padding: 0; font-size: 14px; line-height: 1.35; }
+    li { margin: 6px 0; }
+
+    /* Layout helpers (keep simple; no nesting slides) */
+    .row { width: 100%; }
+    .col { display: inline-block; vertical-align: top; width: 430px; margin-right: 18px; }
+    .col:last-child { margin-right: 0; }
+
+    /* Visual primitives — squares not circles */
+    .tag {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #F1F1EF;
+      border: 1px solid #CFCFCF;
+      font-size: 11px;
+      margin-right: 8px;
+    }
+
+    blockquote {
+      margin: 14px 0;
+      padding: 10px 12px;
+      background: #F1F1EF;
+      border-left: 4px solid #A100FF;
+    }
+
+    hr { border: 0; height: 1px; background: #CFCFCF; margin: 14px 0; }
+
+    .small { font-size: 11px; line-height: 1.35; }
+
+    /* Brand markers */
+    .brand-logo {
+      position: absolute;
+      top: 26px;
+      right: 40px;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+    .brand-logo .wordmark { color: #000000; }
+    .brand-logo .gt { color: #A100FF; font-weight: 700; margin-left: 2px; }
+
+    .brand-gt-only {
+      position: absolute;
+      left: 40px;
+      bottom: 26px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #A100FF;
+    }
+
+    /* Brand expression (optional) */
+    .brand-expression {
+      position: absolute;
+      right: 40px;
+      bottom: 26px;
+      font-size: 12px;
+      color: #000000;
+      white-space: nowrap;
+    }
+
+    /* Apply typography */
+    h1, h2, h3 { font-family: 'Graphik', Arial, sans-serif; }
+    h1, h3 { font-weight: 600; color: #000000; }
+    h2 { font-weight: 400; color: #000000; }
+    p, ul, ol, li, .small { font-family: 'Graphik', Arial, sans-serif; font-weight: 400; color: #818180; }
+
+    /* Purple with purpose: use Core Purple only for emphasis */
+    .accent { color: #A100FF; }
+    .callout-title { font-weight: 600; color: #000000; }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- SLIDE 1 (Cover: full logo + optional brand expression) -->
+  <section class="slide" data-slide-number="1" data-layout="title" data-title="LPM: value-led prioritisation">
+    <div class="brand-logo brand-font-heading"><span class="wordmark">Accenture</span><span class="gt">&gt;</span></div>
+    <div>
+      <span class="tag brand-font-body brand-text-secondary">Common framing</span>
+      <span class="tag brand-font-body brand-text-secondary">Bottom-up → ExCo</span>
+    </div>
+
+    <h1 class="brand-font-heading brand-text-primary">Lean Portfolio Management: faster, evidence‑based prioritisation — without weakening control</h1>
+    <p class="brand-font-body brand-text-secondary">
+      LPM is a decision system that connects strategy → investment → delivery, using lightweight governance and data to optimise value flow.
+    </p>
+
+    <blockquote>
+      <span class="callout-title brand-font-heading">One message:</span>
+      <span class="brand-font-body brand-text-primary">Make fewer, clearer investment decisions — faster — with traceable value and stronger outcomes.</span>
+    </blockquote>
+
+    <hr />
+
+    <p class="small brand-font-body brand-text-secondary">
+      This deck is designed to be reused across audiences, with emphasis adjusted per stakeholder group (COO/Portfolio lead, CEO, CIO, Group ExCo).
+    </p>
+
+    <div class="brand-expression brand-font-heading">Let there be change</div>
+  </section>
+
+  <!-- SLIDE 2 -->
+  <section class="slide" data-slide-number="2" data-layout="two-column" data-title="Why now">
+    <div class="brand-gt-only">&gt;</div>
+    <h2 class="brand-font-body brand-text-primary">Why now (and why this should land)</h2>
+
+    <div class="row">
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">Barclays’ declared direction</h3>
+        <ul>
+          <li><b class="brand-text-primary">“Simpler, Better and More balanced”</b> as the organising strategy.</li>
+          <li>Technology modernisation to simplify processes and improve agility and resilience.</li>
+          <li>Responsible AI adoption (incl. M365 Copilot) to improve productivity and service.</li>
+        </ul>
+        <p class="small">Use these as the anchor phrases to avoid “methodology debate.”</p>
+      </div>
+
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">What that implies for the change portfolio</h3>
+        <ul>
+          <li>More good ideas than capacity: prioritisation must get sharper.</li>
+          <li>Resilience and cyber pressures: outcomes must be measurable and governed.</li>
+          <li>Efficiency and customer experience: value must be visible, not assumed.</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr />
+    <p class="small">Outcome: align decisioning to strategy, improve speed safely, and evidence value continuously.</p>
+  </section>
+
+  <!-- SLIDE 3 -->
+  <section class="slide" data-slide-number="3" data-layout="two-column" data-title="The problem">
+    <div class="brand-gt-only">&gt;</div>
+    <h2 class="brand-font-body brand-text-primary">The problem we’re solving (in business terms)</h2>
+
+    <div class="row">
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">What leaders experience</h3>
+        <ul>
+          <li>Prioritisation is slow and re‑litigated; decisions escalate.</li>
+          <li>Funding is rigid; pivoting spend is expensive and delayed.</li>
+          <li>Too much work in flight; outcomes are hard to evidence.</li>
+        </ul>
+      </div>
+
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">What the system is doing</h3>
+        <ul>
+          <li>Legacy project approvals create “analysis paralysis.”</li>
+          <li>Value is defined late and measured at the end (if at all).</li>
+          <li>Product/value‑stream shifts are blocked by old funding mechanics.</li>
+        </ul>
+      </div>
+    </div>
+
+    <blockquote>
+      <span class="callout-title brand-font-heading">Reframe:</span>
+      <span class="brand-font-body brand-text-primary">This is not an “agile adoption” problem. It’s an <b>investment governance</b> and <b>decision cadence</b> problem.</span>
+    </blockquote>
+  </section>
+
+  <!-- SLIDE 4 -->
+  <section class="slide" data-slide-number="4" data-layout="two-column" data-title="What LPM is / isn’t">
+    <div class="brand-gt-only">&gt;</div>
+    <h2 class="brand-font-body brand-text-primary">What LPM is (and isn’t)</h2>
+
+    <div class="row">
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">LPM is</h3>
+        <ul>
+          <li>A way to align <b>strategy, funding, and execution</b>.</li>
+          <li>A repeatable method for <b>transparent trade‑offs</b>.</li>
+          <li>Lightweight governance that enables faster decisions closer to the work.</li>
+        </ul>
+      </div>
+
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">LPM is not</h3>
+        <ul>
+          <li>More framework training.</li>
+          <li>An IT‑only change.</li>
+          <li>A loss of financial control (it uses <b>guardrails</b>, not micromanagement).</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr />
+    <p class="small">Audience lens: COOs care about speed; CEOs care about outcomes; CIOs care about flow; ExCo cares about enterprise alignment and resilience.</p>
+  </section>
+
+  <!-- SLIDE 5 -->
+  <section class="slide" data-slide-number="5" data-layout="two-column" data-title="Value-led engine">
+    <div class="brand-gt-only">&gt;</div>
+    <h2 class="brand-font-body brand-text-primary">The value-led engine (the bridge to business stakeholders)</h2>
+    <p>We reframe LPM using a value realisation logic: define value, hypothesise it, measure it, and steer continuously.</p>
+
+    <div class="row">
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">Value compass (simple)</h3>
+        <ul>
+          <li>Define value in the client’s terms (by stakeholder).</li>
+          <li>Value hypotheses + KPIs + targets.</li>
+          <li>A value case combining quantitative + qualitative outcomes.</li>
+        </ul>
+      </div>
+
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">Value-led governance</h3>
+        <ul>
+          <li>Lightweight value governance for accountability.</li>
+          <li>Executive scorecards: snapshot (actual vs target) + trend over time.</li>
+          <li>Use results to re‑forecast, pivot, or stop work.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6 -->
+  <section class="slide" data-slide-number="6" data-layout="two-column" data-title="Funding shift">
+    <div class="brand-gt-only">&gt;</div>
+    <h2 class="brand-font-body brand-text-primary">The funding & prioritisation shift (crawl → walk → run)</h2>
+
+    <div class="row">
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">Today</h3>
+        <ul>
+          <li>Project-centric approvals and gated funding.</li>
+          <li>Scope changes require re‑approval; pivoting is slow.</li>
+          <li>Value often loosely defined and measured late.</li>
+        </ul>
+      </div>
+
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">Target</h3>
+        <ul>
+          <li>Capacity-funded teams within lean budgets + guardrails.</li>
+          <li>Portfolio backlog prioritised against OKRs and constraints.</li>
+          <li>Incremental value measurement and regular steering.</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr />
+    <p class="small">Crawl: introduce value tracking + streamline approvals. Walk/Run: pilot LPM funding, then scale capacity funding and common scorecards.</p>
+  </section>
+
+  <!-- SLIDE 7 -->
+  <section class="slide" data-slide-number="7" data-layout="two-column" data-title="Measures">
+    <div class="brand-gt-only">&gt;</div>
+    <h2 class="brand-font-body brand-text-primary">What we measure (minimal set executives will use)</h2>
+    <p>Start with a small set of metrics that connect operational KPIs to business outcomes, then mature over time.</p>
+
+    <div class="row">
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">Value levers (example set)</h3>
+        <ul>
+          <li><b>Speed:</b> time-to-market / cycle time.</li>
+          <li><b>Prioritisation quality:</b> value delivered vs plan.</li>
+          <li><b>Agility:</b> time to pivot funds/resources.</li>
+          <li><b>Efficiency:</b> reduced abandonment / reduced non-value work.</li>
+          <li><b>Visibility:</b> line of sight cost ↔ value.</li>
+        </ul>
+      </div>
+
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">Executive reporting pattern</h3>
+        <ul>
+          <li><b>Scorecard:</b> snapshot actual vs target.</li>
+          <li><b>Trend:</b> progress over time (glide path).</li>
+          <li><b>Decision log:</b> pivots/stops + rationale.</li>
+        </ul>
+        <p class="small">Cadence depends on initiative type; the point is a consistent rhythm.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 8 -->
+  <section class="slide" data-slide-number="8" data-layout="two-column" data-title="Engagement path">
+    <div class="brand-gt-only">&gt;</div>
+    <h2 class="brand-font-body brand-text-primary">How the bottom-up path works (your engagement sequence)</h2>
+
+    <div class="row">
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">Round 1: Divisional COO + Portfolio lead</h3>
+        <ul>
+          <li>Agree the problem statement and decision pain.</li>
+          <li>Select a pilot slice of portfolio to prove value-led steering.</li>
+          <li>Define initial OKRs + guardrails + minimal scorecard.</li>
+        </ul>
+
+        <h3 class="brand-font-heading brand-text-primary">Round 2: Divisional CEO</h3>
+        <ul>
+          <li>Translate to strategic outcomes (growth, efficiency, resilience).</li>
+          <li>Confirm sponsorship for cadence and decision rights.</li>
+          <li>Align with CIO on enablers (without turning it technical).</li>
+        </ul>
+      </div>
+
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">Round 3: Group ExCo</h3>
+        <ul>
+          <li>Show cross-divisional comparability and enterprise view.</li>
+          <li>Propose Group guardrails, common metrics, scaling plan.</li>
+          <li>Secure enterprise sponsorship and enabling investment.</li>
+        </ul>
+
+        <h3 class="brand-font-heading brand-text-primary">Parallel: CIO alignment</h3>
+        <ul>
+          <li>Recast “LPM mechanics” into the business decision model.</li>
+          <li>Confirm changes to governance, funding, and data.</li>
+          <li>Agree how tech modernisation maps to outcomes.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 9 -->
+  <section class="slide" data-slide-number="9" data-layout="two-column" data-title="The ask">
+    <div class="brand-gt-only">&gt;</div>
+    <h2 class="brand-font-body brand-text-primary">The ask (what we need from each audience)</h2>
+
+    <div class="row">
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">COO / Portfolio lead</h3>
+        <ul>
+          <li><b>Decide:</b> pilot scope, portfolio boundary, cadence.</li>
+          <li><b>Provide:</b> demand themes, constraints, current measures.</li>
+          <li><b>Nominate:</b> business owners for OKRs and value hypotheses.</li>
+        </ul>
+      </div>
+
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">CEO / ExCo</h3>
+        <ul>
+          <li><b>Decide:</b> decision rights, guardrails, enterprise KPIs.</li>
+          <li><b>Align:</b> strategic priorities and trade-off principles.</li>
+          <li><b>Sponsor:</b> scaling across divisions with visible accountability.</li>
+        </ul>
+      </div>
+    </div>
+
+    <blockquote>
+      <span class="callout-title brand-font-heading">Close:</span>
+      <span class="brand-font-body brand-text-primary">We’re not asking you to “do more agile.” We’re proposing a way to make investment decisions faster — with traceable value and stronger outcomes.</span>
+    </blockquote>
+  </section>
+
+  <!-- SLIDE 10 -->
+  <section class="slide" data-slide-number="10" data-layout="title" data-title="Deep dives">
+    <div class="brand-gt-only">&gt;</div>
+    <h2 class="brand-font-body brand-text-primary">Deep-dive modules (separate later — same narrative spine)</h2>
+
+    <div class="row">
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">Module A: CIO deep dive</h3>
+        <ul>
+          <li>Guardrails + OKRs + cadence → delivery operating model.</li>
+          <li>Tech modernisation and AI investment → measurable outcomes.</li>
+          <li>Data needed for empiricism (flow + outcomes).</li>
+        </ul>
+      </div>
+
+      <div class="col">
+        <h3 class="brand-font-heading brand-text-primary">Module B: Finance / funding deep dive</h3>
+        <ul>
+          <li>Budgeting vs funding; recurring vs significant initiatives.</li>
+          <li>Lean business cases; incremental value measurement.</li>
+          <li>Controls maintained through guardrails and transparency.</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr />
+    <p class="small">Next step: keep the structure stable, adjust emphasis per audience, and add divisional proof points as annexes.</p>
+  </section>
+
+</body>
+</html>

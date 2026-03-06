@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agile Ways of Working</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+
+  .controls { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .btn { background: #1e2130; border: 1px solid #2e3250; color: #a0a8cc; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+  .btn:hover { background: #2e3250; color: #fff; }
+  .btn:disabled { opacity: 0.3; cursor: default; }
+  .slide-counter { color: #6b7280; font-size: 14px; }
+
+  .slide-wrapper { width: 100%; max-width: 900px; aspect-ratio: 16/9; position: relative; }
+
+  .slide { position: absolute; inset: 0; border-radius: 16px; padding: 48px 56px; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; overflow: hidden; }
+  .slide.active { opacity: 1; pointer-events: all; }
+
+  /* Slide 1 */
+  .slide-1 { background: linear-gradient(135deg, #0d1b2a 0%, #1a2744 50%, #0d1b2a 100%); border: 1px solid #1e3a5f; }
+  .slide-1::before { content: ''; position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%); border-radius: 50%; }
+  .slide-1::after { content: ''; position: absolute; bottom: -80px; left: -80px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%); border-radius: 50%; }
+
+  /* Slide 2 */
+  .slide-2 { background: linear-gradient(135deg, #0d1f1a 0%, #0f2d24 50%, #0d1f1a 100%); border: 1px solid #1a4a3a; }
+  .slide-2::before { content: ''; position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%); border-radius: 50%; }
+
+  /* Slide 3 */
+  .slide-3 { background: linear-gradient(135deg, #1a0d2e 0%, #2a1044 50%, #1a0d2e 100%); border: 1px solid #3a1e5f; }
+  .slide-3::before { content: ''; position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%); border-radius: 50%; }
+
+  .slide-tag { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; opacity: 0.6; }
+  .slide-1 .slide-tag { color: #60a5fa; }
+  .slide-2 .slide-tag { color: #34d399; }
+  .slide-3 .slide-tag { color: #a78bfa; }
+
+  h1 { font-size: 28px; font-weight: 700; line-height: 1.2; margin-bottom: 6px; }
+  .subtitle { font-size: 14px; opacity: 0.5; margin-bottom: 24px; }
+
+  .divider { height: 2px; width: 60px; border-radius: 2px; margin-bottom: 24px; }
+  .slide-1 .divider { background: linear-gradient(90deg, #3b82f6, #6366f1); }
+  .slide-2 .divider { background: linear-gradient(90deg, #10b981, #06b6d4); }
+  .slide-3 .divider { background: linear-gradient(90deg, #8b5cf6, #ec4899); }
+
+  /* Enabler cards */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; flex: 1; }
+  .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; position: relative; overflow: hidden; }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .slide-1 .card::before { background: linear-gradient(90deg, #3b82f6, #6366f1); }
+  .slide-2 .card::before { background: linear-gradient(90deg, #10b981, #06b6d4); }
+  .card-icon { font-size: 22px; margin-bottom: 8px; }
+  .card-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #e2e8f0; }
+  .card-body { font-size: 11px; line-height: 1.6; color: #94a3b8; }
+
+  /* Slide 2 layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex: 1; }
+  .tool-section { display: flex; flex-direction: column; gap: 10px; }
+  .tool-section-title { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #34d399; margin-bottom: 4px; }
+  .tool-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; }
+  .tool-badge { background: linear-gradient(135deg, #10b981, #06b6d4); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; margin-top: 1px; }
+  .tool-badge.atlassian { background: linear-gradient(135deg, #0052cc, #0065ff); }
+  .tool-desc { font-size: 11px; color: #94a3b8; line-height: 1.5; }
+  .tool-name { font-size: 12px; font-weight: 700; color: #e2e8f0; margin-bottom: 2px; }
+  .highlight-box { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); border-radius: 10px; padding: 14px; margin-top: 6px; }
+  .highlight-box p { font-size: 12px; color: #6ee7b7; line-height: 1.6; }
+
+  /* Slide 3 - Journey */
+  .journey { display: flex; gap: 0; flex: 1; align-items: stretch; }
+  .phase { flex: 1; position: relative; display: flex; flex-direction: column; }
+  .phase-connector { width: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .arrow { width: 0; height: 0; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-left: 14px solid rgba(255,255,255,0.1); }
+  .phase-inner { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+  .phase-inner::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .phase-1 .phase-inner::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+  .phase-2 .phase-inner::before { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+  .phase-3 .phase-inner::before { background: linear-gradient(90deg, #3b82f6, #6366f1); }
+  .phase-4 .phase-inner::before { background: linear-gradient(90deg, #10b981, #3b82f6); }
+  .phase-num { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; opacity: 0.5; margin-bottom: 4px; }
+  .phase-title { font-size: 13px; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; line-height: 1.3; }
+  .phase-items { list-style: none; display: flex; flex-direction: column; gap: 5px; flex: 1; }
+  .phase-items li { font-size: 11px; color: #94a3b8; line-height: 1.5; padding-left: 12px; position: relative; }
+  .phase-items li::before { content: '›'; position: absolute; left: 0; color: #7c3aed; font-weight: 700; }
+  .phase-duration { margin-top: 10px; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; display: inline-block; width: fit-content; }
+  .phase-1 .phase-duration { background: rgba(139,92,246,0.2); color: #a78bfa; }
+  .phase-2 .phase-duration { background: rgba(99,102,241,0.2); color: #818cf8; }
+  .phase-3 .phase-duration { background: rgba(59,130,246,0.2); color: #60a5fa; }
+  .phase-4 .phase-duration { background: rgba(16,185,129,0.2); color: #34d399; }
+
+  .dots { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #1e2130; cursor: pointer; transition: all 0.2s; border: 1px solid #2e3250; }
+  .dot.active { background: #6366f1; border-color: #6366f1; transform: scale(1.2); }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button class="btn" id="prevBtn" onclick="changeSlide(-1)" disabled>← Prev</button>
+  <span class="slide-counter" id="counter">1 / 3</span>
+  <button class="btn" id="nextBtn" onclick="changeSlide(1)">Next →</button>
+</div>
+
+<div class="slide-wrapper">
+
+  <!-- SLIDE 1 -->
+  <div class="slide slide-1 active">
+    <div class="slide-tag">Slide 01 · Foundation</div>
+    <h1>Key Enablers of Agile Ways of Working</h1>
+    <div class="subtitle">The building blocks that power a high-performing agile organisation</div>
+    <div class="divider"></div>
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">🧭</div>
+        <div class="card-title">Agile Leadership & Culture</div>
+        <div class="card-body">Leaders who champion iterative thinking, psychological safety, and servant leadership. Culture that embraces experimentation and learning from failure.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏗️</div>
+        <div class="card-title">Cross-Functional Teams</div>
+        <div class="card-body">Empowered, self-organising teams with end-to-end accountability. Reduced handoffs through co-located or well-connected squads aligned to value streams.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔄</div>
+        <div class="card-title">Iterative Delivery Cadence</div>
+        <div class="card-body">Short sprint cycles with regular inspect-and-adapt loops. Defined ceremonies — planning, standups, reviews, and retrospectives — that drive continuous improvement.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <div class="card-title">Transparent Prioritisation</div>
+        <div class="card-body">A single, ranked product backlog visible to all stakeholders. Value-driven prioritisation over scope-driven delivery, enabling rapid re-planning when priorities shift.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🛠️</div>
+        <div class="card-title">Integrated Tooling & Automation</div>
+        <div class="card-body">A connected PPM and engineering toolchain that eliminates silos. Automated CI/CD pipelines, real-time dashboards, and integrated workflows to reduce friction.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📈</div>
+        <div class="card-title">Outcome-Based Metrics</div>
+        <div class="card-body">Measurement focused on value delivered, not activity. OKRs, velocity, cycle time, and team health indicators that keep teams honest and stakeholders informed.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide slide-2">
+    <div class="slide-tag">Slide 02 · Tooling</div>
+    <h1>The Right PPM Toolset Matters</h1>
+    <div class="subtitle">Why Atlassian is the recommended platform for agile project & portfolio management</div>
+    <div class="divider"></div>
+    <div class="two-col">
+      <div class="tool-section">
+        <div class="tool-section-title">Atlassian Recommended Stack</div>
+        <div class="tool-item">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><div class="tool-name">Jira</div><span class="tool-badge atlassian">Core</span></div>
+            <div class="tool-desc">End-to-end work tracking from epics to tasks. Backlog management, sprint planning, and agile boards purpose-built for delivery teams.</div>
+          </div>
+        </div>
+        <div class="tool-item">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><div class="tool-name">Jira Align</div><span class="tool-badge atlassian">Portfolio</span></div>
+            <div class="tool-desc">Enterprise-scale agility. Connects team execution to programme and portfolio strategy with real-time roadmaps and PI planning.</div>
+          </div>
+        </div>
+        <div class="tool-item">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><div class="tool-name">Confluence</div><span class="tool-badge atlassian">Knowledge</span></div>
+            <div class="tool-desc">Living documentation and collaborative spaces. Retros, decision logs, and runbooks kept alongside the work — not in email threads.</div>
+          </div>
+        </div>
+      </div>
+      <div class="tool-section">
+        <div class="tool-section-title">Why Atlassian Wins</div>
+        <div class="tool-item">
+          <div class="tool-badge" style="background:linear-gradient(135deg,#10b981,#06b6d4)">✓</div>
+          <div class="tool-desc"><strong style="color:#e2e8f0;">Native Agile Workflows</strong> — Built-in Scrum, Kanban, and SAFe support. No custom configuration needed to get started.</div>
+        </div>
+        <div class="tool-item">
+          <div class="tool-badge" style="background:linear-gradient(135deg,#10b981,#06b6d4)">✓</div>
+          <div class="tool-desc"><strong style="color:#e2e8f0;">Single Source of Truth</strong> — Jira, Confluence, and Bitbucket integrate natively, reducing tool sprawl and data silos.</div>
+        </div>
+        <div class="tool-item">
+          <div class="tool-badge" style="background:linear-gradient(135deg,#10b981,#06b6d4)">✓</div>
+          <div class="tool-desc"><strong style="color:#e2e8f0;">Real-Time Visibility</strong> — Dashboards and roadmaps give leadership portfolio transparency without status-report overhead.</div>
+        </div>
+        <div class="highlight-box">
+          <p>🎯 <strong>Recommendation:</strong> Adopt Jira as the team-level work management layer, Jira Align for portfolio oversight, and Confluence as the shared knowledge hub — creating a fully connected agile operating model.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide slide-3">
+    <div class="slide-tag">Slide 03 · Roadmap</div>
+    <h1>The Journey to Activate Agile Enablers</h1>
+    <div class="subtitle">A phased approach to embedding agile ways of working across the organisation</div>
+    <div class="divider"></div>
+    <div class="journey">
+      <div class="phase phase-1">
+        <div class="phase-inner">
+          <div class="phase-num">Phase 01</div>
+          <div class="phase-title">Assess & Align</div>
+          <ul class="phase-items">
+            <li>Agile maturity assessment</li>
+            <li>Stakeholder alignment workshops</li>
+            <li>Define target operating model</li>
+            <li>Identify pilot teams & value streams</li>
+            <li>Establish agile governance framework</li>
+          </ul>
+          <div class="phase-duration">Weeks 1–4</div>
+        </div>
+      </div>
+      <div class="phase-connector"><div class="arrow"></div></div>
+      <div class="phase phase-2">
+        <div class="phase-inner">
+          <div class="phase-num">Phase 02</div>
+          <div class="phase-title">Foundation & Tooling</div>
+          <ul class="phase-items">
+            <li>Configure Jira & Confluence</li>
+            <li>Define workflow standards</li>
+            <li>Stand up agile ceremonies</li>
+            <li>Train teams on core practices</li>
+            <li>Launch pilot sprints</li>
+          </ul>
+          <div class="phase-duration">Weeks 5–10</div>
+        </div>
+      </div>
+      <div class="phase-connector"><div class="arrow"></div></div>
+      <div class="phase phase-3">
+        <div class="phase-inner">
+          <div class="phase-num">Phase 03</div>
+          <div class="phase-title">Scale & Embed</div>
+          <ul class="phase-items">
+            <li>Roll out to additional teams</li>
+            <li>Activate Jira Align for portfolio</li>
+            <li>Integrate CI/CD pipelines</li>
+            <li>Embed coaching & Agile CoP</li>
+            <li>Refine metrics & OKRs</li>
+          </ul>
+          <div class="phase-duration">Weeks 11–20</div>
+        </div>
+      </div>
+      <div class="phase-connector"><div class="arrow"></div></div>
+      <div class="phase phase-4">
+        <div class="phase-inner">
+          <div class="phase-num">Phase 04</div>
+          <div class="phase-title">Optimise & Sustain</div>
+          <ul class="phase-items">
+            <li>Continuous retrospectives</li>
+            <li>Leadership agile reviews</li>
+            <li>Evolve tooling & automation</li>
+            <li>Measure business outcomes</li>
+            <li>Sustain culture of improvement</li>
+          </ul>
+          <div class="phase-duration">Ongoing</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="dots">
+  <div class="dot active" onclick="goToSlide(0)"></div>
+  <div class="dot" onclick="goToSlide(1)"></div>
+  <div class="dot" onclick="goToSlide(2)"></div>
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const dots = document.querySelectorAll('.dot');
+
+  function goToSlide(n) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    document.getElementById('counter').textContent = `${current + 1} / ${slides.length}`;
+    document.getElementById('prevBtn').disabled = current === 0;
+    document.getElementById('nextBtn').disabled = current === slides.length - 1;
+  }
+
+  function changeSlide(dir) {
+    const next = current + dir;
+    if (next >= 0 && next < slides.length) goToSlide(next);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') changeSlide(1);
+    if (e.key === 'ArrowLeft') changeSlide(-1);
+  });
+</script>
+</body>
+</html>

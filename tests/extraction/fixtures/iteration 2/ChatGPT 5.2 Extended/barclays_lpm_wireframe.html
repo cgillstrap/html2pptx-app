@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lean portfolio management — Barclays (wireframe)</title>
+  <style>
+    /* Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* Slide container */
+    .slide {
+      width: 960px;
+      height: 540px;
+      padding: 48px 56px;
+      background-color: #FFFFFF;
+      font-family: Arial, "Segoe UI", sans-serif;
+      font-size: 12pt;
+      color: #111111;
+      overflow: hidden;
+      page-break-after: always;
+    }
+
+    /* Typography scale */
+    .tag { font-size: 10pt; letter-spacing: 0.5px; text-transform: uppercase; color: #4B5563; }
+    .h1 { font-size: 32pt; font-weight: 700; line-height: 1.10; margin-top: 10px; }
+    .subtitle { font-size: 14pt; line-height: 1.35; margin-top: 12px; color: #374151; max-width: 760px; }
+    .h2 { font-size: 18pt; font-weight: 700; line-height: 1.15; }
+    .h3 { font-size: 14pt; font-weight: 700; line-height: 1.2; }
+    .p { font-size: 12pt; line-height: 1.4; color: #111111; }
+    .small { font-size: 10pt; line-height: 1.3; color: #4B5563; }
+
+    /* Layout helpers */
+    .spacer-8 { margin-top: 8px; }
+    .spacer-12 { margin-top: 12px; }
+    .spacer-16 { margin-top: 16px; }
+    .spacer-24 { margin-top: 24px; }
+    .spacer-32 { margin-top: 32px; }
+
+    .row { display: flex; gap: 16px; }
+    .row-wide { display: flex; gap: 24px; }
+    .col { flex: 1; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+    .card-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+    .card {
+      border: 1px solid #D1D5DB;
+      border-radius: 12px;
+      padding: 14px 14px;
+      background-color: #FFFFFF;
+      min-height: 120px;
+    }
+
+    .card-fill {
+      background-color: #F3F4F6;
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 14px 14px;
+    }
+
+    .bullet { margin-top: 10px; padding-left: 18px; }
+    .bullet li { margin-top: 6px; }
+
+    .hr { height: 1px; background-color: #E5E7EB; margin-top: 18px; margin-bottom: 18px; }
+
+    /* Sequence */
+    .sequence { display: flex; gap: 12px; margin-top: 18px; }
+    .step {
+      border: 1px solid #D1D5DB;
+      border-radius: 12px;
+      padding: 14px;
+      background-color: #FFFFFF;
+      flex: 1;
+      min-height: 220px;
+    }
+    .step-number { font-size: 10pt; color: #6B7280; letter-spacing: 0.5px; }
+    .arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      color: #6B7280;
+      font-size: 18pt;
+    }
+
+    /* Metrics */
+    .metrics { display: flex; gap: 20px; margin-top: 18px; }
+    .metric {
+      border: 1px solid #D1D5DB;
+      border-radius: 12px;
+      padding: 14px;
+      flex: 1;
+      background-color: #FFFFFF;
+      min-height: 160px;
+    }
+    .metric-value { font-size: 20pt; font-weight: 700; color: #1F2937; display: block; }
+    .metric-label { margin-top: 8px; color: #374151; }
+
+    /* Footer */
+    .footer { position: relative; margin-top: 18px; }
+    .footnote { margin-top: 10px; font-size: 9pt; color: #6B7280; }
+  </style>
+</head>
+<body>
+
+  <!-- 1. Title -->
+  <section class="slide" data-slide-number="1" data-layout="title" data-title="Lean portfolio management" data-notes="Wireframe deck. Aim: common framing for COO / portfolio leads, with appendices for CEOs, ExCo, CIOs.">
+    <div>
+      <span class="tag">Draft wireframe</span>
+      <h1 class="h1">Lean portfolio management<br>as outcome-based investment governance</h1>
+      <p class="subtitle">A practical way to align investment, capacity and governance to measurable outcomes — without leading with frameworks.</p>
+      <div class="spacer-32"></div>
+      <p class="small">Audience: Divisional COOs &amp; portfolio leads (spine deck) • Appendices for CEOs / ExCo / CIOs</p>
+    </div>
+  </section>
+
+  <!-- 2. Context -->
+  <section class="slide" data-slide-number="2" data-layout="card-grid" data-title="Barclays direction" data-notes="Anchor to Barclays three-year plan language: 'Simpler, Better and More balanced' and priorities (operational performance, customer satisfaction, strong risk management, predictable returns).">
+    <span class="tag">Context</span>
+    <h1 class="h1">The direction is clear. Execution needs faster steering.</h1>
+    <p class="subtitle">Barclays is explicitly targeting a bank that is <strong>Simpler</strong>, <strong>Better</strong> and <strong>More balanced</strong> — with disciplined investment and measurable performance.</p>
+
+    <div class="spacer-24"></div>
+    <div class="card-grid-3">
+      <div class="card">
+        <h3 class="h3">Simpler</h3>
+        <ul class="bullet">
+          <li>Reduce complexity and technology debt.</li>
+          <li>Standardise and modernise processes.</li>
+          <li>Make operations more resilient.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="h3">Better</h3>
+        <ul class="bullet">
+          <li>Improve customer outcomes across journeys.</li>
+          <li>Improve performance across businesses.</li>
+          <li>Drive efficiencies with digital and AI.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="h3">More balanced</h3>
+        <ul class="bullet">
+          <li>Allocate capital to highest-returning areas.</li>
+          <li>Balance risk, returns and investment needs.</li>
+          <li>Increase predictability and confidence.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footnote">Wireframe note: replace bullets with Barclays-specific examples per division as you tailor.</div>
+  </section>
+
+  <!-- 3. The problem -->
+  <section class="slide" data-slide-number="3" data-layout="card-grid" data-title="The portfolio problem" data-notes="Frame the problem as portfolio throughput + decision latency: too many priorities, slow approvals, status reporting not outcome evidence.">
+    <span class="tag">The problem</span>
+    <h1 class="h1">When everything is a priority, the portfolio slows down.</h1>
+    <p class="subtitle">Common symptoms in large, regulated organisations: decisions are slow, work queues grow, and confidence drops — even when teams are capable.</p>
+
+    <div class="spacer-24"></div>
+    <div class="card-grid-4">
+      <div class="card">
+        <h3 class="h3">Decision latency</h3>
+        <p class="spacer-8 p">Multiple committees. Late escalations. Long lead time to change course.</p>
+      </div>
+      <div class="card">
+        <h3 class="h3">Hidden overload</h3>
+        <p class="spacer-8 p">Too much work in flight. The same critical teams are booked everywhere.</p>
+      </div>
+      <div class="card">
+        <h3 class="h3">Project funding lock-in</h3>
+        <p class="spacer-8 p">Spend is committed to scope, not outcomes. Plans become constraints.</p>
+      </div>
+      <div class="card">
+        <h3 class="h3">Status &gt; evidence</h3>
+        <p class="spacer-8 p">RAG and milestones dominate. Outcome movement is hard to see early.</p>
+      </div>
+    </div>
+
+    <div class="footnote">Key point: this is a portfolio system issue — not a team capability issue.</div>
+  </section>
+
+  <!-- 4. Definition -->
+  <section class="slide" data-slide-number="4" data-layout="two-column" data-title="What LPM is" data-notes="Define LPM in business language: a decision system for investment, capacity, governance-by-evidence. Avoid SAFe jargon.">
+    <span class="tag">The idea</span>
+    <h1 class="h1">LPM is a decision system — not a delivery methodology.</h1>
+    <p class="subtitle">It makes three leadership decisions explicit, repeatable and evidence-based.</p>
+
+    <div class="spacer-24"></div>
+    <div class="two-col">
+      <div class="card-fill">
+        <h3 class="h3">What leaders get</h3>
+        <ul class="bullet">
+          <li>Clear investment choices tied to outcomes.</li>
+          <li>Visible capacity allocation (trade-offs made explicit).</li>
+          <li>Governance based on evidence, not status.</li>
+          <li>Confidence to stop, pivot or double-down early.</li>
+        </ul>
+      </div>
+      <div class="card-fill">
+        <h3 class="h3">What teams get</h3>
+        <ul class="bullet">
+          <li>Fewer conflicting priorities and less churn.</li>
+          <li>Stable direction within clear guardrails.</li>
+          <li>Faster decisions on scope, sequencing and funding.</li>
+          <li>A shared definition of value and success.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Three decisions -->
+  <section class="slide" data-slide-number="5" data-layout="sequence" data-title="Three portfolio decisions" data-notes="Use as the core spine slide. Each step becomes a module later.">
+    <span class="tag">How it works</span>
+    <h1 class="h1">Three decisions, repeated on a cadence.</h1>
+    <p class="subtitle">The goal is speed with control: decide outcomes, allocate capacity, steer by evidence.</p>
+
+    <div class="sequence">
+      <div class="step">
+        <span class="step-number">01</span>
+        <h3 class="h3">Decide outcomes</h3>
+        <ul class="bullet">
+          <li>Agree a small set of outcome KPIs per portfolio.</li>
+          <li>Define “what success looks like” for 90 days.</li>
+          <li>Make trade-offs visible and explicit.</li>
+        </ul>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <div class="step">
+        <span class="step-number">02</span>
+        <h3 class="h3">Allocate capacity</h3>
+        <ul class="bullet">
+          <li>Allocate capacity by theme (e.g., growth / resilience).</li>
+          <li>Set guardrails (risk, spend, WIP, thresholds).</li>
+          <li>Fund value streams, not long scope commitments.</li>
+        </ul>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <div class="step">
+        <span class="step-number">03</span>
+        <h3 class="h3">Steer by evidence</h3>
+        <ul class="bullet">
+          <li>Review outcome movement and flow metrics.</li>
+          <li>Re-forecast and reallocate based on actuals.</li>
+          <li>Stop low-value work early; double down on winners.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Before / after -->
+  <section class="slide" data-slide-number="6" data-layout="two-column" data-title="From-to" data-notes="Make it feel like 'better governance', not 'less governance'.">
+    <span class="tag">What changes</span>
+    <h1 class="h1">From gates and commitments to guardrails and steering.</h1>
+    <p class="subtitle">This keeps control, but shortens the loop between decision and outcome.</p>
+
+    <div class="spacer-24"></div>
+    <div class="two-col">
+      <div class="card">
+        <h3 class="h3">Typical today</h3>
+        <ul class="bullet">
+          <li>Annual plan treated as a fixed commitment.</li>
+          <li>Funding tied to project scope and milestones.</li>
+          <li>Risk and compliance discovered late.</li>
+          <li>Governance focuses on status and conformance.</li>
+          <li>Stopping work is politically difficult.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="h3">With LPM</h3>
+        <ul class="bullet">
+          <li>Plan sets direction; cadence sets steering.</li>
+          <li>Funding tied to outcomes and capacity guardrails.</li>
+          <li>Risk and controls integrated earlier and continuously.</li>
+          <li>Governance focuses on evidence and decisions.</li>
+          <li>Stop / pivot becomes a normal discipline.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Guardrails -->
+  <section class="slide" data-slide-number="7" data-layout="card-grid" data-title="Portfolio guardrails" data-notes="Show that guardrails are the 'control mechanism'. Keep it simple and executive-readable.">
+    <span class="tag">Control with speed</span>
+    <h1 class="h1">Guardrails make faster decisions safe.</h1>
+    <p class="subtitle">Guardrails replace repeated re-approval with clear boundaries for teams and leaders.</p>
+
+    <div class="spacer-24"></div>
+    <div class="card-grid-4">
+      <div class="card">
+        <h3 class="h3">Capacity buckets</h3>
+        <p class="spacer-8 p">Allocate capacity across themes (e.g., resilience, growth, simplification).</p>
+      </div>
+      <div class="card">
+        <h3 class="h3">Decision thresholds</h3>
+        <p class="spacer-8 p">Agree what needs escalation (spend, risk rating, dependencies).</p>
+      </div>
+      <div class="card">
+        <h3 class="h3">WIP limits</h3>
+        <p class="spacer-8 p">Limit work in flight to increase flow and predictability.</p>
+      </div>
+      <div class="card">
+        <h3 class="h3">Value evidence</h3>
+        <p class="spacer-8 p">Require outcome signals early (KPIs, customer feedback, risk metrics).</p>
+      </div>
+    </div>
+
+    <div class="footnote">Wireframe note: you can add division-specific guardrails later (e.g., regulatory commitments, cyber thresholds).</div>
+  </section>
+
+  <!-- 8. Evidence and value -->
+  <section class="slide" data-slide-number="8" data-layout="data-highlight" data-title="Evidence of value" data-notes="Connect to Barclays stakeholder KPIs (NPS, complaints, digital engagement) and also flow/resilience measures.">
+    <span class="tag">Empiricism</span>
+    <h1 class="h1">Evidence replaces opinion in prioritisation.</h1>
+    <p class="subtitle">A small, stable set of measures helps steer investment and explain trade-offs.</p>
+
+    <div class="metrics">
+      <div class="metric">
+        <span class="metric-value">Customer</span>
+        <p class="metric-label">Outcome measures<br><span class="small">e.g., NPS, complaints, digital engagement</span></p>
+      </div>
+      <div class="metric">
+        <span class="metric-value">Efficiency</span>
+        <p class="metric-label">Cost &amp; productivity measures<br><span class="small">e.g., processing time, unit cost, automation rate</span></p>
+      </div>
+      <div class="metric">
+        <span class="metric-value">Resilience</span>
+        <p class="metric-label">Risk &amp; control measures<br><span class="small">e.g., incident rate, remediation time, control health</span></p>
+      </div>
+      <div class="metric">
+        <span class="metric-value">Flow</span>
+        <p class="metric-label">Delivery system measures<br><span class="small">e.g., cycle time, predictability, WIP</span></p>
+      </div>
+    </div>
+
+    <div class="footnote">Wireframe note: use a single portfolio scorecard view (actual vs target + trend) in the deep dive.</div>
+  </section>
+
+  <!-- 9. Cadence -->
+  <section class="slide" data-slide-number="9" data-layout="sequence" data-title="Portfolio cadence" data-notes="Make the cadence feel lightweight. Emphasise that governance gets faster because it happens more often with less drama.">
+    <span class="tag">Operating rhythm</span>
+    <h1 class="h1">A lightweight cadence keeps the portfolio aligned.</h1>
+    <p class="subtitle">Shorter cycles reduce surprises and make reallocation routine.</p>
+
+    <div class="sequence">
+      <div class="step">
+        <span class="step-number">Quarterly</span>
+        <h3 class="h3">Outcome &amp; capacity reset</h3>
+        <ul class="bullet">
+          <li>Confirm strategic themes and targets.</li>
+          <li>Adjust capacity buckets and guardrails.</li>
+          <li>Rebalance based on evidence.</li>
+        </ul>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <div class="step">
+        <span class="step-number">Monthly</span>
+        <h3 class="h3">Portfolio steering</h3>
+        <ul class="bullet">
+          <li>Review outcome movement and flow.</li>
+          <li>Resolve cross-team dependencies.</li>
+          <li>Stop / pivot decisions (fast).</li>
+        </ul>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <div class="step">
+        <span class="step-number">Continuous</span>
+        <h3 class="h3">Value tracking</h3>
+        <ul class="bullet">
+          <li>Update scorecard (actual vs target).</li>
+          <li>Re-forecast value based on actuals.</li>
+          <li>Communicate progress consistently.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. 90-day start -->
+  <section class="slide" data-slide-number="10" data-layout="sequence" data-title="90-day start" data-notes="Keep it pragmatic. Suggest 1–2 portfolios/value streams; build the measurement and cadence; make one reallocation decision by day 90.">
+    <span class="tag">How we start</span>
+    <h1 class="h1">Start small: a 90‑day pilot to prove the loop.</h1>
+    <p class="subtitle">No re-org required. Stand up the decision cadence, guardrails and evidence — then scale.</p>
+
+    <div class="sequence">
+      <div class="step">
+        <span class="step-number">Days 0–30</span>
+        <h3 class="h3">Align</h3>
+        <ul class="bullet">
+          <li>Select one portfolio slice to pilot.</li>
+          <li>Agree outcome KPIs and targets.</li>
+          <li>Define initial guardrails and decision rights.</li>
+        </ul>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <div class="step">
+        <span class="step-number">Days 31–60</span>
+        <h3 class="h3">Launch</h3>
+        <ul class="bullet">
+          <li>Stand up monthly steering cadence.</li>
+          <li>Build a simple scorecard (actual vs target).</li>
+          <li>Make trade-offs explicit and visible.</li>
+        </ul>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <div class="step">
+        <span class="step-number">Days 61–90</span>
+        <h3 class="h3">Steer</h3>
+        <ul class="bullet">
+          <li>Run two steering cycles.</li>
+          <li>Make one stop / pivot decision.</li>
+          <li>Agree what to scale next.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. Stakeholder journey -->
+  <section class="slide" data-slide-number="11" data-layout="two-column" data-title="Stakeholder journey" data-notes="Map to your sequence: COOs/portfolio leads -> divisional CEOs -> Group ExCo. CIO alignment in parallel.">
+    <span class="tag">Engagement plan</span>
+    <h1 class="h1">One spine story, different decisions by audience.</h1>
+    <p class="subtitle">Same framing deck; the “ask” changes as you move up the chain.</p>
+
+    <div class="spacer-24"></div>
+    <div class="two-col">
+      <div class="card">
+        <h3 class="h3">Who we brief (in sequence)</h3>
+        <ul class="bullet">
+          <li>Divisional COOs + portfolio leads.</li>
+          <li>Divisional CEOs (once pilot alignment is in place).</li>
+          <li>Group ExCo (to set group-level guardrails).</li>
+          <li>CIOs (in parallel) to align terminology and enablement.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="h3">What we ask for</h3>
+        <ul class="bullet">
+          <li>COO/portfolio: approve pilot scope + cadence.</li>
+          <li>CEO: sponsor trade-offs + stop/pivot discipline.</li>
+          <li>ExCo: endorse group guardrails + scaling path.</li>
+          <li>CIO: enable measurement + portfolio data transparency.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12. The ask -->
+  <section class="slide" data-slide-number="12" data-layout="data-highlight" data-title="The ask" data-notes="Keep it crisp: three asks that are decision-based, not activity-based.">
+    <span class="tag">Decision point</span>
+    <h1 class="h1">What we need to start.</h1>
+    <p class="subtitle">Three commitments to launch a controlled pilot and demonstrate outcomes.</p>
+
+    <div class="metrics">
+      <div class="metric">
+        <span class="metric-value">01</span>
+        <p class="metric-label"><strong>Agree outcomes</strong><br><span class="small">3–5 KPIs + targets for the pilot slice</span></p>
+      </div>
+      <div class="metric">
+        <span class="metric-value">02</span>
+        <p class="metric-label"><strong>Assign decision rights</strong><br><span class="small">who decides, when, and with what evidence</span></p>
+      </div>
+      <div class="metric">
+        <span class="metric-value">03</span>
+        <p class="metric-label"><strong>Commit to cadence</strong><br><span class="small">monthly steering + a 90‑day review</span></p>
+      </div>
+    </div>
+
+    <div class="footnote">Wireframe note: if you want, add a single slide showing “what success looks like at day 90”.</div>
+  </section>
+
+  <!-- 13. Appendix A cover -->
+  <section class="slide" data-slide-number="13" data-layout="title" data-title="Appendix A" data-notes="Appendix: Portfolio leads deep dive. Use only when the room wants mechanics.">
+    <span class="tag">Appendix A</span>
+    <h1 class="h1">Portfolio leads deep dive</h1>
+    <p class="subtitle">How prioritisation, guardrails and steering work in practice (without turning it into a framework discussion).</p>
+  </section>
+
+  <!-- 14. Appendix A sample -->
+  <section class="slide" data-slide-number="14" data-layout="title-body" data-title="Portfolio steering in practice" data-notes="Use value levers and KPIs from the funding model strategy as examples. Replace with Barclays-specific measures where possible.">
+    <h1 class="h1">A simple portfolio steering view (wireframe)</h1>
+    <p class="subtitle">One page that enables decisions: value, flow, risk, and spend.</p>
+
+    <div class="spacer-16"></div>
+    <div class="two-col">
+      <div class="card">
+        <h3 class="h3">Inputs (evidence)</h3>
+        <ul class="bullet">
+          <li>Outcome scorecard: actual vs target.</li>
+          <li>Flow: cycle time, predictability, WIP.</li>
+          <li>Risk: control health, incident trends.</li>
+          <li>Spend: burn vs guardrails.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="h3">Decisions (made monthly)</h3>
+        <ul class="bullet">
+          <li>Stop / pause low-value items.</li>
+          <li>Pivot scope based on learning.</li>
+          <li>Reallocate capacity between themes.</li>
+          <li>Escalate only when thresholds are met.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="card-fill">
+      <p class="p"><strong>Tip:</strong> keep the “prioritisation model” visible but lightweight: a small set of value levers (speed, prioritisation, efficiency, resilience) plus a clear definition of evidence.</p>
+    </div>
+  </section>
+
+  <!-- 15. Appendix B cover -->
+  <section class="slide" data-slide-number="15" data-layout="title" data-title="Appendix B">
+    <span class="tag">Appendix B</span>
+    <h1 class="h1">CEO / ExCo cut</h1>
+    <p class="subtitle">Same spine; emphasis on trade-offs, capital discipline, and confidence to stop/pivot.</p>
+  </section>
+
+  <!-- 16. Appendix C cover -->
+  <section class="slide" data-slide-number="16" data-layout="title" data-title="Appendix C">
+    <span class="tag">Appendix C</span>
+    <h1 class="h1">CIO alignment cut</h1>
+    <p class="subtitle">Translate the business framing into technical enablement without letting the conversation become “framework implementation”.</p>
+  </section>
+
+  <!-- 17. Appendix C sample -->
+  <section class="slide" data-slide-number="17" data-layout="two-column" data-title="CIO translation layer" data-notes="Left: business framing. Right: technical translation. Keep jargon minimal.">
+    <span class="tag">Appendix C (sample)</span>
+    <h1 class="h1">A translation layer that keeps the story business-first.</h1>
+    <p class="subtitle">Use this to align with divisional CIOs while protecting the exec narrative.</p>
+
+    <div class="spacer-24"></div>
+    <div class="two-col">
+      <div class="card">
+        <h3 class="h3">Business framing</h3>
+        <ul class="bullet">
+          <li>Outcome KPIs and targets.</li>
+          <li>Capacity guardrails and decision rights.</li>
+          <li>Evidence-based steering cadence.</li>
+          <li>Transparency and accountability in value.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="h3">Technical enablement</h3>
+        <ul class="bullet">
+          <li>Portfolio telemetry (flow + delivery predictability).</li>
+          <li>Value tracking cadence and dashboards.</li>
+          <li>Dependency and capacity visibility.</li>
+          <li>Integration with existing delivery ways of working.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

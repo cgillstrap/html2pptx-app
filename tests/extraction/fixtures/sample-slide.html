@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      margin: 0;
+      width: 960px;
+      height: 540px;
+      font-family: Arial, sans-serif;
+      background: #1B2A4A;
+      position: relative;
+      overflow: hidden;
+    }
+    .title {
+      position: absolute;
+      top: 40px;
+      left: 60px;
+      font-size: 36px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+    .subtitle {
+      position: absolute;
+      top: 100px;
+      left: 60px;
+      font-size: 18px;
+      color: #B0BEC5;
+    }
+    .content-box {
+      position: absolute;
+      top: 160px;
+      left: 60px;
+      width: 840px;
+      height: 320px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .bullet {
+      font-size: 16px;
+      color: #E0E0E0;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .accent {
+      color: #E94560;
+      font-weight: 600;
+    }
+    .placeholder {
+      position: absolute;
+      right: 60px;
+      bottom: 40px;
+      width: 200px;
+      height: 150px;
+      background: #333;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">Quarterly Business Review</div>
+  <div class="subtitle">Q4 2025 — Strategic Initiatives Update</div>
+  <div class="content-box">
+    <ul>
+      <li class="bullet"><span class="accent">Revenue</span> exceeded target by 12%</li>
+      <li class="bullet"><span class="accent">Client NPS</span> improved to 72 (+8 pts)</li>
+      <li class="bullet"><span class="accent">Utilisation</span> steady at 84% across practice</li>
+      <li class="bullet"><span class="accent">Pipeline</span> 3.2x coverage for next quarter</li>
+    </ul>
+  </div>
+  <div class="placeholder" id="chart-area"></div>
+</body>
+</html>

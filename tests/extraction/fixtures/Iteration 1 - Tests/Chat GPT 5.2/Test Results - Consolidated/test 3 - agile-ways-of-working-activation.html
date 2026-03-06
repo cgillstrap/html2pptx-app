@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agile Ways of Working Activation</title>
+  <style>
+    /* Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* Slide container (HTML-to-PPTX conversion profile: 960×540) */
+    .slide {
+      width: 960px;
+      height: 540px;
+      padding: 40px 48px;
+      background-color: #FFFFFF;
+      font-family: Graphik, Arial, sans-serif;
+      color: #000000;
+      overflow: hidden;
+      page-break-after: always;
+    }
+
+    /* Brand tokens (Accenture light mode) */
+    .brand-text-secondary { color: #818180; }
+    .brand-text-accent { color: #A100FF; }
+    .brand-text-heading { color: #000000; }
+    .brand-text-purple-dark { color: #460073; }
+    .brand-bg-secondary { background-color: #F1F1EF; }
+    .brand-bg-accent { background-color: #A100FF; }
+    .brand-border { border: 1px solid #CFCFCF; }
+
+    /* Type scale */
+    h1 { font-size: 30pt; font-weight: 700; line-height: 1.1; }
+    h2 { font-size: 14pt; font-weight: 400; line-height: 1.2; }
+    h3 { font-size: 13pt; font-weight: 700; line-height: 1.15; }
+    p, li { font-size: 11pt; font-weight: 400; line-height: 1.25; }
+
+    /* Header + footer */
+    .hdr { margin-bottom: 16px; }
+    .hdr .section { font-size: 9pt; color: #818180; }
+    .rule { height: 1px; background-color: #CFCFCF; margin-top: 6px; }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 16px;
+    }
+    .footer .gt { font-size: 18pt; font-weight: 700; color: #A100FF; }
+    .footer .copyright { font-size: 8pt; color: #818180; }
+
+    /* Layout utilities */
+    .subtitle { margin-top: 10px; }
+    .spacer-24 { height: 24px; }
+
+    /* Card grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .card {
+      background-color: #F1F1EF;
+      padding: 14px 14px;
+    }
+    .card p { margin-top: 6px; }
+    .card ul { margin-top: 6px; padding-left: 18px; }
+
+    /* Two-column */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel { padding: 14px 14px; }
+    .panel ul { margin-top: 10px; padding-left: 18px; }
+    .tool-list { margin-top: 10px; }
+    .tool { margin-top: 10px; }
+    .tool .name { font-size: 11pt; font-weight: 700; color: #A100FF; }
+    .tool .desc { margin-top: 2px; }
+    .banner {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background-color: #A100FF;
+      color: #FFFFFF;
+      font-size: 12pt;
+      font-weight: 700;
+    }
+
+    /* Sequence */
+    .sequence {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      align-items: stretch;
+    }
+    .step {
+      flex: 1;
+      background-color: #F1F1EF;
+      padding: 12px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+    .step .top {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .step .num {
+      width: 34px;
+      height: 26px;
+      background-color: #A100FF;
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 10pt;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .step .when { font-size: 9pt; color: #818180; margin-top: 2px; }
+    .step ul { margin-top: 10px; padding-left: 18px; }
+    .arrow {
+      width: 22px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20pt;
+      font-weight: 700;
+      color: #A100FF;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Slide 1 -->
+  <section class="slide" data-slide-number="1" data-layout="card-grid" data-title="Agile ways of working: key enablers" data-background="#FFFFFF">
+    <div class="hdr">
+      <div class="section">02&nbsp;&nbsp;AGILE WAYS OF WORKING</div>
+      <div class="rule"></div>
+    </div>
+
+    <h1 class="brand-text-heading">Agile ways of working: key enablers</h1>
+    <h2 class="subtitle brand-text-secondary">Five capabilities that make agile repeatable across Business and IT</h2>
+
+    <div class="grid">
+      <div class="card">
+        <h3 class="brand-text-purple-dark">A. Agile methods playbook definition</h3>
+        <ul>
+          <li>Common language for roles, ceremonies and artefacts</li>
+          <li>Pragmatic guidance for hybrid delivery and governance</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="brand-text-purple-dark">B. Agile PPM tooling approach</h3>
+        <ul>
+          <li>Single source of truth for intake, priorities and delivery</li>
+          <li>Portfolio views of value, capacity, dependencies and risk</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="brand-text-purple-dark">C. Agile coaching for Business and IT teams</h3>
+        <ul>
+          <li>Hands-on support to build habits in the first sprints</li>
+          <li>Coaching for product ownership, teams and leaders</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="brand-text-purple-dark">D. Agile training design and delivery</h3>
+        <ul>
+          <li>Role-based learning paths (PO, SM, team, leadership)</li>
+          <li>Learning-by-doing with scenarios from real work</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="brand-text-purple-dark">E. Modern engineering support</h3>
+        <ul>
+          <li>Quality, automation and CI/CD to increase confidence</li>
+          <li>Reusable patterns, guardrails and communities of practice</li>
+        </ul>
+      </div>
+      <div class="panel brand-border" style="padding: 14px 14px;">
+        <h3 class="brand-text-accent">Key point</h3>
+        <p style="margin-top: 8px;">Agile is not a process change alone. These enablers turn intent into a repeatable delivery system.</p>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="gt">&gt;</div>
+      <div class="copyright">Copyright © 2026 Accenture. All rights reserved.</div>
+    </div>
+  </section>
+
+  <!-- Slide 2 -->
+  <section class="slide" data-slide-number="2" data-layout="two-column" data-title="The right PPM toolset" data-background="#FFFFFF">
+    <div class="hdr">
+      <div class="section">02&nbsp;&nbsp;AGILE WAYS OF WORKING</div>
+      <div class="rule"></div>
+    </div>
+
+    <h1 class="brand-text-heading">The right PPM toolset enables flow, transparency and governance</h1>
+    <h2 class="subtitle brand-text-secondary">Without consistent tooling, agile delivery becomes hard to prioritise, measure and scale</h2>
+
+    <div class="two-col">
+      <div class="panel brand-bg-secondary">
+        <h3 class="brand-text-purple-dark">What good looks like</h3>
+        <ul>
+          <li>A single “front door” for demand and intake</li>
+          <li>One backlog per product, connected to portfolio priorities</li>
+          <li>Capacity, dependencies and risks visible end-to-end</li>
+          <li>Lightweight governance with real-time reporting (not decks)</li>
+          <li>Common metrics for flow, value and predictability</li>
+        </ul>
+      </div>
+      <div class="panel brand-border">
+        <h3 class="brand-text-purple-dark">Recommended toolchain (Atlassian)</h3>
+        <div class="tool-list">
+          <div class="tool">
+            <div class="name">Jira Software</div>
+            <p class="desc">Team execution, sprint / kanban boards, work tracking</p>
+          </div>
+          <div class="tool">
+            <div class="name">Jira Align</div>
+            <p class="desc">Portfolio planning, value streams, OKRs, funding-to-delivery traceability</p>
+          </div>
+          <div class="tool">
+            <div class="name">Confluence</div>
+            <p class="desc">Playbooks, decision records, product documentation and knowledge base</p>
+          </div>
+          <div class="tool">
+            <div class="name">Jira Service Management</div>
+            <p class="desc">Demand intake, triage and service workflows (front door)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner">Recommendation: standardise on Atlassian (Jira + Jira Align + Confluence) as the PPM backbone.</div>
+
+    <div class="footer">
+      <div class="gt">&gt;</div>
+      <div class="copyright">Copyright © 2026 Accenture. All rights reserved.</div>
+    </div>
+  </section>
+
+  <!-- Slide 3 -->
+  <section class="slide" data-slide-number="3" data-layout="sequence" data-title="Journey to activate the enablers" data-background="#FFFFFF">
+    <div class="hdr">
+      <div class="section">02&nbsp;&nbsp;AGILE WAYS OF WORKING</div>
+      <div class="rule"></div>
+    </div>
+
+    <h1 class="brand-text-heading">Journey to activate the enablers</h1>
+    <h2 class="subtitle brand-text-secondary">A phased approach that builds foundations first, then scales with confidence</h2>
+
+    <div class="sequence">
+      <div class="step">
+        <div class="top">
+          <div class="num">01</div>
+          <div>
+            <h3 class="brand-text-purple-dark">Align &amp; design</h3>
+            <div class="when">Weeks 0–4</div>
+          </div>
+        </div>
+        <ul>
+          <li>Confirm operating model and success measures</li>
+          <li>Draft playbook v1 (A) and training/coaching plan (C, D)</li>
+          <li>Select tooling pattern and data model (B)</li>
+        </ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="top">
+          <div class="num">02</div>
+          <div>
+            <h3 class="brand-text-purple-dark">Stand up foundations</h3>
+            <div class="when">Weeks 4–10</div>
+          </div>
+        </div>
+        <ul>
+          <li>Configure Atlassian stack + reporting (B)</li>
+          <li>Train pilot teams and start coaching (C, D)</li>
+          <li>Establish engineering standards &amp; automation (E)</li>
+        </ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="top">
+          <div class="num">03</div>
+          <div>
+            <h3 class="brand-text-purple-dark">Scale &amp; embed</h3>
+            <div class="when">Quarter 2+</div>
+          </div>
+        </div>
+        <ul>
+          <li>Expand to additional products and portfolios</li>
+          <li>Evolve playbook and communities of practice (A, C)</li>
+          <li>Embed governance cadence in the tools (B)</li>
+        </ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="top">
+          <div class="num">04</div>
+          <div>
+            <h3 class="brand-text-purple-dark">Optimise continuously</h3>
+            <div class="when">Ongoing</div>
+          </div>
+        </div>
+        <ul>
+          <li>Measure flow + outcomes; remove blockers</li>
+          <li>Refresh training, coaching and playbook (A, C, D)</li>
+          <li>Invest in engineering excellence and reuse (E)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="gt">&gt;</div>
+      <div class="copyright">Copyright © 2026 Accenture. All rights reserved.</div>
+    </div>
+  </section>
+
+</body>
+</html>

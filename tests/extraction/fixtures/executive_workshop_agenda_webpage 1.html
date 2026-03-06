@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Executive Workshop Agenda — AI-Driven Last-Mile Orchestration</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#0f1b33;
+      --card2:#0d172e;
+      --text:#e9eefc;
+      --muted:#b7c3e6;
+      --line:rgba(255,255,255,.12);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 600px at 20% 0%, rgba(125,211,252,.25), transparent 60%),
+                  radial-gradient(900px 500px at 80% 10%, rgba(167,139,250,.20), transparent 55%),
+                  linear-gradient(180deg, #070b14, var(--bg));
+      color:var(--text);
+      line-height:1.45;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    header{
+      padding:32px 18px 14px;
+      max-width:1100px;
+      margin:0 auto;
+    }
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .badge{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:8px 12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:13px;
+      backdrop-filter: blur(8px);
+    }
+    .badge b{color:var(--text)}
+    h1{
+      margin:14px 0 8px;
+      font-size: clamp(26px, 3vw, 38px);
+      letter-spacing:-.02em;
+    }
+    .subtitle{
+      color:var(--muted);
+      font-size:15.5px;
+      max-width:72ch;
+    }
+
+    main{
+      max-width:1100px;
+      margin:0 auto;
+      padding: 10px 18px 40px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:16px;
+    }
+    @media (max-width: 960px){
+      main{grid-template-columns:1fr}
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:16px 16px 12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.12);
+    }
+    .card .hd h2{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.01em;
+    }
+    .card .bd{padding:16px}
+
+    .pillrow{display:flex; flex-wrap:wrap; gap:8px}
+    .pill{
+      padding:7px 10px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12.5px;
+    }
+    .pill strong{color:var(--text)}
+
+    .kpiGrid{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+    @media (max-width: 560px){
+      .kpiGrid{grid-template-columns:1fr}
+    }
+    .kpi{
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: rgba(11,18,32,.55);
+    }
+    .kpi .label{color:var(--muted); font-size:12.5px}
+    .kpi .value{font-size:18px; margin-top:4px}
+    .kpi .value span{font-family:var(--mono); font-weight:700}
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size:13.5px;
+    }
+    thead th{
+      text-align:left;
+      color:var(--muted);
+      font-weight:600;
+      padding:10px 8px;
+      border-bottom:1px solid var(--line);
+    }
+    tbody td{
+      padding:12px 8px;
+      border-bottom:1px dashed rgba(255,255,255,.12);
+      vertical-align:top;
+    }
+    tbody tr:hover{background:rgba(255,255,255,.03)}
+    .time{
+      font-family:var(--mono);
+      color:var(--text);
+      white-space:nowrap;
+      width:84px;
+    }
+    .stepTitle{font-weight:700}
+    .intent{color:var(--muted); margin-top:2px}
+
+    .steps{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    details.step{
+      border:1px solid var(--line);
+      background: rgba(15,27,51,.55);
+      border-radius: 16px;
+      overflow:hidden;
+    }
+    details.step[open]{
+      background: rgba(15,27,51,.80);
+    }
+    summary{
+      cursor:pointer;
+      list-style:none;
+      padding: 14px 14px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    summary::-webkit-details-marker{display:none}
+    .sumLeft{display:flex; gap:12px; align-items:flex-start}
+    .num{
+      width:32px;
+      height:32px;
+      border-radius:10px;
+      display:grid;
+      place-items:center;
+      font-weight:800;
+      background: linear-gradient(135deg, rgba(125,211,252,.25), rgba(167,139,250,.25));
+      border:1px solid rgba(255,255,255,.14);
+      flex:0 0 auto;
+    }
+    .sumText{display:flex; flex-direction:column; gap:2px}
+    .sumText .t{font-weight:800}
+    .sumText .m{color:var(--muted); font-size:13px}
+    .sumRight{
+      font-family:var(--mono);
+      color:var(--muted);
+      font-size:12.5px;
+      padding-top:2px;
+      white-space:nowrap;
+    }
+    .content{
+      padding: 0 14px 14px;
+      border-top:1px solid rgba(255,255,255,.10);
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    @media (max-width: 720px){
+      .grid2{grid-template-columns:1fr}
+    }
+    .box{
+      padding:12px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      background: rgba(13,23,46,.55);
+    }
+    .box h3{margin:0 0 6px; font-size:13px; color:var(--text)}
+    .box p{margin:0; color:var(--muted); font-size:13.5px}
+    .prompt{
+      margin-top:8px;
+      padding:10px;
+      border-radius: 12px;
+      border:1px dashed rgba(255,255,255,.18);
+      background: rgba(0,0,0,.18);
+      font-family: var(--mono);
+      font-size: 12.3px;
+      color: #dce7ff;
+      white-space: pre-wrap;
+    }
+
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:12px;
+    }
+    button{
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      font-weight:650;
+    }
+    button:hover{background: rgba(255,255,255,.10)}
+    .ghost{background:transparent}
+
+    .foot{
+      max-width:1100px;
+      margin:0 auto;
+      padding: 10px 18px 26px;
+      color:var(--muted);
+      font-size:12.5px;
+    }
+    .divider{
+      height:1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent);
+      margin: 18px 0;
+    }
+
+    .toast{
+      position: fixed;
+      inset: auto 18px 18px auto;
+      background: rgba(10,16,30,.92);
+      border:1px solid rgba(255,255,255,.14);
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      opacity:0;
+      transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events:none;
+      max-width: min(420px, calc(100vw - 36px));
+      font-size: 13px;
+    }
+    .toast.show{opacity:1; transform: translateY(0)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="badge"><b>Duration:</b> 60 minutes</div>
+      <div class="badge"><b>Audience:</b> CEO • CIDO • Europe Ops Leadership</div>
+      <div class="badge"><b>Theme:</b> Reinvention wedge (AI-Driven Last-Mile Orchestration)</div>
+    </div>
+    <h1>Executive Workshop Agenda</h1>
+    <div class="subtitle">
+      Align Europe leadership on why <b>AI-Driven Last-Mile Orchestration & Partner Ecosystem</b> is the priority reinvention wedge—
+      then commit to a <b>90-day scale pilot</b> with clear execution gates.
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="hd">
+        <h2>Context & anchors (from the briefing)</h2>
+        <span class="badge">Reinvention narrative</span>
+      </div>
+      <div class="bd">
+        <div class="pillrow">
+          <div class="pill"><strong>Value magnitude:</strong> ~ $250M (CEO-endorsed)</div>
+          <div class="pill"><strong>Investment:</strong> ~ half of value (~$125M)</div>
+          <div class="pill"><strong>Cost pressure:</strong> ~$8+ per package</div>
+          <div class="pill"><strong>Service baseline:</strong> ~91% OTP</div>
+          <div class="pill"><strong>Partner API coverage:</strong> ~43%</div>
+          <div class="pill"><strong>Dispatcher training completion:</strong> ~28%</div>
+        </div>
+
+        <div class="kpiGrid" aria-label="Key anchors">
+          <div class="kpi">
+            <div class="label">CEO-endorsed value potential</div>
+            <div class="value"><span>$250M</span> (order of magnitude)</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Europe delivery cost</div>
+            <div class="value"><span>$8+</span> per package</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Europe OTP baseline</div>
+            <div class="value"><span>~91%</span> on-time</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="box">
+          <h3>Workshop outcomes</h3>
+          <p>
+            1) Align on why this is the highest-leverage, near-term controllable performance lever in Europe.
+            <br/>2) Make readiness blockers explicit—and convert them into execution gates.
+            <br/>3) Confirm sponsorship and decisions to launch a 90-day scale pilot (2–3 core countries).
+          </p>
+        </div>
+
+        <div class="actions">
+          <button id="expandAll">Expand all steps</button>
+          <button id="collapseAll" class="ghost">Collapse all</button>
+          <button id="copyAll" title="Copies all image prompts to clipboard">Copy all image prompts</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <div class="hd">
+        <h2>Journey View (60 minutes)</h2>
+        <span class="badge">Agenda map</span>
+      </div>
+      <div class="bd">
+        <table aria-label="Journey View agenda">
+          <thead>
+            <tr>
+              <th style="width:92px">Time</th>
+              <th>Step</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="time">0–10</td>
+              <td>
+                <div class="stepTitle">Burning Platform: Europe Performance Reality</div>
+                <div class="intent">Create urgency around cost + OTP gap</div>
+              </td>
+            </tr>
+            <tr>
+              <td class="time">10–20</td>
+              <td>
+                <div class="stepTitle">Reinvention Wedge: AI Orchestration as the Performance Lever</div>
+                <div class="intent">Align on why this is the highest-leverage move</div>
+              </td>
+            </tr>
+            <tr>
+              <td class="time">20–35</td>
+              <td>
+                <div class="stepTitle">Readiness Truth: What’s Blocking “Self-Driving” Operations</div>
+                <div class="intent">Make blockers explicit and solvable</div>
+              </td>
+            </tr>
+            <tr>
+              <td class="time">35–50</td>
+              <td>
+                <div class="stepTitle">ART of Reinvention Roadmap</div>
+                <div class="intent">Convert blockers into a controlled rollout plan</div>
+              </td>
+            </tr>
+            <tr>
+              <td class="time">50–60</td>
+              <td>
+                <div class="stepTitle">Decision & 90-Day Scale Pilot Commitment</div>
+                <div class="intent">Secure sponsorship + action</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </aside>
+
+    <section class="card" style="grid-column: 1 / -1;">
+      <div class="hd">
+        <h2>Step-by-step agenda (interactive)</h2>
+        <span class="badge">Click to expand</span>
+      </div>
+      <div class="bd">
+        <div class="steps" id="steps">
+
+          <details class="step" open>
+            <summary>
+              <div class="sumLeft">
+                <div class="num">1</div>
+                <div class="sumText">
+                  <div class="t">Burning Platform: Europe Performance Reality</div>
+                  <div class="m">Create urgency around cost + OTP gap; anchor value magnitude</div>
+                </div>
+              </div>
+              <div class="sumRight">0–10 min</div>
+            </summary>
+            <div class="content">
+              <div class="grid2">
+                <div class="box">
+                  <h3>Objective</h3>
+                  <p>Align leadership on the urgency and the CEO-endorsed value: ~$250M opportunity, ~$8+ per package cost pressure, ~91% OTP baseline.</p>
+                </div>
+                <div class="box">
+                  <h3>Interaction format</h3>
+                  <p><b>Executive pulse check</b>: “If we fix only one lever in Europe in 2026, what must it be?” Quick vote: Cost vs Service vs Both.</p>
+                </div>
+              </div>
+              <div class="grid2">
+                <div class="box">
+                  <h3>Key executive takeaway</h3>
+                  <p>Europe’s cost competitiveness and service reliability gap is material—and controllable.</p>
+                </div>
+                <div class="box">
+                  <h3>Comic visual concept</h3>
+                  <p>A CEO facing a dashboard with two red needles (Cost, OTP). A locked vault behind reads “$250M Value”.</p>
+                  <div class="prompt" data-prompt>
+Cartoon-style executive dashboard scene. A CEO in business attire looking at two large gauges labeled ‘Cost per Package $8+’ in red and ‘On-Time Performance 91%’ below target. Behind him is a large vault labeled ‘$250M Value Opportunity’. Clean corporate comic style, simple lines, minimal colors, white background.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="step">
+            <summary>
+              <div class="sumLeft">
+                <div class="num">2</div>
+                <div class="sumText">
+                  <div class="t">Reinvention Wedge: AI Orchestration as the Performance Lever</div>
+                  <div class="m">Position as the operating spine and foundation for other AI plays</div>
+                </div>
+              </div>
+              <div class="sumRight">10–20 min</div>
+            </summary>
+            <div class="content">
+              <div class="grid2">
+                <div class="box">
+                  <h3>Objective</h3>
+                  <p>Align on AI-driven dispatch + network orchestration and partner ecosystem upgrade as the highest near-term controllable lever and a scalable foundation (Digital Twin, Micro-hubs/OOH).</p>
+                </div>
+                <div class="box">
+                  <h3>Interaction format</h3>
+                  <p><b>Wedge test</b>: “If we fix dispatch + re-optimization + partner APIs, what breaks in our model—what gets easier?”</p>
+                </div>
+              </div>
+              <div class="grid2">
+                <div class="box">
+                  <h3>Key executive takeaway</h3>
+                  <p>This is not an AI experiment—it’s the operating spine for Europe reinvention.</p>
+                </div>
+                <div class="box">
+                  <h3>Comic visual concept</h3>
+                  <p>A big wedge labeled “AI Orchestration” lifting two heavy blocks labeled “Cost” and “Service”; foundation blocks behind labeled “Digital Twin” and “Micro-hubs”.</p>
+                  <div class="prompt" data-prompt>
+Business comic illustration of a large wedge labeled ‘AI Orchestration’ lifting two heavy blocks labeled ‘Cost’ and ‘Service’. Behind it are foundation blocks labeled ‘Digital Twin’ and ‘Micro-Hubs’. Executive cartoon style, clean corporate illustration, simple and bold.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="step">
+            <summary>
+              <div class="sumLeft">
+                <div class="num">3</div>
+                <div class="sumText">
+                  <div class="t">Readiness Truth: What’s Blocking “Self-Driving” Operations</div>
+                  <div class="m">Make blockers explicit and investable (APIs, TLS, adoption, KPI conflicts)</div>
+                </div>
+              </div>
+              <div class="sumRight">20–35 min</div>
+            </summary>
+            <div class="content">
+              <div class="grid2">
+                <div class="box">
+                  <h3>Objective</h3>
+                  <p>Surface the four measurable constraints: ~43% partner API coverage, TLS baseline gaps, ~28% training and low trust, overrides spiking (>35%) due to KPI conflicts.</p>
+                </div>
+                <div class="box">
+                  <h3>Interaction format</h3>
+                  <p><b>Executive prioritization</b>: Vote the #1 blocker to scaling. Fast debate: “Fix tech first or trust first?”</p>
+                </div>
+              </div>
+              <div class="grid2">
+                <div class="box">
+                  <h3>Key executive takeaway</h3>
+                  <p>These are not unknown unknowns—they are fixable gates.</p>
+                </div>
+                <div class="box">
+                  <h3>Comic visual concept</h3>
+                  <p>A “self-driving delivery truck” stopped at four red traffic lights labeled APIs 43%, TLS Baseline, 28% Training, KPI Conflict.</p>
+                  <div class="prompt" data-prompt>
+Corporate cartoon of a self-driving delivery truck stopped at four red traffic lights labeled ‘APIs 43%’, ‘TLS Baseline’, ‘28% Training’, and ‘KPI Conflict’. Clean executive comic style, simple shapes, white background.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="step">
+            <summary>
+              <div class="sumLeft">
+                <div class="num">4</div>
+                <div class="sumText">
+                  <div class="t">ART of Reinvention Roadmap</div>
+                  <div class="m">Convert blockers into a controlled rollout: Adopt, Re-platform, Transform</div>
+                </div>
+              </div>
+              <div class="sumRight">35–50 min</div>
+            </summary>
+            <div class="content">
+              <div class="grid2">
+                <div class="box">
+                  <h3>Objective</h3>
+                  <p>Translate readiness blockers into Accenture’s ART of Reinvention: <b>A</b> adopt/accelerate (training + shadow→enforcement), <b>R</b> re-platform (APIs + TLS), <b>T</b> transform (KPI hierarchy to reduce overrides).</p>
+                </div>
+                <div class="box">
+                  <h3>Interaction format</h3>
+                  <p><b>Non-negotiables</b>: What must be enforced? What governance prevents backsliding? Define 2–3 “gates” that must be green before scale.</p>
+                </div>
+              </div>
+              <div class="grid2">
+                <div class="box">
+                  <h3>Key executive takeaway</h3>
+                  <p>Reinvention is execution discipline—not just technology deployment.</p>
+                </div>
+                <div class="box">
+                  <h3>Comic visual concept</h3>
+                  <p>Three stepping stones across a river labeled Adopt, Re-platform, Transform. Executives crossing from “Manual Overrides” to “Self-Driving Network”.</p>
+                  <div class="prompt" data-prompt>
+Minimalist business cartoon of three stepping stones across a river labeled ‘Adopt’, ‘Re-platform’, and ‘Transform’. Executives walking from a side labeled ‘Manual Overrides’ to a side labeled ‘Self-Driving Network’. Clean corporate comic style.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="step">
+            <summary>
+              <div class="sumLeft">
+                <div class="num">5</div>
+                <div class="sumText">
+                  <div class="t">Decision & 90-Day Scale Pilot Commitment</div>
+                  <div class="m">Secure sponsorship, scope, and decision gates for 2–3 core countries</div>
+                </div>
+              </div>
+              <div class="sumRight">50–60 min</div>
+            </summary>
+            <div class="content">
+              <div class="grid2">
+                <div class="box">
+                  <h3>Objective</h3>
+                  <p>Confirm the 90-day scale pilot: pick 2–3 countries; run shadow-mode → enforced orchestration; accelerate API onboarding with TLS gates; reset KPI hierarchy to cut overrides; scale by playbook.</p>
+                </div>
+                <div class="box">
+                  <h3>Interaction format</h3>
+                  <p><b>Decision framing</b>: “What would make us regret not starting in 90 days?” Name CEO/CIDO sponsor and agree top 3 decisions required this week.</p>
+                </div>
+              </div>
+              <div class="grid2">
+                <div class="box">
+                  <h3>Key executive takeaway</h3>
+                  <p>This is a controlled performance inflection—not a technology experiment.</p>
+                </div>
+                <div class="box">
+                  <h3>Comic visual concept</h3>
+                  <p>A runway labeled “90-Day Scale Pilot” with a delivery truck accelerating toward “Europe Performance Inflection”.</p>
+                  <div class="prompt" data-prompt>
+Executive cartoon of a delivery truck accelerating down a runway labeled ‘90-Day Scale Pilot’ toward a large sign that says ‘Europe Performance Inflection’. Clean, professional comic style, white background.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="foot">
+    <div class="divider"></div>
+    <div>
+      <b>Source:</b> Executive-ready reinvention narrative — AI-Driven Last-Mile Orchestration & Partner Ecosystem (provided by user).
+      <br/>
+      <span style="color:rgba(233,238,252,.7)">Note:</span> Numbers and anchors are reproduced as stated in the briefing; validate prior to decision-making.
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const toast = document.getElementById('toast');
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    document.getElementById('expandAll').addEventListener('click', () => {
+      $$('.step').forEach(d => d.open = true);
+      showToast('Expanded all steps');
+    });
+
+    document.getElementById('collapseAll').addEventListener('click', () => {
+      $$('.step').forEach(d => d.open = false);
+      showToast('Collapsed all steps');
+    });
+
+    document.getElementById('copyAll').addEventListener('click', async () => {
+      const prompts = $$('[data-prompt]').map(p => p.innerText.trim()).filter(Boolean);
+      const text = prompts.map((p, i) => `Step ${i+1} prompt:\n${p}`).join('\n\n');
+      try{
+        await navigator.clipboard.writeText(text);
+        showToast('Copied all image prompts');
+      }catch(e){
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        showToast('Copied (fallback)');
+      }
+    });
+  </script>
+</body>
+</html>

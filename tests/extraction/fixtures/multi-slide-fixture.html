@@ -1,0 +1,237 @@
+<!-- Save as: test/extraction/fixtures/multi-slide-test.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #0D1B2A;
+    }
+
+    .slide {
+      width: 960px;
+      height: 540px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Slide 1: Title Slide ──────────────────────────── */
+    .slide[data-slide-number="1"] {
+      background: linear-gradient(135deg, #1B2A4A 0%, #0D1B2A 100%);
+      background-color: #1B2A4A; /* fallback for extraction */
+    }
+
+    .slide[data-slide-number="1"] .title {
+      position: absolute;
+      top: 160px;
+      left: 80px;
+      font-size: 42px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .slide[data-slide-number="1"] .subtitle {
+      position: absolute;
+      top: 230px;
+      left: 80px;
+      font-size: 20px;
+      color: #B0BEC5;
+    }
+
+    .slide[data-slide-number="1"] .date {
+      position: absolute;
+      top: 280px;
+      left: 80px;
+      font-size: 14px;
+      color: #607D8B;
+    }
+
+    .slide[data-slide-number="1"] .accent-bar {
+      position: absolute;
+      top: 140px;
+      left: 80px;
+      width: 60px;
+      height: 4px;
+      background: #E94560;
+      border-radius: 2px;
+    }
+
+    /* ── Slide 2: Card Grid ────────────────────────────── */
+    .slide[data-slide-number="2"] {
+      background-color: #F5F7FA;
+    }
+
+    .slide[data-slide-number="2"] h1 {
+      position: absolute;
+      top: 30px;
+      left: 60px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #1B2A4A;
+    }
+
+    .slide[data-slide-number="2"] .card-grid {
+      position: absolute;
+      top: 90px;
+      left: 60px;
+      width: 840px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .slide[data-slide-number="2"] .card {
+      background: #FFFFFF;
+      border-radius: 10px;
+      padding: 20px;
+      border-left: 4px solid #E94560;
+    }
+
+    .slide[data-slide-number="2"] .card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1B2A4A;
+      margin-bottom: 8px;
+    }
+
+    .slide[data-slide-number="2"] .card p {
+      font-size: 12px;
+      color: #607D8B;
+      line-height: 1.5;
+    }
+
+    /* ── Slide 3: Key Metrics ──────────────────────────── */
+    .slide[data-slide-number="3"] {
+      background-color: #1B2A4A;
+    }
+
+    .slide[data-slide-number="3"] h1 {
+      position: absolute;
+      top: 30px;
+      left: 60px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .slide[data-slide-number="3"] .metrics-row {
+      position: absolute;
+      top: 120px;
+      left: 60px;
+      width: 840px;
+      display: flex;
+      gap: 24px;
+    }
+
+    .slide[data-slide-number="3"] .metric-card {
+      flex: 1;
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .slide[data-slide-number="3"] .metric-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #E94560;
+      margin-bottom: 8px;
+    }
+
+    .slide[data-slide-number="3"] .metric-label {
+      font-size: 14px;
+      color: #B0BEC5;
+    }
+
+    .slide[data-slide-number="3"] .metric-delta {
+      font-size: 12px;
+      color: #4CAF50;
+      margin-top: 4px;
+    }
+
+    .slide[data-slide-number="3"] .footnote {
+      position: absolute;
+      bottom: 30px;
+      left: 60px;
+      font-size: 11px;
+      color: #607D8B;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SLIDE 1: Title -->
+  <section class="slide" data-slide-number="1" data-layout="title">
+    <div class="accent-bar"></div>
+    <h1 class="title">Quarterly Business Review</h1>
+    <p class="subtitle">Strategic Initiatives & Performance Update</p>
+    <p class="date">Q4 2025 — Presented to Executive Committee</p>
+  </section>
+
+  <!-- SLIDE 2: Card Grid -->
+  <section class="slide" data-slide-number="2" data-layout="card-grid"
+           data-title="Key Enablers">
+    <h1>Key Enablers</h1>
+    <div class="card-grid">
+      <div class="card">
+        <h3>Agile Leadership</h3>
+        <p>Leaders who champion iterative thinking, psychological safety, and servant leadership.</p>
+      </div>
+      <div class="card">
+        <h3>Cross-functional Teams</h3>
+        <p>Empowered, self-organising teams with end-to-end accountability.</p>
+      </div>
+      <div class="card">
+        <h3>Iterative Delivery</h3>
+        <p>Short sprint cycles with regular inspect-and-adapt loops.</p>
+      </div>
+      <div class="card">
+        <h3>Transparent Prioritisation</h3>
+        <p>A single ranked backlog visible to all stakeholders.</p>
+      </div>
+      <div class="card">
+        <h3>Integrated Tooling</h3>
+        <p>A connected toolchain that eliminates silos with automated pipelines.</p>
+      </div>
+      <div class="card">
+        <h3>Outcome-based Metrics</h3>
+        <p>Measurement focused on value delivered, not activity.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: Key Metrics -->
+  <section class="slide" data-slide-number="3" data-layout="metrics"
+           data-title="Q4 Performance">
+    <h1>Q4 Performance Dashboard</h1>
+    <div class="metrics-row">
+      <div class="metric-card">
+        <p class="metric-value">$4.2M</p>
+        <p class="metric-label">Revenue</p>
+        <p class="metric-delta">+12% vs target</p>
+      </div>
+      <div class="metric-card">
+        <p class="metric-value">72</p>
+        <p class="metric-label">Client NPS</p>
+        <p class="metric-delta">+8 points QoQ</p>
+      </div>
+      <div class="metric-card">
+        <p class="metric-value">84%</p>
+        <p class="metric-label">Utilisation</p>
+        <p class="metric-delta">Steady</p>
+      </div>
+      <div class="metric-card">
+        <p class="metric-value">3.2x</p>
+        <p class="metric-label">Pipeline Coverage</p>
+        <p class="metric-delta">+0.4x QoQ</p>
+      </div>
+    </div>
+    <p class="footnote">Source: Finance & Operations dashboards as at 31 December 2025</p>
+  </section>
+
+</body>
+</html>
