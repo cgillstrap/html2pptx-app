@@ -17,18 +17,19 @@
 // detection layer, speaker notes from data-notes attributes, and
 // scale-to-fit when content exceeds the slide viewport.
 //
+// Key Changes (Session 4):
+// - Shape text styling: shapes can now contain text with font, size, colour,
+//   bold, italic, alignment, and margin properties. The shape rendering path
+//   applies these from the extraction data's style property. This enables
+//   badge labels, phase durations, and styled containers with text to render
+//   correctly in PPTX rather than appearing as empty rectangles.
+//
 // Key Changes (Session 3):
-// - Scale-to-fit: when extracted elements extend beyond the slide viewport,
-//   uniform scaling is applied to all positions, sizes, and font sizes so
-//   content fits within the slide boundary. A warning is emitted whenever
-//   scaling is applied. This is a generator concern (not extractor) because
-//   the extractor's job is faithful capture; the generator's job is to map
-//   content to the output format's constraints.
+// - Scale-to-fit: uniform scaling when content exceeds viewport
 //
 // Key Changes (Session 2):
-// - Speaker notes: use data-notes attribute when present, breadcrumb fallback
-// - addBackground: handle data URI backgrounds from gradient rasterisation
-//   (capturePage in extractor.js) alongside file path backgrounds
+// - Speaker notes from data-notes attributes
+// - Data URI background support for gradient rasterisation
 //
 // Contract:
 //   Input:  Multi-slide extraction result + output path + options
@@ -54,17 +55,6 @@ const SCALE_TOLERANCE_IN = 0.05;
 /**
  * Computes a uniform scale factor and centering offsets to fit all
  * elements within the viewport.
- *
- * Scans all element positions (including lines and placeholders) to find
- * the maximum extent in both dimensions. If content exceeds the viewport
- * (minus tolerance), returns the scale factor needed to fit plus the
- * x/y offsets to centre the scaled content on the slide.
- *
- * Uses the tighter of the two dimensions so that content fits in both
- * directions after uniform scaling.
- *
- * Also computes the minimum origin (smallest x/y) so that centering
- * accounts for content that doesn't start at 0,0.
  *
  * @param {object} slideData - Per-slide extraction data
  * @param {number} vpW - Viewport width in inches
@@ -105,7 +95,6 @@ function computeScaleAndOffset(slideData, vpW, vpH) {
     }
   }
 
-  // No elements — nothing to scale or centre
   if (maxR === 0 && maxB === 0) {
     return { scale: 1, offsetX: 0, offsetY: 0 };
   }
@@ -118,18 +107,11 @@ function computeScaleAndOffset(slideData, vpW, vpH) {
     return { scale: 1, offsetX: 0, offsetY: 0 };
   }
 
-  // After scaling, compute the new bounding box and centre it.
-  // Content span is (max - min) in each dimension; after scaling
-  // the span shrinks, and we distribute the remaining space evenly.
   const scaledW = (maxR - minL) * scale;
   const scaledH = (maxB - minT) * scale;
   const scaledMinL = minL * scale;
   const scaledMinT = minT * scale;
 
-  // The offset shifts all content so the scaled bounding box is
-  // centred within the viewport. We account for the existing origin
-  // (scaledMinL/T) so content that started with padding from the
-  // left/top edge stays balanced.
   const offsetX = (vpW - scaledW) / 2 - scaledMinL;
   const offsetY = (vpH - scaledH) / 2 - scaledMinT;
 
@@ -141,19 +123,7 @@ function computeScaleAndOffset(slideData, vpW, vpH) {
  * sizes, font sizes, and spacing values in a slide's element and
  * placeholder data.
  *
- * Mutates the slideData in place. This is safe because the extraction
- * result is consumed once and not reused.
- *
- * Scaled properties:
- *   - Element positions (x, y, w, h) in inches — then offset for centering
- *   - Line coordinates (x1, y1, x2, y2) and width
- *   - Shape border width, corner radius, shadow blur/offset
- *   - Font size, line spacing, paragraph spacing, margins (points)
- *   - Inline text run font sizes (points)
- *   - List bullet indentation (points)
- *   - Placeholder positions (x, y, w, h) in inches
- *
- * NOT scaled: backgrounds (fill the slide regardless of content size)
+ * Mutates the slideData in place.
  *
  * @param {object} slideData - Per-slide extraction data (mutated in place)
  * @param {number} scale - Uniform scale factor (0 < scale < 1)
@@ -206,8 +176,6 @@ function applyScaling(slideData, scale, offsetX, offsetY) {
     }
 
     // ── Inline text runs (mixed formatting) ─────────────────
-    // Text elements and div-text fallbacks can have an array of
-    // runs, each with their own fontSize from parseInlineFormatting().
     if (Array.isArray(el.text)) {
       for (const run of el.text) {
         if (run.options) {
@@ -245,13 +213,6 @@ function applyScaling(slideData, scale, offsetX, offsetY) {
 
 /**
  * Adds background to a pptxgenjs slide.
- * Ported from html2pptx-local.cjs addBackground(), extended to handle
- * data URI backgrounds from gradient rasterisation (Session 2).
- *
- * Background types:
- *   - { type: 'image', data: 'data:image/png;...' }  → gradient capture (data URI)
- *   - { type: 'image', path: './bg.png' }             → file reference from CSS url()
- *   - { type: 'color', value: '1B2A4A' }              → solid colour
  *
  * @param {object} slideData - Per-slide extraction data
  * @param {object} targetSlide - pptxgenjs slide object
@@ -262,32 +223,25 @@ function addBackground(slideData, targetSlide, htmlDir) {
   if (!bg) return;
 
   if (bg.type === 'image') {
-    // Data URI backgrounds (from gradient rasterisation via capturePage).
-    // These are self-contained PNG data — no file path to resolve or validate.
     if (bg.data) {
       targetSlide.background = { data: bg.data };
       return;
     }
 
-    // File path backgrounds (from CSS url() references in the HTML).
-    // Subject to path resolution and security checks.
     if (bg.path) {
       let imagePath = bg.path.startsWith('file://')
         ? bg.path.replace('file://', '')
         : bg.path;
 
-      // Security: block remote URLs
       if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
         console.warn(`[Generator] Skipped remote background image: ${imagePath}`);
         return;
       }
 
-      // Resolve relative paths against HTML directory
       if (!path.isAbsolute(imagePath)) {
         imagePath = path.resolve(htmlDir, imagePath);
       }
 
-      // Security: verify path doesn't escape htmlDir
       if (htmlDir && !imagePath.startsWith(htmlDir)) {
         console.warn(`[Generator] Blocked background path traversal: ${imagePath}`);
         return;
@@ -307,13 +261,6 @@ function addBackground(slideData, targetSlide, htmlDir) {
  * Adds extracted elements to a pptxgenjs slide.
  * Ported from html2pptx-local.cjs addElements().
  *
- * This is the core rendering function. It handles:
- *   - Images with local path resolution
- *   - Lines (for partial borders)
- *   - Shapes (divs with background/border/shadow)
- *   - Lists (UL/OL with bullet formatting and text runs)
- *   - Text (P, H1-H6 with inline formatting runs)
- *
  * @param {object} slideData - Per-slide extraction data
  * @param {object} targetSlide - pptxgenjs slide object
  * @param {object} pres - pptxgenjs presentation object
@@ -326,18 +273,15 @@ function addElements(slideData, targetSlide, pres, htmlDir) {
     if (el.type === 'image') {
       let imagePath = el.src;
 
-      // Handle file:// protocol
       if (imagePath.startsWith('file://')) {
         imagePath = imagePath.replace('file://', '');
       }
 
-      // Security: skip remote images
       if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
         console.warn(`[Generator] Skipped remote image: ${imagePath}`);
         continue;
       }
 
-      // Data URIs pass through directly
       if (!imagePath.startsWith('data:')) {
         if (!path.isAbsolute(imagePath)) {
           imagePath = path.resolve(htmlDir, imagePath);
@@ -375,7 +319,13 @@ function addElements(slideData, targetSlide, pres, htmlDir) {
       continue;
     }
 
-    // ── Shapes (divs with bg/border) ───────────────────────────
+    // ── Shapes (divs with bg/border, inline badges) ────────────
+    // Session 4: Shapes can now contain text with styling. When
+    // el.style is present, text properties (font, size, colour,
+    // alignment, margins) are applied so text renders correctly
+    // inside the shape. This handles badge labels, phase durations,
+    // and other styled containers that hold text alongside their
+    // visual properties.
     if (el.type === 'shape') {
       const shapeOpts = {
         x: el.position.x, y: el.position.y,
@@ -390,6 +340,25 @@ function addElements(slideData, targetSlide, pres, htmlDir) {
       if (el.shape.line) shapeOpts.line = el.shape.line;
       if (el.shape.rectRadius > 0) shapeOpts.rectRadius = el.shape.rectRadius;
       if (el.shape.shadow) shapeOpts.shadow = el.shape.shadow;
+
+      // ── Shape text styling (Session 4) ────────────────────────
+      // Apply text properties from extraction data so that text
+      // inside shapes renders with the correct font, size, colour,
+      // and alignment. Without this, shapes containing text (badge
+      // labels, phase durations) would appear as empty rectangles.
+      if (el.style) {
+        if (el.style.fontSize) shapeOpts.fontSize = el.style.fontSize;
+        if (el.style.fontFace) shapeOpts.fontFace = el.style.fontFace;
+        if (el.style.color) shapeOpts.color = el.style.color;
+        if (el.style.bold) shapeOpts.bold = el.style.bold;
+        if (el.style.italic) shapeOpts.italic = el.style.italic;
+        if (el.style.align) shapeOpts.align = el.style.align;
+        if (el.style.valign) shapeOpts.valign = el.style.valign;
+        if (el.style.margin) shapeOpts.margin = el.style.margin;
+        // Remove default PowerPoint internal padding so our
+        // extracted margins control spacing precisely.
+        shapeOpts.inset = 0;
+      }
 
       targetSlide.addText(el.text || '', shapeOpts);
       continue;
@@ -418,15 +387,11 @@ function addElements(slideData, targetSlide, pres, htmlDir) {
     if (el.type === 'div-text' && el.isDivFallback) {
       const config = getConfig();
       if (config.divTextHandling === 'strict') {
-        // Skip — original behaviour
         continue;
       }
-      // Render as text using the same logic as P/H1-H6 below
-      // (falls through to the text rendering block)
     }
 
     // ── Text (P, H1-H6, and div-text fallback) ────────────────
-    // Single-line width adjustment: 2% wider to prevent clipping
     const lineHeight = el.style.lineSpacing || el.style.fontSize * 1.2;
     const isSingleLine = el.position.h <= lineHeight * 1.5;
 
@@ -461,7 +426,7 @@ function addElements(slideData, targetSlide, pres, htmlDir) {
       lineSpacing: el.style.lineSpacing,
       paraSpaceBefore: el.style.paraSpaceBefore,
       paraSpaceAfter: el.style.paraSpaceAfter,
-      inset: 0  // Remove default PowerPoint internal padding
+      inset: 0
     };
 
     if (el.style.align) textOpts.align = el.style.align;
@@ -480,9 +445,6 @@ function addElements(slideData, targetSlide, pres, htmlDir) {
 
 /**
  * Renders placeholder elements as visible shapes if configured.
- * In the original pipeline, placeholders are invisible positions for chart
- * insertion. In our standalone app, we optionally render them so users can
- * see where charts/tables would go.
  *
  * @param {object[]} placeholders - Array of { id, x, y, w, h } from extraction
  * @param {object} targetSlide - pptxgenjs slide object
@@ -530,7 +492,6 @@ async function generatePPTX(extractionResult, outputPath, options = {}) {
   const pres = new PptxGenJS();
   const warnings = [];
 
-  // Use the first slide's viewport as the presentation layout
   const firstVP = slides[0].viewport;
   const layoutW = firstVP.w / PX_PER_IN;
   const layoutH = firstVP.h / PX_PER_IN;
@@ -541,7 +502,6 @@ async function generatePPTX(extractionResult, outputPath, options = {}) {
     const slideData = slides[i];
     const targetSlide = pres.addSlide();
 
-    // Collect any extraction warnings
     if (slideData.errors && slideData.errors.length > 0) {
       slideData.errors.forEach(err => {
         warnings.push(`Slide ${i + 1}: ${err}`);
@@ -549,10 +509,6 @@ async function generatePPTX(extractionResult, outputPath, options = {}) {
     }
 
     // ── Scale-to-fit with centering (Session 3) ────────────
-    // Check if extracted elements exceed the slide viewport.
-    // If so, apply uniform scaling to all positions, sizes, and
-    // font sizes, then centre the scaled content on the slide.
-    // This preserves layout proportions at the cost of smaller text.
     const slideVpW = slideData.viewport.w / PX_PER_IN;
     const slideVpH = slideData.viewport.h / PX_PER_IN;
     const { scale, offsetX, offsetY } = computeScaleAndOffset(slideData, slideVpW, slideVpH);
@@ -571,10 +527,8 @@ async function generatePPTX(extractionResult, outputPath, options = {}) {
       );
     }
 
-    // Background (not affected by scaling — fills the slide)
     addBackground(slideData, targetSlide, htmlDir);
 
-    // Speaker notes: prefer author-supplied data-notes, fall back to breadcrumb
     const authorNotes = slideData.dataAttributes && slideData.dataAttributes.notes;
     if (authorNotes) {
       targetSlide.addNotes(authorNotes);
@@ -582,10 +536,7 @@ async function generatePPTX(extractionResult, outputPath, options = {}) {
       targetSlide.addNotes('Slide ' + (i + 1) + ': ' + slideData.title);
     }
 
-    // Elements
     addElements(slideData, targetSlide, pres, htmlDir);
-
-    // Placeholders (rendered as visible shapes if configured)
     renderPlaceholders(slideData.placeholders, targetSlide, pres);
 
     console.log(

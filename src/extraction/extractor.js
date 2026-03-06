@@ -15,18 +15,34 @@
 // - Div-text fallback for AI-generated HTML that puts text in bare divs
 // - Gradient detection: slide backgrounds marked for rasterisation,
 //   element-level gradients surfaced as warnings
+// - Interactive element filtering
+// - Font validation warnings
+// - High-transparency warnings
+// - Shape text capture with gradient-aware colour fallback
+// - Standalone span/inline element extraction
+// - CSS shape trick detection (border-based visual shapes)
+//
+// Key Changes (Session 4):
+// - Interactive/navigation element filtering
+// - Font validation warnings
+// - High-transparency warnings
+// - Shape text capture: divs with backgrounds that also contain text
+//   preserve the text content. Gradient backgrounds extract the first
+//   colour stop as a solid fallback (not backgroundColor, which is
+//   transparent when only a gradient is set).
+// - Standalone span handling for badge/pill/tag patterns, also with
+//   gradient-aware colour extraction.
+// - CSS trick detection: uses content-area calculation (bounding rect
+//   minus border widths) rather than computed.width, which is unreliable
+//   with box-sizing: border-box.
+//
+// Key Changes (Session 3):
+// - Overflow detection: container-level and element-level
+// - Gradient capture fix for stacked/overlapping slide layouts
 //
 // Key Changes (Session 2):
-// - Gradient background detection in extraction script — returns 'gradient'
-//   type with captureRect instead of silently falling back to solid colour
-// - Element-level gradient detection — pushes warning to errors array
-// - Post-extraction gradient capture pass using capturePage() — converts
-//   gradient backgrounds to data URI PNGs before the hidden window closes
-// - This replaces the Sharp-based approach from the original repo. Rationale:
-//   Sharp is an image processing library, not a capture tool. The original
-//   repo used Playwright for capture + Sharp for processing. Since we already
-//   replaced Playwright with Electron BrowserWindow, capturePage() is the
-//   platform-native equivalent. No new dependency required.
+// - Gradient background detection and capturePage() rasterisation
+// - Element-level gradient detection with warning fallback
 //
 // Contract:
 //   Input:  Absolute path to an HTML file
@@ -78,6 +94,31 @@ const EXTRACTION_SCRIPT = `
     const match = rgbStr.match(/rgba\\((\\d+),\\s*(\\d+),\\s*(\\d+),\\s*([\\d.]+)\\)/);
     if (!match || !match[4]) return null;
     return Math.round((1 - parseFloat(match[4])) * 100);
+  };
+
+  // ── Gradient colour extraction (Session 4) ─────────────────────
+  // Extracts the first colour stop from a CSS gradient string as a
+  // solid fallback. When an element's only background is a gradient,
+  // backgroundColor is 'transparent' — useless as a fill. This
+  // function parses the gradient to get a reasonable solid colour.
+  //
+  // Handles: #hex, #shortHex, rgb(), rgba() colour formats in
+  // linear-gradient, radial-gradient, and conic-gradient strings.
+  var extractGradientFallbackColor = function(bgImage) {
+    // Try hex colour first (#RGB, #RRGGBB, #RRGGBBAA)
+    var hexMatch = bgImage.match(/#([0-9a-fA-F]{3,8})/);
+    if (hexMatch) {
+      var hex = hexMatch[1];
+      // Expand shorthand #RGB → #RRGGBB
+      if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+      }
+      return hex.substring(0, 6).toUpperCase();
+    }
+    // Try rgb/rgba
+    var rgbMatch = bgImage.match(/rgba?\\([^)]+\\)/);
+    if (rgbMatch) return rgbToHex(rgbMatch[0]);
+    return null;
   };
 
   const applyTextTransform = (text, textTransform) => {
@@ -193,6 +234,45 @@ const EXTRACTION_SCRIPT = `
     return runs.filter(r => r.text.length > 0);
   };
 
+  // ── Font validation whitelist (Session 4) ──────────────────────
+  var SAFE_FONTS = new Set([
+    'arial', 'calibri', 'cambria', 'candara', 'consolas', 'constantia',
+    'corbel', 'courier new', 'georgia', 'impact', 'lucida console',
+    'lucida sans unicode', 'palatino linotype', 'segoe ui', 'segoe ui light',
+    'segoe ui semibold', 'segoe ui semilight', 'tahoma', 'times new roman',
+    'trebuchet ms', 'verdana', 'wingdings', 'wingdings 2', 'wingdings 3',
+    'symbol', 'webdings', 'microsoft sans serif', 'ms sans serif',
+    'aptos', 'aptos narrow', 'aptos display', 'garamond', 'book antiqua',
+    'franklin gothic medium', 'century gothic', 'gill sans mt',
+    'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy',
+    'helvetica', 'helvetica neue', 'times', 'courier',
+    'system-ui', '-apple-system', 'blinkmacsystemfont', 'roboto'
+  ]);
+
+  // Block tag set for shape text detection
+  var SHAPE_BLOCK_TAGS = new Set([
+    'DIV','SECTION','ARTICLE','P','H1','H2','H3','H4','H5','H6',
+    'UL','OL','TABLE','BLOCKQUOTE','PRE','HEADER','FOOTER','NAV'
+  ]);
+
+  // ── Resolve fill colour (Session 4) ────────────────────────────
+  // Determines the correct solid fill colour for a shape element.
+  // When only a gradient is present, backgroundColor is transparent —
+  // so we extract the first gradient colour stop instead.
+  // Returns the 6-char hex string for pptxgenjs.
+  var resolveShapeFill = function(computed) {
+    var bgColor = computed.backgroundColor;
+    var hasSolidBg = bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent';
+    if (hasSolidBg) return rgbToHex(bgColor);
+
+    var bgImg = computed.backgroundImage;
+    if (bgImg && bgImg !== 'none' && bgImg.includes('gradient')) {
+      var fallback = extractGradientFallbackColor(bgImg);
+      if (fallback) return fallback;
+    }
+    return null;
+  };
+
   // ── Per-container extraction (core of original extractSlideData) ──
 
   function extractSlideData(container, containerRect) {
@@ -201,6 +281,16 @@ const EXTRACTION_SCRIPT = `
     const errors = [];
     const textTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'LI'];
     const processed = new Set();
+    var interactiveSkipCount = 0;
+
+    var INTERACTIVE_TAGS_SET = new Set([
+      'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'NAV', 'FORM'
+    ]);
+
+    var EVENT_HANDLER_ATTRS = [
+      'onclick', 'onchange', 'onkeydown', 'onkeyup',
+      'onmousedown', 'onmouseup', 'ontouchstart', 'ontouchend', 'onsubmit'
+    ];
 
     // Background — with gradient detection (Session 2 addition)
     const containerStyle = window.getComputedStyle(container);
@@ -213,10 +303,6 @@ const EXTRACTION_SCRIPT = `
       if (urlMatch) {
         background = { type: 'image', path: urlMatch[1] };
       } else if (bgImage.includes('gradient')) {
-        // Mark for rasterisation — extractor.js will capturePage() this rect
-        // and replace with a data URI PNG before the hidden window closes.
-        // We store the absolute page coordinates for the capture, plus the
-        // solid fallback colour in case capture fails.
         background = {
           type: 'gradient',
           fallbackColor: rgbToHex(bgColor),
@@ -241,8 +327,25 @@ const EXTRACTION_SCRIPT = `
     container.querySelectorAll('*').forEach((el) => {
       if (processed.has(el)) return;
 
-      // Skip if outside this container (for body-fallback with multi-slide)
+      // Skip if outside this container
       if (!container.contains(el)) return;
+
+      // ── Interactive/navigation element filtering (Session 4) ──
+      if (INTERACTIVE_TAGS_SET.has(el.tagName)) {
+        el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
+        processed.add(el);
+        interactiveSkipCount++;
+        return;
+      }
+      var hasEventHandler = EVENT_HANDLER_ATTRS.some(function(attr) {
+        return el.hasAttribute(attr);
+      });
+      if (hasEventHandler) {
+        el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
+        processed.add(el);
+        interactiveSkipCount++;
+        return;
+      }
 
       // Validate text elements
       if (textTags.includes(el.tagName)) {
@@ -298,16 +401,13 @@ const EXTRACTION_SCRIPT = `
         const hasBg = computed.backgroundColor && computed.backgroundColor !== 'rgba(0, 0, 0, 0)';
 
         // Element-level gradient detection (Session 2)
-        // We detect but don't rasterise individual elements for MVP.
-        // The solid backgroundColor is used as fallback. A warning is
-        // surfaced to the user so they know the gradient was lost.
         const elBgImage = computed.backgroundImage;
         const hasGradient = elBgImage && elBgImage !== 'none' && elBgImage.includes('gradient');
         if (hasGradient) {
           errors.push(
             'Element <div> has a CSS gradient background. ' +
             'Gradients on individual elements are not yet supported — ' +
-            'falling back to solid background colour.'
+            'falling back to first colour stop.'
           );
         }
 
@@ -318,6 +418,34 @@ const EXTRACTION_SCRIPT = `
         const borders = [borderTop, borderRight, borderBottom, borderLeft].map(b => parseFloat(b) || 0);
         const hasBorder = borders.some(b => b > 0);
         const hasUniformBorder = hasBorder && borders.every(b => b === borders[0]);
+
+        // ── CSS shape trick detection (Session 4) ──────────────────
+        // Elements with zero content area that use borders to create
+        // visual shapes (CSS triangles, arrows) cannot be faithfully
+        // represented in PPTX. Skip and warn.
+        //
+        // Uses bounding rect minus border widths to compute content
+        // area, rather than computed.width which is unreliable with
+        // box-sizing: border-box (the border widths are included in
+        // the computed width, making a width:0 element report as 14px
+        // if it has a 14px border).
+        if (hasBorder) {
+          var elRect = el.getBoundingClientRect();
+          var totalBorderW = borders[3] + borders[1]; // left + right
+          var totalBorderH = borders[0] + borders[2]; // top + bottom
+          var contentW = elRect.width - totalBorderW;
+          var contentH = elRect.height - totalBorderH;
+          if (contentW < 1 && contentH < 1) {
+            errors.push(
+              'CSS shape trick detected (zero-dimension element with ' +
+              'borders used to create a visual shape like a triangle or ' +
+              'arrow). This cannot be represented in PPTX and was skipped.'
+            );
+            processed.add(el);
+            return;
+          }
+        }
+
         const borderLines = [];
 
         if (hasBorder && !hasUniformBorder) {
@@ -349,25 +477,70 @@ const EXTRACTION_SCRIPT = `
           }
         }
 
-        // Treat gradient as having a background for shape creation purposes.
-        // The fill will use the solid fallback colour — the gradient itself
-        // is lost but the shape is still rendered in the correct position.
+        // Use resolveShapeFill to get the best solid colour, whether
+        // from backgroundColor or from the first gradient colour stop.
         const hasVisualFill = hasBg || hasGradient;
+        var resolvedFill = hasVisualFill ? resolveShapeFill(computed) : null;
 
         if (hasVisualFill || hasBorder) {
           const rect = el.getBoundingClientRect();
           if (rect.width > 0 && rect.height > 0) {
             const shadow = parseBoxShadow(computed.boxShadow);
+
+            // ── Shape text capture (Session 4) ───────────────────
+            var shapeText = '';
+            var shapeStyle = null;
+            var shapeHasBlockChild = false;
+            for (var sci = 0; sci < el.children.length; sci++) {
+              if (SHAPE_BLOCK_TAGS.has(el.children[sci].tagName)) {
+                shapeHasBlockChild = true;
+                break;
+              }
+            }
+            var shapeInnerText = el.textContent ? el.textContent.trim() : '';
+            if (!shapeHasBlockChild && shapeInnerText.length > 0) {
+              var shapeHasFormatting = el.querySelector('b, i, u, strong, em, span');
+              if (shapeHasFormatting) {
+                shapeText = parseInlineFormatting(el);
+                var shapeTT = computed.textTransform;
+                if (shapeTT && shapeTT !== 'none') {
+                  shapeText = shapeText.map(function(run) {
+                    return Object.assign({}, run, {
+                      text: applyTextTransform(run.text, shapeTT)
+                    });
+                  });
+                }
+              } else {
+                shapeText = applyTextTransform(shapeInnerText, computed.textTransform);
+              }
+              var sBold = computed.fontWeight === 'bold' || parseInt(computed.fontWeight) >= 600;
+              shapeStyle = {
+                fontSize: pxToPoints(computed.fontSize),
+                fontFace: computed.fontFamily.split(',')[0].replace(/['"]/g, '').trim(),
+                color: rgbToHex(computed.color),
+                bold: sBold && !shouldSkipBold(computed.fontFamily),
+                italic: computed.fontStyle === 'italic',
+                align: computed.textAlign === 'start' ? 'center' : computed.textAlign,
+                valign: 'middle',
+                margin: [
+                  pxToPoints(computed.paddingLeft),
+                  pxToPoints(computed.paddingRight),
+                  pxToPoints(computed.paddingBottom),
+                  pxToPoints(computed.paddingTop)
+                ]
+              };
+            }
+
             if (hasVisualFill || hasUniformBorder) {
               elements.push({
-                type: 'shape', text: '',
+                type: 'shape', text: shapeText,
                 position: {
                   x: pxToInch(rect.left - offX), y: pxToInch(rect.top - offY),
                   w: pxToInch(rect.width), h: pxToInch(rect.height)
                 },
                 shape: {
-                  fill: hasVisualFill ? rgbToHex(computed.backgroundColor) : null,
-                  transparency: hasVisualFill ? extractAlpha(computed.backgroundColor) : null,
+                  fill: resolvedFill,
+                  transparency: hasBg ? extractAlpha(computed.backgroundColor) : null,
                   line: hasUniformBorder ? { color: rgbToHex(computed.borderColor), width: pxToPoints(computed.borderWidth) } : null,
                   rectRadius: (() => {
                     const radius = computed.borderRadius;
@@ -381,7 +554,8 @@ const EXTRACTION_SCRIPT = `
                     return rv / PX_PER_IN;
                   })(),
                   shadow: shadow
-                }
+                },
+                style: shapeStyle
               });
             }
             elements.push(...borderLines);
@@ -467,6 +641,81 @@ const EXTRACTION_SCRIPT = `
               processed.add(el);
               return;
             }
+          }
+        }
+      }
+
+      // ── Inline elements with visual properties (Session 4) ────
+      // Handles SPAN, A, LABEL with backgrounds (badges, pills, tags).
+      // Uses resolveShapeFill for gradient-aware colour extraction.
+      if (el.tagName === 'SPAN' || el.tagName === 'A' || el.tagName === 'LABEL') {
+        var inlineComputed = window.getComputedStyle(el);
+        var inlineRect = el.getBoundingClientRect();
+        if (inlineRect.width > 0 && inlineRect.height > 0) {
+          var inlineHasBg = inlineComputed.backgroundColor &&
+            inlineComputed.backgroundColor !== 'rgba(0, 0, 0, 0)';
+          var inlineBgImage = inlineComputed.backgroundImage;
+          var inlineHasGradient = inlineBgImage && inlineBgImage !== 'none' &&
+            inlineBgImage.includes('gradient');
+
+          if (inlineHasGradient) {
+            errors.push(
+              'Inline element <' + el.tagName.toLowerCase() + '> has a CSS ' +
+              'gradient background — falling back to first colour stop.'
+            );
+          }
+
+          var inlineHasVisualFill = inlineHasBg || inlineHasGradient;
+          var inlineText = el.textContent ? el.textContent.trim() : '';
+
+          if (inlineHasVisualFill && inlineText.length > 0) {
+            var inlineFill = resolveShapeFill(inlineComputed);
+            var inlineBold = inlineComputed.fontWeight === 'bold' ||
+              parseInt(inlineComputed.fontWeight) >= 600;
+            elements.push({
+              type: 'shape',
+              text: applyTextTransform(inlineText, inlineComputed.textTransform),
+              position: {
+                x: pxToInch(inlineRect.left - offX),
+                y: pxToInch(inlineRect.top - offY),
+                w: pxToInch(inlineRect.width),
+                h: pxToInch(inlineRect.height)
+              },
+              shape: {
+                fill: inlineFill,
+                transparency: inlineHasBg ? extractAlpha(inlineComputed.backgroundColor) : null,
+                line: null,
+                rectRadius: (function() {
+                  var r = inlineComputed.borderRadius;
+                  var rv = parseFloat(r);
+                  if (rv === 0) return 0;
+                  if (r.includes('%')) {
+                    return rv >= 50 ? 1 : (rv / 100) *
+                      pxToInch(Math.min(inlineRect.width, inlineRect.height));
+                  }
+                  if (r.includes('pt')) return rv / 72;
+                  return rv / PX_PER_IN;
+                })(),
+                shadow: null
+              },
+              style: {
+                fontSize: pxToPoints(inlineComputed.fontSize),
+                fontFace: inlineComputed.fontFamily.split(',')[0].replace(/['"]/g, '').trim(),
+                color: rgbToHex(inlineComputed.color),
+                bold: inlineBold && !shouldSkipBold(inlineComputed.fontFamily),
+                italic: inlineComputed.fontStyle === 'italic',
+                align: 'center',
+                valign: 'middle',
+                margin: [
+                  pxToPoints(inlineComputed.paddingLeft),
+                  pxToPoints(inlineComputed.paddingRight),
+                  pxToPoints(inlineComputed.paddingBottom),
+                  pxToPoints(inlineComputed.paddingTop)
+                ]
+              }
+            });
+            processed.add(el);
+            return;
           }
         }
       }
@@ -599,6 +848,50 @@ const EXTRACTION_SCRIPT = `
       processed.add(el);
     });
 
+    if (interactiveSkipCount > 0) {
+      errors.push(
+        interactiveSkipCount + ' interactive element(s) (buttons, controls) ' +
+        'skipped — these have no static equivalent in PPTX.'
+      );
+    }
+
+    // ── Font validation (Session 4) ─────────────────────────────
+    var usedFonts = new Set();
+    for (var fi = 0; fi < elements.length; fi++) {
+      var elFont = elements[fi];
+      if (elFont.style && elFont.style.fontFace) {
+        usedFonts.add(elFont.style.fontFace);
+      }
+    }
+    var unsafeFonts = [];
+    usedFonts.forEach(function(font) {
+      if (!SAFE_FONTS.has(font.toLowerCase())) {
+        unsafeFonts.push(font);
+      }
+    });
+    if (unsafeFonts.length > 0) {
+      errors.push(
+        'Font(s) may not be available on target machines: ' +
+        unsafeFonts.join(', ') + '. ' +
+        'PowerPoint will substitute a default font if these are missing.'
+      );
+    }
+
+    // ── High-transparency warning (Session 4) ───────────────────
+    var highTransCount = 0;
+    for (var ti = 0; ti < elements.length; ti++) {
+      var elT = elements[ti];
+      if (elT.type === 'shape' && elT.shape && elT.shape.transparency != null) {
+        if (elT.shape.transparency > 80) highTransCount++;
+      }
+    }
+    if (highTransCount > 0) {
+      errors.push(
+        highTransCount + ' shape(s) have very high transparency (>80%). ' +
+        'These may appear differently in PowerPoint than in the browser.'
+      );
+    }
+
     return { background, elements, placeholders, errors };
   }
 
@@ -657,9 +950,6 @@ const EXTRACTION_SCRIPT = `
     const slideData = extractSlideData(container, containerRect);
 
     // ── Overflow detection (Session 3) ───────────────────────
-    // Container-level: does rendered content exceed the slide bounds?
-    // Uses a small tolerance to avoid false positives from sub-pixel
-    // rounding in Chromium's layout engine.
     var OVERFLOW_TOL_PX = 5;
     var overflowW = container.scrollWidth - containerRect.width;
     var overflowH = container.scrollHeight - containerRect.height;
@@ -677,10 +967,6 @@ const EXTRACTION_SCRIPT = `
       );
     }
 
-    // Element-level: count elements positioned beyond the viewport.
-    // Reports a single summary warning rather than per-element noise.
-    // Checks all four edges (negative x/y catches elements shifted
-    // left/above the container origin).
     var vpWIn = vpW / PX_PER_IN;
     var vpHIn = vpH / PX_PER_IN;
     var EL_TOL_IN = 0.05;
@@ -724,22 +1010,6 @@ const EXTRACTION_SCRIPT = `
 /**
  * Captures gradient backgrounds from the hidden window via capturePage().
  *
- * After the extraction script identifies slide backgrounds that contain CSS
- * gradients, this function captures each gradient as a PNG data URI using
- * Electron's native capturePage(). This is the platform equivalent of
- * Playwright's element.screenshot() used in the original repo.
- *
- * The hidden window must still be open and the page fully rendered when
- * this is called. Each gradient background marker is replaced in-place
- * with an image background containing the data URI. If capture fails for
- * any slide, it falls back to the solid colour stored in the marker.
- *
- * Session 3 fix: Handles stacked/overlapping slide layouts (e.g. CSS
- * slideshows where all slides share the same position and are toggled
- * via opacity). Before capturing, ALL containers are hidden, then only
- * the target container is made visible (with its children hidden) so
- * capturePage() sees only the target's gradient background.
- *
  * @param {object} result - Extraction result with slides array
  * @param {Electron.BrowserWindow} hiddenWindow - The still-open hidden window
  * @returns {Promise<{ captured: number, failed: number }>} Capture summary
@@ -750,10 +1020,6 @@ async function captureGradients(result, hiddenWindow) {
 
   const method = result.detectionMethod;
 
-  // ── Helper: JS string that resolves all slide containers ────
-  // Injected into executeJavaScript() calls. Returns an array of
-  // containers using the same detection logic as the extraction
-  // script, so we always target the right elements.
   const RESOLVE_CONTAINERS_JS = `
     (function() {
       var method = '${method}';
@@ -787,21 +1053,6 @@ async function captureGradients(result, hiddenWindow) {
     const slideIndex = slide.index;
 
     try {
-      // Step 1: Hide ALL containers AND their children, stashing
-      // original values for restoration. This handles both:
-      //   - Vertically stacked layouts (containers don't overlap,
-      //     but children need hiding on the target)
-      //   - Stacked/overlapping layouts (CSS slideshows where all
-      //     containers share the same position via position:absolute)
-      //
-      // For each container we stash:
-      //   - _prevOpacity: the container's original opacity
-      //   - _prevVisibility: the container's original visibility
-      // For each container's children we stash:
-      //   - _prevChildVisibility: the child's original visibility
-      //
-      // Then we set ALL containers to opacity:0, visibility:hidden.
-      // This ensures nothing renders at the capture coordinates.
       await hiddenWindow.webContents.executeJavaScript(`
         (function() {
           var containers = ${RESOLVE_CONTAINERS_JS};
@@ -819,9 +1070,6 @@ async function captureGradients(result, hiddenWindow) {
         })()
       `);
 
-      // Step 2: Make ONLY the target container visible, but keep
-      // its children hidden. The container's CSS gradient background
-      // will render; the foreground content will not.
       await hiddenWindow.webContents.executeJavaScript(`
         (function() {
           var containers = ${RESOLVE_CONTAINERS_JS};
@@ -829,14 +1077,11 @@ async function captureGradients(result, hiddenWindow) {
           if (!target) return;
           target.style.opacity = '1';
           target.style.visibility = 'visible';
-          // Children remain hidden from Step 1
         })()
       `);
 
-      // Brief pause to let the repaint settle
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Step 3: Capture the gradient-only background
       const nativeImage = await hiddenWindow.webContents.capturePage({
         x: Math.round(rect.x),
         y: Math.round(rect.y),
@@ -844,10 +1089,6 @@ async function captureGradients(result, hiddenWindow) {
         height: Math.round(rect.h)
       });
 
-      // Step 4: Restore ALL containers and their children to
-      // original state. This must happen even if capture succeeded,
-      // because subsequent slides need the page in its original
-      // rendering state.
       await hiddenWindow.webContents.executeJavaScript(`
         (function() {
           var containers = ${RESOLVE_CONTAINERS_JS};
@@ -879,12 +1120,6 @@ async function captureGradients(result, hiddenWindow) {
       );
 
     } catch (err) {
-      // Graceful fallback to solid colour — the gradient is lost but
-      // the slide is still usable. Warning is added to slide errors
-      // so it surfaces in the UI.
-      //
-      // Also attempt to restore all containers in case we failed
-      // mid-capture.
       try {
         await hiddenWindow.webContents.executeJavaScript(`
           (function() {
@@ -928,9 +1163,6 @@ async function captureGradients(result, hiddenWindow) {
  * Loads an HTML file into a hidden BrowserWindow and extracts
  * per-slide element data using the ported html2pptx-local.cjs logic.
  *
- * After extraction, any gradient backgrounds are rasterised via
- * capturePage() before the hidden window is destroyed.
- *
  * @param {string} htmlFilePath - Absolute path to the HTML file
  * @param {object} [options]
  * @param {number} [options.width=960]
@@ -957,10 +1189,8 @@ async function extractFromHTML(htmlFilePath, options = {}) {
     installNavigationGuards(hiddenWindow);
     await hiddenWindow.loadFile(htmlFilePath);
 
-    // Allow layout to settle
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Set viewport to match body dimensions for accurate rendering
     const bodyDims = await hiddenWindow.webContents.executeJavaScript(`
       (function() {
         const s = window.getComputedStyle(document.body);
@@ -984,9 +1214,6 @@ async function extractFromHTML(htmlFilePath, options = {}) {
       `${result.slideCount} slide(s) via "${result.detectionMethod}"`
     );
 
-    // ── Gradient rasterisation pass (Session 2) ──────────────
-    // Must happen before the hidden window is destroyed, because
-    // capturePage() needs the rendered page content.
     const hasGradients = result.slides.some(
       s => s.background && s.background.type === 'gradient'
     );
