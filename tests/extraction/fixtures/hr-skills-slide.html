@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Talent Strategy – Glanbia</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: #e8e8f0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  .slide-wrap {
+    width: 96vw;
+    height: calc(96vw * 9 / 16);
+    max-width: 1280px;
+    max-height: 720px;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1280px;
+    height: 720px;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    padding: 34px 52px 22px;
+    display: flex;
+    flex-direction: column;
+    transform-origin: top left;
+    overflow: hidden;
+  }
+
+  /* ── Title ── */
+  .slide-title {
+    font-size: 21px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin-bottom: 6px;
+    line-height: 1.25;
+    flex-shrink: 0;
+  }
+  .slide-subtitle {
+    font-size: 10.5px;
+    color: #7c3aed;
+    font-weight: 600;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+
+  /* ── 4-column grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* ── Column card ── */
+  .col-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1.5px solid #e5e5ef;
+  }
+
+  .col-header {
+    padding: 10px 14px 9px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-shrink: 0;
+  }
+  .col-header svg { width: 22px; height: 22px; flex-shrink: 0; }
+  .col-header-text { font-size: 11px; font-weight: 800; line-height: 1.25; }
+
+  /* Per-column accent colours */
+  .col-build   .col-header { background: #ede9fe; }
+  .col-build   .col-header-text { color: #5b21b6; }
+  .col-build   .pill { background: #ede9fe; color: #5b21b6; }
+  .col-build   .col-footer { background: #5b21b6; }
+
+  .col-partner .col-header { background: #e0f2fe; }
+  .col-partner .col-header-text { color: #0369a1; }
+  .col-partner .pill { background: #e0f2fe; color: #0369a1; }
+  .col-partner .col-footer { background: #0369a1; }
+
+  .col-borrow  .col-header { background: #dcfce7; }
+  .col-borrow  .col-header-text { color: #166534; }
+  .col-borrow  .pill { background: #dcfce7; color: #166534; }
+  .col-borrow  .col-footer { background: #166534; }
+
+  .col-embed   .col-header { background: #fff7ed; }
+  .col-embed   .col-header-text { color: #9a3412; }
+  .col-embed   .pill { background: #fff7ed; color: #9a3412; }
+  .col-embed   .col-footer { background: #9a3412; }
+
+  .col-body {
+    padding: 10px 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    background: #fff;
+  }
+
+  /* Section label inside body */
+  .section-lbl {
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #999;
+    margin-top: 4px;
+  }
+  .section-lbl:first-child { margin-top: 0; }
+
+  /* Skill pills */
+  .pills { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
+  .pill {
+    font-size: 8.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* Body text rows */
+  .item {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    font-size: 9.5px;
+    color: #333;
+    line-height: 1.45;
+  }
+  .item-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .col-build   .item-dot { background: #7c3aed; }
+  .col-partner .item-dot { background: #0369a1; }
+  .col-borrow  .item-dot { background: #166534; }
+  .col-embed   .item-dot { background: #9a3412; }
+
+  .item strong { font-weight: 700; color: #1a1a2e; }
+
+  /* Footer strip */
+  .col-footer {
+    padding: 6px 14px;
+    flex-shrink: 0;
+  }
+  .col-footer p {
+    font-size: 8.5px;
+    color: rgba(255,255,255,0.92);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* ── Bottom banner ── */
+  .banner {
+    flex-shrink: 0;
+    margin-top: 11px;
+    background: linear-gradient(130deg, #1a1a2e 0%, #3b1469 100%);
+    border-radius: 7px;
+    padding: 9px 18px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .banner-icon { font-size: 18px; color: #c4b5fd; flex-shrink: 0; }
+  .banner-title { font-size: 9.5px; font-weight: 700; color: #c4b5fd; margin-bottom: 2px; }
+  .banner-body  { font-size: 8.5px; color: #ddd8f8; line-height: 1.55; }
+
+  /* ── Footer ── */
+  .slide-footer {
+    flex-shrink: 0;
+    margin-top: 9px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .footer-logo {
+    width: 18px; height: 18px;
+    background: #f59e0b;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 900; color: #1a1a2e;
+  }
+  .footer-name { font-size: 10px; font-weight: 700; color: #1a1a2e; }
+</style>
+</head>
+<body>
+<div class="slide-wrap">
+<div class="slide" id="slide">
+
+  <h1 class="slide-title">HR must adopt a multi-route talent strategy to build the modern IT skill portfolio…</h1>
+  <p class="slide-subtitle">Four complementary routes to closing the capability gap across AI &amp; Agentic, Data, Platform, Product, Integration and Cyber skill domains</p>
+
+  <div class="grid">
+
+    <!-- ── Col 1: BUILD ── -->
+    <div class="col-card col-build">
+      <div class="col-header">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v4M12 17v4M4.22 6.22l2.83 2.83M16.95 16.95l2.83 2.83M3 12h4M17 12h4M4.22 17.78l2.83-2.83M16.95 7.05l2.83-2.83" stroke="#5b21b6" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="col-header-text">BUILD<br>Train &amp; Develop Internally</span>
+      </div>
+      <div class="col-body">
+        <p class="section-lbl">Priority skill domains</p>
+        <div class="pills">
+          <span class="pill">AI &amp; Agentic</span>
+          <span class="pill">Data Governance</span>
+          <span class="pill">Cyber &amp; AI Ethics</span>
+        </div>
+        <p class="section-lbl">Key HR actions</p>
+        <div class="item"><div class="item-dot"></div><span>Establish a <strong>technology skills academy</strong> with structured learning pathways mapped to each skill domain</span></div>
+        <div class="item"><div class="item-dot"></div><span>Partner with platforms (Coursera, AWS, Google Cloud) for <strong>vendor-certified training</strong> and micro-credentials</span></div>
+        <div class="item"><div class="item-dot"></div><span>Run <strong>internal hackathons and AI labs</strong> to accelerate applied learning and surface hidden talent</span></div>
+        <div class="item"><div class="item-dot"></div><span>Create <strong>70/20/10 development plans</strong> — on-the-job stretch, peer coaching, formal learning</span></div>
+        <div class="item"><div class="item-dot"></div><span>Define a <strong>skills taxonomy</strong> and run regular capability assessments to track progress and identify gaps</span></div>
+      </div>
+      <div class="col-footer"><p>Highest long-term ROI but requires sustained investment and 12–24 month lead times for deep technical skills</p></div>
+    </div>
+
+    <!-- ── Col 2: PARTNER ── -->
+    <div class="col-card col-partner">
+      <div class="col-header">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#0369a1" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="#0369a1" stroke-width="2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#0369a1" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="col-header-text">PARTNER<br>Strategic &amp; Ecosystem Partners</span>
+      </div>
+      <div class="col-body">
+        <p class="section-lbl">Priority skill domains</p>
+        <div class="pills">
+          <span class="pill">Platform &amp; SRE</span>
+          <span class="pill">Integration &amp; API</span>
+          <span class="pill">AI Agents</span>
+        </div>
+        <p class="section-lbl">Key HR actions</p>
+        <div class="item"><div class="item-dot"></div><span>Define a <strong>strategic partner framework</strong> that maps partners to specific skill domain gaps and delivery needs</span></div>
+        <div class="item"><div class="item-dot"></div><span>Embed <strong>knowledge transfer clauses</strong> in all partner contracts to ensure internal capability builds over time</span></div>
+        <div class="item"><div class="item-dot"></div><span>Create <strong>co-delivery models</strong> pairing internal staff with partner specialists on live programmes</span></div>
+        <div class="item"><div class="item-dot"></div><span>Establish <strong>vendor innovation partnerships</strong> (e.g. with hyperscalers) for early access to emerging toolsets</span></div>
+        <div class="item"><div class="item-dot"></div><span>Develop <strong>partner performance scorecards</strong> that include knowledge transfer and capability uplift metrics</span></div>
+      </div>
+      <div class="col-footer"><p>Fastest route to specialist capability; risk of dependency if not paired with active knowledge transfer programme</p></div>
+    </div>
+
+    <!-- ── Col 3: BORROW ── -->
+    <div class="col-card col-borrow">
+      <div class="col-header">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" stroke="#166534" stroke-width="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M12 12v4M10 14h4" stroke="#166534" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="col-header-text">BORROW<br>Flexible &amp; Contingent Talent</span>
+      </div>
+      <div class="col-body">
+        <p class="section-lbl">Priority skill domains</p>
+        <div class="pills">
+          <span class="pill">Product &amp; Partner</span>
+          <span class="pill">Data Engineering</span>
+          <span class="pill">SRE</span>
+        </div>
+        <p class="section-lbl">Key HR actions</p>
+        <div class="item"><div class="item-dot"></div><span>Build a <strong>pre-qualified contingent talent pool</strong> of AI, data and platform specialists for rapid deployment</span></div>
+        <div class="item"><div class="item-dot"></div><span>Establish relationships with <strong>specialist technology staffing firms</strong> and remote talent platforms</span></div>
+        <div class="item"><div class="item-dot"></div><span>Design <strong>staff augmentation playbooks</strong> so teams can onboard contingent workers at pace without quality risk</span></div>
+        <div class="item"><div class="item-dot"></div><span>Use <strong>interim leaders</strong> (e.g. fractional CTOs, AI Directors) to bridge capability gaps during transformation</span></div>
+        <div class="item"><div class="item-dot"></div><span>Actively manage <strong>IR35 / contractor compliance</strong> and total workforce cost as the liquid workforce grows</span></div>
+      </div>
+      <div class="col-footer"><p>Optimises speed and cost flexibility; works best as a bridge while BUILD routes mature over 12–24 months</p></div>
+    </div>
+
+    <!-- ── Col 4: EMBED ── -->
+    <div class="col-card col-embed">
+      <div class="col-header">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#9a3412" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="col-header-text">EMBED<br>Hire, Rotate &amp; Redesign Roles</span>
+      </div>
+      <div class="col-body">
+        <p class="section-lbl">Priority skill domains</p>
+        <div class="pills">
+          <span class="pill">AI &amp; Agentic</span>
+          <span class="pill">Cyber Ethics</span>
+          <span class="pill">Product</span>
+        </div>
+        <p class="section-lbl">Key HR actions</p>
+        <div class="item"><div class="item-dot"></div><span>Refresh <strong>job architectures and role profiles</strong> to reflect agentic AI, SRE and product ownership capabilities</span></div>
+        <div class="item"><div class="item-dot"></div><span>Launch <strong>targeted external hiring campaigns</strong> for scarce skills — AI architects, data engineers, SREs</span></div>
+        <div class="item"><div class="item-dot"></div><span>Introduce <strong>internal rotation programmes</strong> to move talent across product, data and platform teams</span></div>
+        <div class="item"><div class="item-dot"></div><span>Partner with <strong>universities and bootcamps</strong> for graduate pipelines in AI, data science and cybersecurity</span></div>
+        <div class="item"><div class="item-dot"></div><span>Redesign <strong>reward and career frameworks</strong> to retain scarce tech talent in a highly competitive market</span></div>
+      </div>
+      <div class="col-footer"><p>Critical for embedding capability long-term; competitive hiring market requires differentiated EVP and speed to offer</p></div>
+    </div>
+
+  </div><!-- /grid -->
+
+  <!-- Banner -->
+  <div class="banner">
+    <div class="banner-icon">↻</div>
+    <div>
+      <p class="banner-title">HR as a Continuous Capability Engine</p>
+      <p class="banner-body">As technology evolves from GenAI to Agentic AI (2025+), HR must treat talent strategy as a living system — continuously sensing skill gaps, rebalancing across BUILD / PARTNER / BORROW / EMBED routes, and refreshing role architectures to match the pace of change. A static workforce plan is a capability risk.</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="slide-footer">
+    <div class="footer-logo">G</div>
+    <span class="footer-name">Glanbia</span>
+  </div>
+
+</div>
+</div>
+
+<script>
+  function scaleSlide() {
+    var wrap = document.querySelector('.slide-wrap');
+    var slide = document.getElementById('slide');
+    var scale = Math.min(wrap.offsetWidth / 1280, wrap.offsetHeight / 720);
+    slide.style.transform = 'scale(' + scale + ')';
+  }
+  scaleSlide();
+  window.addEventListener('resize', scaleSlide);
+</script>
+</body>
+</html>

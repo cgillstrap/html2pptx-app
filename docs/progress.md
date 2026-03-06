@@ -17,6 +17,18 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - Compliant HTML (following guardrails) will convert cleanly
 - Non-compliant HTML (from other AI engines or legacy sources) degrades gracefully via our fallback mechanisms
 
+## Reference Documents
+
+| Document | Purpose | Update Frequency |
+|----------|---------|-----------------|
+| `progress.md` (this file) | Decision journal, session checkpoint, work tracker | Every session |
+| `PRINCIPLES.md` | Architectural principles and code standards for this project | Rarely — only when principles are revised |
+| `uc1-guardrails.md` | Prescribed HTML structure for compliant output | Stable reference |
+| `doc2-design-principles.md` | Visual communication guidance | Stable reference |
+| `doc3-brand-tokens.md` | Brand identity tokens | Stable reference |
+
+**Session start checklist:** Paste `progress.md` and `PRINCIPLES.md`. Attach current source files per the File Status table below. Optionally attach `uc1-guardrails.md` if working on extraction/detection logic.
+
 ## Source Repository
 
 - **Repo**: https://github.com/tfriedel/claude-office-skills
@@ -36,63 +48,34 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - electron-builder produces .exe installer for Windows 11
 - pptxgenjs runs natively in Node.js
 
-## Architecture & Design Principles
+## Module Structure
 
-### Module Structure
-- `src/main/main.js` — Electron entry point, orchestrator (no conversion logic)
-- `src/main/preload.js` — Secure IPC bridge (contextBridge, webUtils.getPathForFile)
-- `src/main/security.js` — CSP, navigation guards, file validation
-- `src/main/config.js` — Centralised user-configurable settings
-- `src/extraction/extractor.js` — Hidden BrowserWindow rendering + style extraction (ported from html2pptx-local.cjs)
-- `src/generation/generator.js` — pptxgenjs PPTX generation (ported from html2pptx-local.cjs)
-- `src/renderer/index.html` + `renderer.js` — Drag-and-drop UI
+| Module | Responsibility | Does NOT do |
+|--------|---------------|-------------|
+| `src/main/main.js` | Electron entry point, orchestration, IPC routing, app lifecycle | Conversion logic, DOM access |
+| `src/main/preload.js` | Secure IPC bridge (contextBridge, webUtils.getPathForFile) | Business logic, file I/O |
+| `src/main/security.js` | CSP headers, navigation guards, path validation | Conversion, UI rendering |
+| `src/main/config.js` | Centralised settings, defaults, schema validation | File I/O (yet), UI rendering |
+| `src/extraction/extractor.js` | HTML → intermediate JSON via hidden BrowserWindow | File writing, PPTX generation |
+| `src/generation/generator.js` | Intermediate JSON → PPTX via pptxgenjs | DOM access, HTML parsing |
+| `src/renderer/index.html` + `renderer.js` | Drag-and-drop UI, status display | File system access, conversion logic |
 
-### Security by Default
-| Concern | Mitigation |
-|---------|------------|
-| Node integration in renderer | `nodeIntegration: false` |
-| Context isolation | `contextIsolation: true` |
-| Content Security Policy | Strict CSP: no external URLs, local file access only |
-| File path sanitisation | Validate extension + normalise before loading |
-| External URL blocking | Navigation guards on all BrowserWindows |
-| Remote images | Blocked in generator — local files and data URIs only |
-| Path traversal | Resolved paths checked against HTML directory |
+**Critical boundary:** Extraction produces JSON. Generation consumes it. These modules never import each other. This enables future output format targets (Google Slides, PDF) by swapping only the generator.
 
-### Configuration Module (src/main/config.js)
-| Setting | Default | Options |
-|---------|---------|---------|
-| outputStrategy | 'same-directory' | 'same-directory', 'save-dialog', 'fixed-folder' |
-| divTextHandling | 'fallback' | 'fallback' (render div text), 'strict' (skip + warn) |
-| placeholderRendering | 'visible' | 'visible' (grey shape), 'hidden' (skip) |
-| placeholderFillColor | 'D9D9D9' | Any 6-char hex |
-| placeholderFillTransparency | 50 | 0–100 |
+## File Status
 
-Designed for future persistence (JSON file) and settings UI panel.
-
-## Current File Inventory
-
-```
-html2pptx-app/
-├── package.json
-├── src/
-│   ├── main/
-│   │   ├── main.js            ← Electron entry + orchestrator
-│   │   ├── preload.js         ← IPC bridge (webUtils.getPathForFile)
-│   │   ├── security.js        ← CSP, guards, validation
-│   │   └── config.js          ← User-configurable settings
-│   ├── extraction/
-│   │   └── extractor.js       ← Ported extractSlideData() + multi-slide detection
-│   ├── generation/
-│   │   └── generator.js       ← Ported addElements() + addBackground() + multi-slide loop
-│   └── renderer/
-│       ├── index.html         ← Drop zone UI (dark theme)
-│       └── renderer.js        ← UI logic, IPC callbacks
-└── test/
-    └── extraction/
-        └── fixtures/
-            ├── sample-slide.html       ← Single slide test (h1/p/ul/placeholder)
-            └── multi-slide-test.html   ← 3-slide test (title/cards/metrics)
-```
+| File | Last Updated | Status | Key Changes |
+|------|-------------|--------|-------------|
+| `src/extraction/extractor.js` | Session 3 | **Updated** | Overflow detection (container-level + element-level). Gradient capture fix for stacked/overlapping slide layouts. |
+| `src/generation/generator.js` | Session 3 | **Updated** | Scale-to-fit: uniform scaling when content exceeds viewport. Emits warning with scale factor. |
+| `src/main/main.js` | Session 2 | Current | No changes this session |
+| `src/main/preload.js` | Session 2 | Current | No changes this session |
+| `src/main/security.js` | Session 1 | Current | No changes this session |
+| `src/main/config.js` | Session 1 | Current | No changes this session |
+| `src/renderer/index.html` | Session 2 | Current | No changes this session |
+| `src/renderer/renderer.js` | Session 2 | Current | No changes this session |
+| `PRINCIPLES.md` | Session 2 | Current | No changes this session |
+| `package.json` | Session 1 | Current | No new dependencies added |
 
 ## Build Phases
 
@@ -110,56 +93,144 @@ html2pptx-app/
 - [x] Placeholder rendering as visible grey shapes
 - [x] multi-slide-test.html — VALIDATED
 - [x] sample-slide.html — VALIDATED (after h1/p fix + config additions)
-- [x] Stress tested with esoteric examples — rendering good, minor issues noted for future
+- [x] Stress tested with esoteric examples — rendering good, minor issues noted
 
-### Phase 2 Known Issues (from stress testing)
-- Some edge cases with esoteric HTML — to be catalogued and addressed in Phase 3 or future iterations
-- These are not blocking for the quick win deployment
+### Phase 3 — MVP Polish & Package (IN PROGRESS — Sessions 2–3)
 
-### Phase 3 — Polish & Package (NOT STARTED)
+#### 3a: MVP Priority ✅ COMPLETE
+- [x] **Validation/warning display in UI**: Warnings in amber, errors in red, surfaced in status panel.
+- [x] **Speaker notes from data-notes**: Generator reads `dataAttributes.notes`, falls back to breadcrumb title.
+- [x] **Batch completion signalling**: `conversion:batch-complete` sends summary counts, renderer shows colour-coded summary bar.
+- [x] **IPC listener cleanup**: `removeAllListeners()` in preload, called at start of each batch in renderer.
+- [ ] **Extraction window height**: Deferred — not yet tested with long decks. May not be a real issue.
 
-#### 3a: Functional Gaps (from repo review)
-- [ ] **Gradient detection + rasterisation**: Detect CSS gradients in extracted HTML. Use Sharp (already a repo dependency) to screenshot the gradient element from the hidden BrowserWindow and inject the rasterised PNG back as a background-image before extraction. This matches the repo's approach where gradients are rasterised to PNG first. Fallback: surface a clear warning to the user if auto-rasterisation fails.
-- [ ] **Font validation warnings**: Check extracted fontFamily values against a web-safe whitelist (Arial, Helvetica, Times New Roman, Georgia, Courier New, Verdana, Tahoma, Trebuchet MS, Impact). Warn on non-safe fonts (Segoe UI, SF Pro, Roboto, custom fonts) as these may not render correctly in PowerPoint on all systems.
-- [ ] **Speaker notes from data-notes**: Read `data-notes` attribute from slide section elements and pass to pptxgenjs `slide.addNotes()`. Currently we only use the slide title as a breadcrumb.
-- [ ] **Overflow detection warnings**: Port the original's getBodyDimensions() overflow check — detect when HTML content exceeds slide container dimensions and surface measurement-specific warnings to the user.
-- [ ] **Validation error display in UI**: Surface extraction warnings/errors (from the ported validation logic) in the status panel, not just console. Colour-code: red for errors, amber for warnings.
+#### 3b: Functional Gaps (IN PROGRESS)
+- [x] **Gradient detection (slide-level)**: Extraction detects gradient backgrounds, capturePage() rasterises to data URI PNG. Generator handles data URI backgrounds.
+- [x] **Gradient detection (element-level)**: Detection + warning implemented. Falls back to solid backgroundColor.
+- [x] **Gradient capture bug fix (Session 2)**: Hide container children before capturePage(), restore after. Error path includes best-effort cleanup.
+- [x] **Gradient capture fix for stacked layouts (Session 3)**: Hide ALL containers, reveal only target container (children hidden), capture, restore all. Handles CSS slideshows where slides share the same position via position:absolute.
+- [x] **Overflow detection (Session 3)**: Container-level (scrollWidth/Height vs bounds) and element-level (positions beyond viewport). Warnings surface via existing errors → warnings → UI pipeline.
+- [x] **Scale-to-fit with centering (Session 3)**: When extracted elements exceed slide viewport, generator applies uniform scaling then centres the scaled bounding box on the slide. Warning emitted with scale factor, percentage reduction, and offset values.
+- [ ] **Font validation warnings**: Check extracted fontFamily against web-safe whitelist. Warn on non-safe fonts.
+- [ ] **Overflow detection warnings (original port)**: Port getBodyDimensions() overflow check from original repo. May be redundant now with our own overflow detection — needs review.
+- [ ] **Table extraction**: Not currently handled. Design discussion in progress (see Session 3 notes below). High likelihood testers will hit this.
 
-#### 3b: Configuration & Settings
-- [ ] Config persistence (JSON file in user's app data directory, survives restarts)
-- [ ] Settings UI panel in renderer (toggle divTextHandling, placeholderRendering, outputStrategy)
+#### 3c: Configuration & Settings
+- [ ] Config persistence (JSON file in user's app data directory)
+- [ ] Settings UI panel in renderer
 - [ ] Output strategy: implement 'save-dialog' and 'fixed-folder' options
 
-#### 3c: Packaging & Distribution
-- [ ] Batch processing for multiple HTML files → one .pptx per file
+#### 3d: Packaging & Distribution
 - [ ] Package with electron-builder → Windows .exe installer
 - [ ] Test on clean Windows 11 machine
-- [ ] Consider whether Sharp is needed (for gradient rasterisation) — if so, configure native binaries for electron-builder
-- [ ] Application icon and branding for the installer
+- [ ] Application icon and branding
+- [ ] Minimal end-user README or in-app guidance
+- [ ] No Sharp dependency needed — gradient rasterisation uses Electron-native capturePage()
 
-#### 3d: Future Considerations (not blocking quick win)
-- [ ] Visual preview of generated PPTX (would require LibreOffice — conflicts with standalone goal)
-- [ ] Chart/table insertion into placeholders (programmatic — beyond the drag-and-drop use case)
-- [ ] Single-file-per-slide mode (alternative to multi-slide detection, matches repo's native workflow)
-- [ ] Template-based creation (repo's rearrange/replace workflow — different use case entirely)
+#### 3e: Future Considerations (not blocking MVP)
+- [ ] Visual preview of generated PPTX
+- [ ] Chart/table insertion into placeholders
+- [ ] Single-file-per-slide mode
+- [ ] Template-based creation
+- [ ] Element-level gradient rasterisation (currently detection + warning only)
+
+## Key Decisions Log
+
+### Session 3 Decisions
+
+1. **Scale-to-fit is a generator concern, not extractor** — The extractor's job is faithful capture of the DOM layout. The generator's job is mapping that to the output format's constraints. "Fit content to the slide boundary" is a PPTX constraint, so the generator owns it. This means different output formats (Google Slides, PDF) can handle fitting differently. Uniform scaling preserves proportions at the cost of smaller text; vertical-only scaling was rejected because it distorts shapes.
+
+2. **Overflow detection is an extractor concern** — Overflow detection (warning the user that content exceeds bounds) belongs in the extractor because it reports on what the DOM actually contains. Scale-to-fit (fixing the problem) belongs in the generator. These are complementary — the extractor warns, the generator acts.
+
+3. **Gradient capture: hide-all-then-reveal pattern** — Session 2's approach of hiding only the target slide's children broke on stacked layouts (CSS slideshows where all slides share the same coordinates). Session 3 fix: hide ALL containers and their children first, then reveal only the target container (children still hidden), capture, restore all. This handles both vertically stacked layouts and position:absolute stacked layouts.
+
+4. **Table extraction approach: hybrid (native + fallback)** — Design discussion initiated. Recommendation is Option C: extract as native pptxgenjs tables for simple structures, fall back to positioned text boxes for complex cases (colspan/rowspan/nested), with a warning. Decision not yet finalised — pending further discussion.
+
+5. **Integration test harness design** — Three-layer approach agreed in principle. Layer 1: extraction assertions against intermediate JSON (slide count, detection method, element counts, background types). Layer 2: generation assertions (file produced, expected warnings emitted, no unexpected warnings). Layer 3: PPTX XML inspection for specific regression tests only. Layers 1+2 for MVP, Layer 3 selectively. Each fixture gets a companion `.expected.json` defining expected outcomes — adding a new fixture requires no test code changes. Runs via electron-mocha in main-process mode (not `--renderer`, since extraction needs BrowserWindow). Longer timeout (30s) to account for BrowserWindow creation and gradient capture. Primary value: regression detection across all fixtures on every change. Does not replace manual visual fidelity checks.
+
+### Session 2 Decisions
+
+1. **PRINCIPLES.md as separate document** — Architectural principles forked from progress.md into standalone file. Rationale: principles are stable reference material; progress.md is a frequently-updated checkpoint.
+
+2. **Gradient rasterisation via capturePage() instead of Sharp** — Sharp would add native binary packaging complexity with no benefit. capturePage() is Electron-native. Aligns with Principle 5 (Reuse Before Building) and Principle 1 (Security by Default — no new dependencies).
+
+3. **Element-level gradients: detect + warn, don't rasterise** — Per-element capture has complications (overlapping text, border-radius clipping, double-rendering). MVP: detect, fall back to solid colour, surface warning.
+
+4. **Listener cleanup pattern** — removeAllListeners() called at batch start, not batch end. Defensive: if batch-complete never fires (crash), next drop still starts clean.
+
+## HTML Patterns Encountered
+
+Different AI engines and authoring approaches produce structurally different HTML. The converter must handle all of these gracefully. This section documents patterns we've tested against and the challenges each presents.
+
+| Pattern | Example Fixture | Detection Method | Layout Strategy | Key Challenges |
+|---------|----------------|-----------------|----------------|----------------|
+| **Guardrails-compliant** | `multi-slide-test.html` | `data-slide-number` | Vertically stacked sections, 960×540px each | Clean case. Gradient on slide 1 tested. |
+| **Body-as-single-slide** | `sample-slide.html` | `body-fallback` | Single slide, body is the viewport | Div-text fallback needed. Placeholder rendering tested. |
+| **Content-dense compliant** | `lpm-slides-v1.html` | `data-slide-number` | Vertically stacked sections, dense card grids and two-column layouts | Overflow: slides 3 and 11 exceed 540px height. Scale-to-fit needed. |
+| **CSS slideshow (stacked)** | `agile-slides.html` | `class-slide` (div.slide) | All slides `position: absolute; inset: 0` in a wrapper, toggled via opacity | Gradient capture broken by sibling slides rendering at same coordinates. Fixed in Session 3. No `data-slide-number` attributes. |
+| **Div-heavy (ChatGPT/Copilot)** | Not yet tested | Expected: `uniform-divs` or `body-fallback` | Deeply nested wrapper divs, text in bare divs | Div-text fallback essential. No fixture yet. |
+| **Table-heavy** | Not yet tested | N/A | `<table>` elements for data display | Tables currently ignored. Design discussion in progress. |
 
 ## Key Learnings
 
 1. **Electron v33+ deprecates File.path** — must use webUtils.getPathForFile() via preload
-2. **Don't reinvent tested logic** — porting html2pptx-local.cjs directly was far more productive than writing a custom generator
-3. **The original assumes strict HTML structure** — text must be in <p>/<h1>-<h6> tags, not bare divs. Our fallback handles this gracefully.
-4. **parseInlineFormatting() is the key function** — builds text run arrays with per-span colour/bold/italic, which pptxgenjs renders as mixed formatting within a single text frame
+2. **Don't reinvent tested logic** — porting html2pptx-local.cjs directly was far more productive than writing a custom generator (see Principle 5)
+3. **The original assumes strict HTML structure** — text must be in `<p>`/`<h1>`-`<h6>` tags, not bare divs. Our fallback handles this.
+4. **parseInlineFormatting() is the key function** — builds text run arrays with per-span colour/bold/italic
 5. **PptxGenJS margin order** is [left, right, bottom, top] — NOT CSS order
 6. **inset: 0** is critical on text boxes to remove default PowerPoint internal padding
+7. **Multi-engine HTML varies significantly** — Claude produces semantic HTML; ChatGPT/Copilot tend toward div-heavy structures. Div-text fallback is essential.
+8. **capturePage() captures rendered pixels, not layers** — Must hide foreground content first. Session 3 extended this: must also hide sibling containers in stacked layouts.
+9. **Artifact versioning matters** — When updating files across sessions, produce complete file artifacts rather than partial updates.
+10. **Layout strategy affects gradient capture** — Vertically stacked slides (each at a different Y offset) only need children hidden. Stacked overlapping slides (same coordinates, toggled via opacity) need ALL containers hidden except the target. The hide-all-then-reveal pattern handles both cases.
+11. **Overflow is an extraction concern; fitting is a generation concern** — The extractor reports reality (content exceeds bounds). The generator decides what to do about it (scale to fit). This separation means different output formats can handle fitting differently.
+
+## Testing Notes
+
+### Test Fixtures
+| Fixture | Location | Purpose |
+|---------|----------|---------|
+| `sample-slide.html` | `test/extraction/fixtures/` | Single slide: div-text fallback, ul with inline spans, placeholder, rgba background |
+| `multi-slide-test.html` | `test/extraction/fixtures/` | 3 slides: data-slide-number detection, shapes, CSS Grid + Flexbox, gradient on slide 1 |
+| `lpm-slides-v1.html` | `test/extraction/fixtures/` | 12 slides: content-dense compliant deck. Tests scale-to-fit (slides 3, 11 overflow). Speaker notes via data-notes. |
+| `agile-slides.html` | `test/extraction/fixtures/` | 3 slides: CSS slideshow (stacked layout). Tests gradient capture with overlapping containers. class-slide detection. |
+
+### Known Gaps in Test Coverage
+- No fixture with `<img>` tags (image path resolution untested)
+- No fixture with deeply nested wrapper divs (ChatGPT/Copilot patterns)
+- No fixture with `<table>` elements
+- No fixture testing `uniform-divs` detection path
+- No fixture with mixed detection signals (e.g. some slides with data-slide-number, some without)
+- Scale-to-fit centering not yet tested (current: scaled content retains top-left origin)
 
 ## Conversation History
 
-1. **Session 1** — Established project goal, reviewed repository, made Electron architecture decision. Built Phase 1 (proof of concept), validated extraction. Built Phase 2 custom generator, discovered fidelity gaps, pivoted to porting original html2pptx-local.cjs. Added config module, div-text fallback, placeholder rendering. Received broader context documents (design principles, brand tokens, guardrails). Phase 2 validated and closed. Ready for Phase 3.
+1. **Session 1** — Established project goal, reviewed repository, made Electron architecture decision. Built Phase 1 (proof of concept), validated extraction. Built Phase 2 custom generator, discovered fidelity gaps, pivoted to porting original html2pptx-local.cjs. Added config module, div-text fallback, placeholder rendering. Received broader context documents (design principles, brand tokens, guardrails). Phase 2 validated and closed.
+
+2. **Session 2** — Reviewed all source files. Consolidated architectural principles into PRINCIPLES.md. Established checkpoint discipline and progress.md structure. Completed Phase 3a: UI warnings, batch-complete signal, speaker notes, IPC listener cleanup. Completed Phase 3b gradient work: slide-level gradient detection and capturePage() rasterisation, element-level gradient detection with warning fallback. Found and fixed gradient capture bug (foreground content in screenshot). No new dependencies added.
+
+3. **Session 3** (current) — Implemented overflow detection in extractor (container-level and element-level). Implemented scale-to-fit with centering in generator (uniform scaling + bounding-box centering, with warning). Fixed gradient capture for stacked/overlapping slide layouts (agile-slides.html). Tested against lpm-slides-v1.html (12-slide content-dense deck) and agile-slides.html (CSS slideshow with stacked position:absolute slides). Designed integration test harness approach (three-layer, fixture-driven, electron-mocha). Began table extraction design discussion — hybrid approach (native + fallback) recommended, decision pending. Added HTML Patterns Encountered section to progress.md.
+
+### Next Session Priorities
+1. **Table extraction** (3b) — finalise design decision and implement. Hybrid approach recommended: native pptxgenjs tables for simple structures, positioned text boxes as fallback for complex cases
+2. **Font validation warnings** (3b) — check fontFamily against web-safe whitelist, warn on non-safe fonts
+3. **Integration test harness** (new) — fixture-driven pipeline tests using electron-mocha in main-process mode. See design notes in Session 3 decisions. Not blocking MVP but should land before or immediately after first .exe.
+4. **Packaging with electron-builder** (3d) — .exe installer for Windows 11
+5. **Extraction window height** (3a) — test with longer fixture to confirm if real issue
+
+## Checkpoint Discipline
+
+Progress.md is updated at three points:
+1. **After completing a meaningful unit of work** (feature, fix, or decision)
+2. **When context is getting heavy** (many file uploads, long session, approaching limits)
+3. **Before closing a session** (always — this is the handoff to the next conversation)
+
+When checkpointing, the File Status table is updated to reflect which files changed and what's current.
 
 ## How to Use This File
 
-When starting a new conversation due to context limits:
-1. Paste this progress.md at the start
-2. Attach the current versions of extractor.js, generator.js, config.js, main.js, and preload.js
-3. Optionally attach uc1-guardrails.md for the prescribed HTML structure
-4. State which task to resume from (see PENDING items above)
+When starting a new conversation:
+1. Paste `progress.md` (this file) and `PRINCIPLES.md`
+2. Attach current source files per the File Status table
+3. Optionally attach `uc1-guardrails.md` if working on extraction or detection logic
+4. State which task to resume from (see Next Session Priorities above)
