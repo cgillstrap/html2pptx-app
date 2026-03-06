@@ -394,6 +394,37 @@ const EXTRACTION_SCRIPT = `
         }
       }
 
+      // HR elements — extract as lines (Session 5)
+      if (el.tagName === 'HR') {
+        var hrRect = el.getBoundingClientRect();
+        if (hrRect.width > 0 && hrRect.height > 0) {
+          var hrComputed = window.getComputedStyle(el);
+          var borderTopWidth = parseFloat(hrComputed.borderTopWidth) || 0;
+          var borderTopColor = hrComputed.borderTopColor;
+          var lineWidth = borderTopWidth > 0 ? pxToPoints(hrComputed.borderTopWidth) : 0.75;
+          var lineColor;
+          if (borderTopColor && borderTopColor !== 'rgba(0, 0, 0, 0)' &&
+              borderTopColor !== 'transparent') {
+            lineColor = rgbToHex(borderTopColor);
+          } else if (hrComputed.color && hrComputed.color !== 'rgba(0, 0, 0, 0)') {
+            lineColor = rgbToHex(hrComputed.color);
+          } else {
+            lineColor = 'D1D5DB';
+          }
+          elements.push({
+            type: 'line',
+            x1: pxToInch(hrRect.left - offX),
+            y1: pxToInch(hrRect.top - offY + hrRect.height / 2),
+            x2: pxToInch(hrRect.left - offX + hrRect.width),
+            y2: pxToInch(hrRect.top - offY + hrRect.height / 2),
+            width: lineWidth,
+            color: lineColor
+          });
+          processed.add(el);
+          return;
+        }
+      }
+
       // DIV shapes
       const isContainer = el.tagName === 'DIV' && !textTags.includes(el.tagName);
       if (isContainer) {
@@ -611,6 +642,19 @@ const EXTRACTION_SCRIPT = `
               if (trans !== null) baseStyle.transparency = trans;
               if (rotation !== null) baseStyle.rotate = rotation;
 
+              // Detect flex centering (e.g. arrow connector divs)
+              var display = computed2.display;
+              if (display === 'flex' || display === 'inline-flex') {
+                var alignItems = computed2.alignItems;
+                var justifyContent = computed2.justifyContent;
+                if (alignItems === 'center' || alignItems === 'safe center') {
+                  baseStyle.valign = 'middle';
+                }
+                if (justifyContent === 'center' || justifyContent === 'safe center') {
+                  baseStyle.align = 'center';
+                }
+              }
+
               const hasFormatting = el.querySelector('b, i, u, strong, em, span');
 
               if (hasFormatting) {
@@ -706,6 +750,46 @@ const EXTRACTION_SCRIPT = `
                 italic: inlineComputed.fontStyle === 'italic',
                 align: 'center',
                 valign: 'middle',
+                margin: [
+                  pxToPoints(inlineComputed.paddingLeft),
+                  pxToPoints(inlineComputed.paddingRight),
+                  pxToPoints(inlineComputed.paddingBottom),
+                  pxToPoints(inlineComputed.paddingTop)
+                ]
+              }
+            });
+            processed.add(el);
+            return;
+          }
+
+          // Text-only spans (no background fill) — e.g. tags, metric values,
+          // contrast labels. Only extract if not already processed (spans inside
+          // <p> tags are already captured via parseInlineFormatting).
+          if (!processed.has(el) && !inlineHasVisualFill && inlineText.length > 0) {
+            var inlineBold2 = inlineComputed.fontWeight === 'bold' ||
+              parseInt(inlineComputed.fontWeight) >= 600;
+            var inlineTextTransform = inlineComputed.textTransform;
+            elements.push({
+              type: 'div-text',
+              isDivFallback: true,
+              text: applyTextTransform(inlineText, inlineTextTransform),
+              position: {
+                x: pxToInch(inlineRect.left - offX),
+                y: pxToInch(inlineRect.top - offY),
+                w: pxToInch(inlineRect.width),
+                h: pxToInch(inlineRect.height)
+              },
+              style: {
+                fontSize: pxToPoints(inlineComputed.fontSize),
+                fontFace: inlineComputed.fontFamily.split(',')[0].replace(/['"]/g, '').trim(),
+                color: rgbToHex(inlineComputed.color),
+                bold: inlineBold2 && !shouldSkipBold(inlineComputed.fontFamily),
+                italic: inlineComputed.fontStyle === 'italic',
+                align: inlineComputed.textAlign === 'start' ? 'left' : inlineComputed.textAlign,
+                textTransform: inlineTextTransform,
+                lineSpacing: pxToPoints(inlineComputed.lineHeight),
+                paraSpaceBefore: pxToPoints(inlineComputed.marginTop),
+                paraSpaceAfter: pxToPoints(inlineComputed.marginBottom),
                 margin: [
                   pxToPoints(inlineComputed.paddingLeft),
                   pxToPoints(inlineComputed.paddingRight),

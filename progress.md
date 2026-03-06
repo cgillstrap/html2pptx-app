@@ -66,8 +66,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 4 | **Updated** | Interactive element filtering, font validation, high-transparency warnings, shape text capture, standalone span/inline extraction, CSS trick detection, gradient-aware colour fallback for badges/shapes |
-| `src/generation/generator.js` | Session 4 | **Updated** | Shape text styling: shapes with text content now render with correct font, size, colour, bold, italic, alignment, and margins via addText() |
+| `src/extraction/extractor.js` | Session 5 | **Updated** | Standalone text span extraction (no-bg spans), HR element extraction as lines, flex centering detection for div-text fallback |
+| `src/generation/generator.js` | Session 5 | **Updated** | Text valign read from extraction data instead of hardcoded 'top' (supports flex-centred div-text elements) |
 | `src/main/main.js` | Session 2 | Current | No changes this session |
 | `src/main/preload.js` | Session 2 | Current | No changes this session |
 | `src/main/security.js` | Session 1 | Current | No changes this session |
@@ -95,7 +95,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [x] sample-slide.html — VALIDATED (after h1/p fix + config additions)
 - [x] Stress tested with esoteric examples — rendering good, minor issues noted
 
-### Phase 3 — MVP Polish & Package (IN PROGRESS — Sessions 2–4)
+### Phase 3 — MVP Polish & Package (IN PROGRESS — Sessions 2–5)
 
 #### 3a: MVP Priority ✅ COMPLETE
 - [x] **Validation/warning display in UI**: Warnings in amber, errors in red, surfaced in status panel.
@@ -118,6 +118,9 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [x] **Standalone inline element extraction (Session 4)**: SPAN, A, LABEL elements with visible backgrounds extracted as shapes with text. Handles badge/pill/tag patterns (e.g. "Core", "Portfolio", "Knowledge" labels).
 - [x] **CSS shape trick detection (Session 4)**: Zero-dimension elements using borders to create visual shapes (CSS triangles, arrows) detected and skipped with warning. Uses content-area calculation (bounding rect minus border widths) rather than computed.width which is unreliable with box-sizing: border-box.
 - [x] **Generator shape text styling (Session 4)**: Shape rendering path applies font, size, colour, bold, italic, alignment, vertical alignment, and margins from extraction data. Shapes with text now render correctly in PPTX instead of appearing as empty rectangles.
+- [x] **Standalone text span extraction (Session 5)**: SPAN, A, LABEL elements without background fills but with visible text now extracted as div-text. Captures styled tags, metric values, contrast labels, and numbered markers from the LPM deck.
+- [x] **HR element extraction (Session 5)**: `<hr>` elements extracted as lines, positioned at the vertical centre of the HR bounding box. Colour fallback: borderTopColor → color → light grey (#D1D5DB).
+- [x] **Flex centering detection (Session 5)**: Div-text fallback path detects `display: flex` with `align-items: center` / `justify-content: center` and emits `valign: 'middle'` / `align: 'center'`. Generator reads `valign` from style instead of hardcoding `'top'`.
 - [ ] **Table extraction**: Not currently handled. Design discussion from Session 3 (hybrid approach). High likelihood testers will hit this.
 - [ ] **Overflow detection warnings (original port)**: Port getBodyDimensions() overflow check from original repo. May be redundant now with our own overflow detection — needs review.
 
@@ -141,6 +144,16 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [ ] Element-level gradient rasterisation (currently detection + warning only)
 
 ## Key Decisions Log
+
+### Session 5 Decisions
+
+1. **Text-only spans use div-text, not shape** — Spans without background fills are pure text elements. Emitting them as `shape` type would be incorrect (no visual fill to render). The `div-text` type with `isDivFallback: true` is the right fit — the generator already handles it, and no JSON contract change is needed.
+
+2. **HR elements map to the existing `line` type** — An `<hr>` is semantically and visually a line. Browsers render it as a `border-top`, so the extraction reads `borderTopColor` and `borderTopWidth`. The y-coordinate is placed at the vertical centre of the HR's bounding box (`rect.top + rect.height / 2`) for accurate positioning.
+
+3. **Flex centering detection is scoped to div-text fallback only** — Standard `<p>` and heading tags don't use flexbox for text alignment, so flex detection is only added to the div-text fallback path. The `textAlign` CSS property is meaningless on a flex container — centering comes from `justify-content` and `align-items`. The generator change (`valign: el.style.valign || 'top'`) is additive — all existing elements without `valign` continue to get `'top'`.
+
+4. **JSON contract extended: `valign` on div-text style** — The intermediate JSON `style` object for div-text elements can now include `valign: 'middle'`. This is an additive extension — existing elements without `valign` are unaffected. The generator defaults to `'top'` when `valign` is absent.
 
 ### Session 4 Decisions
 
@@ -203,6 +216,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 12. **backgroundColor is unreliable for gradient-only elements** — When the only background is a CSS gradient, `backgroundColor` resolves to `transparent`. Must parse the gradient string to extract a solid fallback colour (first colour stop).
 13. **box-sizing: border-box makes computed.width unreliable for content-area checks** — A `width: 0` element with `border-left: 14px` reports `computed.width = 14px`. Use `rect.width - totalBorderWidths` instead.
 14. **Shape elements can hold text in PptxGenJS** — The `addText()` method works on shapes. The original ported code always set `text: ''` on shapes, but PptxGenJS fully supports text with font, colour, and alignment properties inside shape objects. Extending the extraction to capture text in shaped divs was a straightforward win.
+15. **`textAlign` is meaningless on flex containers** — A div with `display: flex; justify-content: center` reports `textAlign: start` from computed styles, but the actual centering comes from the flex properties. Must check `display` and read `justifyContent`/`alignItems` to detect the real alignment.
+16. **HR renders as `border-top` in browsers** — The visual line of an `<hr>` element comes from `borderTopColor` and `borderTopWidth`, not from the element's `color` or `backgroundColor`. Extraction must read border properties to get accurate colour and thickness.
 
 ## Testing Notes
 
@@ -222,7 +237,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - No fixture with mixed detection signals (e.g. some slides with data-slide-number, some without)
 - Scale-to-fit centering not yet tested (current: scaled content retains top-left origin)
 - User has tested agile-slides.html rendering and confirmed Session 4 fixes resolve badge, shape text, and CSS triangle issues
-- lpm-slides-v1.html rendering feedback pending from user
+- User has validated lpm-slides-v1.html rendering with Session 5 fixes — standalone spans, HR lines, and flex-centred arrows confirmed working
 
 ## Conversation History
 
@@ -232,14 +247,16 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 3. **Session 3** — Implemented overflow detection in extractor (container-level and element-level). Implemented scale-to-fit with centering in generator (uniform scaling + bounding-box centering, with warning). Fixed gradient capture for stacked/overlapping slide layouts (agile-slides.html). Tested against lpm-slides-v1.html (12-slide content-dense deck) and agile-slides.html (CSS slideshow with stacked position:absolute slides). Designed integration test harness approach (three-layer, fixture-driven, electron-mocha). Began table extraction design discussion — hybrid approach (native + fallback) recommended, decision pending. Added HTML Patterns Encountered section to progress.md.
 
-4. **Session 4** (current) — Focused on rendering quality before regression testing. Implemented six extractor enhancements: interactive element filtering, font validation warnings, high-transparency warnings, shape text capture (with gradient-aware colour fallback), standalone span/inline element extraction, and CSS shape trick detection (content-area based). Updated generator to apply text styling properties on shapes. Tested against agile-slides.html — confirmed fixes for: missing badge labels (Core/Portfolio/Knowledge), missing phase duration labels (Weeks 1–4 etc.), CSS triangles rendering as white boxes, and missing section headings. Two iterations needed: first pass got text appearing but badges had no colour (gradient backgroundColor = transparent); second pass added gradient colour stop extraction. User has additional fixture feedback pending (lpm-slides-v1.html and potentially others).
+4. **Session 4** — Focused on rendering quality before regression testing. Implemented six extractor enhancements: interactive element filtering, font validation warnings, high-transparency warnings, shape text capture (with gradient-aware colour fallback), standalone span/inline element extraction, and CSS shape trick detection (content-area based). Updated generator to apply text styling properties on shapes. Tested against agile-slides.html — confirmed fixes for: missing badge labels (Core/Portfolio/Knowledge), missing phase duration labels (Weeks 1–4 etc.), CSS triangles rendering as white boxes, and missing section headings. Two iterations needed: first pass got text appearing but badges had no colour (gradient backgroundColor = transparent); second pass added gradient colour stop extraction.
+
+5. **Session 5** (current) — Addressed three rendering issues from visual review of lpm-slides-v1.html. (1) Standalone text span extraction: SPAN/A/LABEL elements without backgrounds now extracted as div-text — captures tags, metric values, contrast labels, and numbered markers. (2) HR element extraction: `<hr>` elements extracted as lines with colour fallback chain. (3) Flex centering detection: div-text fallback detects flex containers and emits valign/align; generator reads valign from style. All three validated against lpm-slides-v1.html (215 elements across 12 slides) and agile-slides.html (no regressions). Also tested against conformant_sample.html and modern-it-skills.html.
 
 ### Next Session Priorities
-1. **Continue rendering quality review** — user has additional fixture feedback to share (lpm-slides-v1.html, possibly others). Address issues identified through visual testing.
-2. **Table extraction** (3b) — finalise design decision and implement. Hybrid approach recommended.
-3. **Integration test harness** — fixture-driven pipeline tests using electron-mocha. Baseline rendering quality should be established first.
-4. **Packaging with electron-builder** (3d) — .exe installer for Windows 11
-5. **Extraction window height** (3a) — test with longer fixture to confirm if real issue
+1. **Table extraction** (3b) — finalise design decision and implement. Hybrid approach recommended.
+2. **Integration test harness** — fixture-driven pipeline tests using electron-mocha. Baseline rendering quality should be established first.
+3. **Packaging with electron-builder** (3d) — .exe installer for Windows 11
+4. **Extraction window height** (3a) — test with longer fixture to confirm if real issue
+5. **Continue rendering quality review** — additional fixtures or user feedback may surface new issues.
 
 ## Checkpoint Discipline
 
