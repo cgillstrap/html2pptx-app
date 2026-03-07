@@ -348,14 +348,34 @@ const EXTRACTION_SCRIPT = `
         return;
       }
 
-      // ── SVG element handling (Session 6) ────────────────────────
-      // Inline SVGs and their children (path, circle, rect, etc.)
-      // cannot be faithfully represented in PPTX as vector elements.
-      // Skip the entire SVG subtree and count for summary warning.
+      // ── SVG element handling (Session 6, updated Session 6c) ───
+      // Inline SVGs captured as raster images via capturePage().
+      // Emit a placeholder with position data; the post-extraction
+      // capture step converts it to a standard image element.
       if (el.tagName === 'svg' || el.tagName === 'SVG' || el instanceof SVGElement) {
         el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
         processed.add(el);
-        if (el.tagName === 'svg' || el.tagName === 'SVG') svgSkipCount++;
+        if (el.tagName === 'svg' || el.tagName === 'SVG') {
+          var svgRect = el.getBoundingClientRect();
+          if (svgRect.width > 0 && svgRect.height > 0) {
+            elements.push({
+              type: 'svg-capture',
+              position: {
+                x: pxToInch(svgRect.left - offX),
+                y: pxToInch(svgRect.top - offY),
+                w: pxToInch(svgRect.width),
+                h: pxToInch(svgRect.height)
+              },
+              captureRect: {
+                x: svgRect.left,
+                y: svgRect.top,
+                w: svgRect.width,
+                h: svgRect.height
+              }
+            });
+          }
+          svgSkipCount++;
+        }
         return;
       }
 
@@ -577,7 +597,7 @@ const EXTRACTION_SCRIPT = `
             }
 
             if (hasVisualFill || hasUniformBorder) {
-              elements.push({
+              var shapeElement = {
                 type: 'shape', text: shapeText,
                 position: {
                   x: pxToInch(rect.left - offX), y: pxToInch(rect.top - offY),
@@ -601,7 +621,15 @@ const EXTRACTION_SCRIPT = `
                   shadow: shadow
                 },
                 style: shapeStyle
-              });
+              };
+              // Signal for post-extraction gradient capture (Session 6c)
+              if (hasGradient) {
+                shapeElement.captureRect = {
+                  x: rect.left, y: rect.top,
+                  w: rect.width, h: rect.height
+                };
+              }
+              elements.push(shapeElement);
             }
             elements.push(...borderLines);
             processed.add(el);
@@ -751,7 +779,7 @@ const EXTRACTION_SCRIPT = `
             var inlineFill = resolveShapeFill(inlineComputed);
             var inlineBold = inlineComputed.fontWeight === 'bold' ||
               parseInt(inlineComputed.fontWeight) >= 600;
-            elements.push({
+            var inlineShapeEl = {
               type: 'shape',
               text: applyTextTransform(inlineText, inlineComputed.textTransform),
               position: {
@@ -792,7 +820,15 @@ const EXTRACTION_SCRIPT = `
                   pxToPoints(inlineComputed.paddingTop)
                 ]
               }
-            });
+            };
+            // Signal for post-extraction gradient capture (Session 6c)
+            if (inlineHasGradient) {
+              inlineShapeEl.captureRect = {
+                x: inlineRect.left, y: inlineRect.top,
+                w: inlineRect.width, h: inlineRect.height
+              };
+            }
+            elements.push(inlineShapeEl);
             processed.add(el);
             return;
           }
@@ -977,9 +1013,8 @@ const EXTRACTION_SCRIPT = `
 
     if (svgSkipCount > 0) {
       errors.push(
-        svgSkipCount + ' inline SVG element(s) skipped — vector graphics ' +
-        'cannot be converted to PPTX shapes. Consider replacing with ' +
-        'images for better conversion fidelity.'
+        svgSkipCount + ' inline SVG element(s) captured as raster images. ' +
+        'These will appear as non-editable images in the PPTX.'
       );
     }
 
@@ -1288,6 +1323,253 @@ async function captureGradients(result, hiddenWindow) {
 }
 
 /**
+ * Captures inline SVGs and gradient element backgrounds from the hidden
+ * window via capturePage(). SVGs are captured as-is. Gradient elements
+ * have their children hidden before capture to isolate the background.
+ *
+ * For stacked slide layouts (e.g. agile-slides with position:absolute),
+ * other containers are hidden before capture to prevent overlapping
+ * slides from contaminating the captured image — same approach as
+ * captureGradients() uses for slide-level backgrounds.
+ *
+ * @param {object} result - Extraction result with slides array
+ * @param {Electron.BrowserWindow} hiddenWindow - The still-open hidden window
+ * @returns {Promise<{ svgsCaptured: number, svgsFailed: number, gradientsCaptured: number, gradientsFailed: number }>}
+ */
+async function captureElementImages(result, hiddenWindow) {
+  let svgsCaptured = 0;
+  let svgsFailed = 0;
+  let gradientsCaptured = 0;
+  let gradientsFailed = 0;
+
+  const method = result.detectionMethod;
+
+  // Same container resolution logic as captureGradients()
+  const RESOLVE_CONTAINERS_JS = `
+    (function() {
+      var method = '${method}';
+      var containers;
+      if (method === 'data-slide-number') {
+        containers = Array.from(document.body.querySelectorAll('[data-slide-number]'));
+        containers.sort(function(a, b) {
+          return parseInt(a.dataset.slideNumber) - parseInt(b.dataset.slideNumber);
+        });
+      } else if (method === 'class-slide') {
+        containers = Array.from(document.body.querySelectorAll('section.slide, div.slide'));
+      } else if (method === 'section-children') {
+        containers = Array.from(document.body.children).filter(function(el) {
+          return el.tagName.toLowerCase() === 'section';
+        });
+      } else if (method === 'uniform-divs') {
+        containers = Array.from(document.body.children).filter(function(el) {
+          return el.tagName.toLowerCase() === 'div';
+        });
+      } else {
+        containers = [document.body];
+      }
+      return containers;
+    })()
+  `;
+
+  // Helper: hide all containers except the target slide, showing its
+  // content so the target element is visible for capture.
+  async function isolateSlide(slideIndex) {
+    await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        var containers = ${RESOLVE_CONTAINERS_JS};
+        for (var i = 0; i < containers.length; i++) {
+          var c = containers[i];
+          c.dataset._ecPrevOpacity = c.style.opacity || '';
+          c.dataset._ecPrevVisibility = c.style.visibility || '';
+          if (i !== ${slideIndex}) {
+            c.style.opacity = '0';
+            c.style.visibility = 'hidden';
+          } else {
+            c.style.opacity = '1';
+            c.style.visibility = 'visible';
+          }
+        }
+      })()
+    `);
+  }
+
+  // Helper: restore all containers to their original state.
+  async function restoreContainers() {
+    await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        var containers = ${RESOLVE_CONTAINERS_JS};
+        for (var i = 0; i < containers.length; i++) {
+          var c = containers[i];
+          if (c.dataset._ecPrevOpacity !== undefined) {
+            c.style.opacity = c.dataset._ecPrevOpacity || '';
+            c.style.visibility = c.dataset._ecPrevVisibility || '';
+            delete c.dataset._ecPrevOpacity;
+            delete c.dataset._ecPrevVisibility;
+          }
+        }
+      })()
+    `);
+  }
+
+  // Helper: hide text content of the target element (for gradient capture).
+  // Hides both direct text (via color: transparent) and child elements
+  // (via visibility: hidden) so only the background gradient is captured.
+  async function hideTargetContent(captureRect) {
+    await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        var targetRect = { x: ${captureRect.x}, y: ${captureRect.y},
+                           w: ${captureRect.w}, h: ${captureRect.h} };
+        var all = document.querySelectorAll('*');
+        for (var i = 0; i < all.length; i++) {
+          var r = all[i].getBoundingClientRect();
+          if (Math.abs(r.left - targetRect.x) < 2 &&
+              Math.abs(r.top - targetRect.y) < 2 &&
+              Math.abs(r.width - targetRect.w) < 2 &&
+              Math.abs(r.height - targetRect.h) < 2) {
+            // Hide direct text nodes by making text transparent
+            all[i].dataset._gcPrevColor = all[i].style.color || '';
+            all[i].style.color = 'transparent';
+            // Hide child elements
+            var children = all[i].children;
+            for (var c = 0; c < children.length; c++) {
+              children[c].dataset._gcPrevVis = children[c].style.visibility || '';
+              children[c].style.visibility = 'hidden';
+            }
+            break;
+          }
+        }
+      })()
+    `);
+  }
+
+  // Helper: restore text and children visibility after gradient capture
+  async function restoreTargetContent() {
+    await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        document.querySelectorAll('*').forEach(function(el) {
+          if (el.dataset._gcPrevColor !== undefined) {
+            el.style.color = el.dataset._gcPrevColor || '';
+            delete el.dataset._gcPrevColor;
+          }
+          var children = el.children;
+          for (var c = 0; c < children.length; c++) {
+            if (children[c].dataset._gcPrevVis !== undefined) {
+              children[c].style.visibility = children[c].dataset._gcPrevVis || '';
+              delete children[c].dataset._gcPrevVis;
+            }
+          }
+        });
+      })()
+    `);
+  }
+
+  for (const slide of result.slides) {
+    // Check if this slide has any elements needing capture
+    const hasSvgs = slide.elements.some(el => el.type === 'svg-capture');
+    const hasGradients = slide.elements.some(el => el.type === 'shape' && el.captureRect);
+    if (!hasSvgs && !hasGradients) continue;
+
+    // Isolate this slide (hide other containers) for accurate capture
+    await isolateSlide(slide.index);
+    await new Promise(resolve => setTimeout(resolve, 30));
+
+    for (let i = 0; i < slide.elements.length; i++) {
+      const el = slide.elements[i];
+
+      // ── SVG Capture ──────────────────────────────────────
+      if (el.type === 'svg-capture') {
+        try {
+          const nativeImage = await hiddenWindow.webContents.capturePage({
+            x: Math.round(el.captureRect.x),
+            y: Math.round(el.captureRect.y),
+            width: Math.round(el.captureRect.w),
+            height: Math.round(el.captureRect.h)
+          });
+
+          if (nativeImage.isEmpty()) {
+            throw new Error('capturePage returned empty image for SVG');
+          }
+
+          const dataUri = nativeImage.toDataURL();
+
+          slide.elements[i] = {
+            type: 'image',
+            src: dataUri,
+            position: el.position
+          };
+
+          svgsCaptured++;
+          console.log(
+            `[Extractor] Slide ${slide.index + 1}: SVG captured as PNG ` +
+            `(${Math.round(el.captureRect.w)}×${Math.round(el.captureRect.h)}px)`
+          );
+
+        } catch (err) {
+          console.warn(
+            `[Extractor] Slide ${slide.index + 1}: SVG capture failed — ` +
+            `removing element. ${err.message}`
+          );
+          slide.elements.splice(i, 1);
+          i--;
+          svgsFailed++;
+        }
+        continue;
+      }
+
+      // ── Element Gradient Capture ─────────────────────────
+      if (el.type === 'shape' && el.captureRect) {
+        const captureW = el.captureRect.w;
+        const captureH = el.captureRect.h;
+        try {
+          // Hide the element's children so we capture only the background
+          await hideTargetContent(el.captureRect);
+          await new Promise(resolve => setTimeout(resolve, 30));
+
+          const nativeImage = await hiddenWindow.webContents.capturePage({
+            x: Math.round(el.captureRect.x),
+            y: Math.round(el.captureRect.y),
+            width: Math.round(el.captureRect.w),
+            height: Math.round(el.captureRect.h)
+          });
+
+          await restoreTargetContent();
+
+          if (nativeImage.isEmpty()) {
+            throw new Error('capturePage returned empty image for gradient element');
+          }
+
+          const dataUri = nativeImage.toDataURL();
+
+          el.shape.fillImage = dataUri;
+          delete el.captureRect;
+
+          gradientsCaptured++;
+          console.log(
+            `[Extractor] Slide ${slide.index + 1}: element gradient captured as PNG ` +
+            `(${Math.round(captureW)}×${Math.round(captureH)}px)`
+          );
+
+        } catch (err) {
+          try { await restoreTargetContent(); } catch (_) { /* best effort */ }
+
+          console.warn(
+            `[Extractor] Slide ${slide.index + 1}: element gradient capture failed — ` +
+            `keeping solid fallback. ${err.message}`
+          );
+          delete el.captureRect;
+          gradientsFailed++;
+        }
+      }
+    }
+
+    // Restore all containers after processing this slide's elements
+    await restoreContainers();
+  }
+
+  return { svgsCaptured, svgsFailed, gradientsCaptured, gradientsFailed };
+}
+
+/**
  * Loads an HTML file into a hidden BrowserWindow and extracts
  * per-slide element data using the ported html2pptx-local.cjs logic.
  *
@@ -1379,6 +1661,22 @@ async function extractFromHTML(htmlFilePath, options = {}) {
       console.log(
         `[Extractor] Gradient capture: ${gradientResult.captured} succeeded, ` +
         `${gradientResult.failed} fell back to solid colour`
+      );
+    }
+
+    // Element-level captures (SVGs and gradient elements)
+    const hasElementCaptures = result.slides.some(s =>
+      s.elements.some(el =>
+        el.type === 'svg-capture' || (el.type === 'shape' && el.captureRect)
+      )
+    );
+
+    if (hasElementCaptures) {
+      const elementResult = await captureElementImages(result, hiddenWindow);
+      console.log(
+        `[Extractor] Element captures: ` +
+        `${elementResult.svgsCaptured} SVGs, ${elementResult.gradientsCaptured} gradients succeeded. ` +
+        `${elementResult.svgsFailed} SVGs, ${elementResult.gradientsFailed} gradients failed.`
       );
     }
 

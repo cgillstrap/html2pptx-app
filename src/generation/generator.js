@@ -333,7 +333,17 @@ function addElements(slideData, targetSlide, pres, htmlDir) {
         shape: el.shape.rectRadius > 0 ? pres.ShapeType.roundRect : pres.ShapeType.rect
       };
 
-      if (el.shape.fill) {
+      // Captured gradient: add image behind shape, then render text
+      // with transparent fill on top (Session 6c). PptxGenJS addText()
+      // does not support image fills, so we layer image + text.
+      if (el.shape.fillImage) {
+        targetSlide.addImage({
+          data: el.shape.fillImage,
+          x: el.position.x, y: el.position.y,
+          w: el.position.w, h: el.position.h
+        });
+        // No solid fill on the text overlay — the image is the background
+      } else if (el.shape.fill) {
         shapeOpts.fill = { color: el.shape.fill };
         if (el.shape.transparency != null) shapeOpts.fill.transparency = el.shape.transparency;
       }

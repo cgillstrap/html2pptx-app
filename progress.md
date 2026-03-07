@@ -66,8 +66,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 6b | **Updated** | Processed set propagation: all extraction paths mark descendants. Div-text skips when children have visual fills. Fixes duplicate text. |
-| `src/generation/generator.js` | Session 5 | Current | No changes this session |
+| `src/extraction/extractor.js` | Session 6c | **Updated** | SVG rasterisation via capturePage(). Element gradient rasterisation with stacked layout support. |
+| `src/generation/generator.js` | Session 6c | **Updated** | Gradient image fill: layered addImage() + addText() for shapes with captured gradients. |
 | `src/main/main.js` | Session 2 | Current | No changes this session |
 | `src/main/preload.js` | Session 2 | Current | No changes this session |
 | `src/main/security.js` | Session 1 | Current | No changes this session |
@@ -125,6 +125,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [x] **Transform-aware extraction (Session 6)**: CSS transforms stripped from slide containers and their ancestors before extraction runs, ensuring `getBoundingClientRect()` returns native layout coordinates. Scoped to ancestors only — content element transforms preserved to avoid breaking gradient capture hiding.
 - [x] **SVG element handling (Session 6)**: Inline `<svg>` elements and their subtrees skipped during extraction with summary warning. Prevents malformed extraction data from SVG paths, circles, and other vector elements.
 - [x] **Processed set propagation (Session 6b)**: All extraction paths (list, shape text, text elements, div-text) now mark descendants as processed after capturing their text. Div-text fallback skips extraction when children have visual fills. Fixes duplicate text in hr-skills-slide, sample-slide, and similar patterns.
+- [x] **SVG rasterisation (Session 6c)**: Inline SVGs captured as PNG images via `capturePage()`. Extraction emits `svg-capture` placeholder elements with position and capture rect. Post-extraction step captures each SVG's rendered pixels and replaces placeholder with standard image element. Stacked layout support via slide isolation.
+- [x] **Element gradient rasterisation (Session 6c)**: Elements with CSS gradient backgrounds captured via `capturePage()` with text hidden (`color: transparent`) and children hidden (`visibility: hidden`). Captured PNG used as background image layer in PptxGenJS, with text rendered on top via separate `addText()` call. Solid colour fallback preserved for capture failures. Stacked layout support via slide isolation (same pattern as slide-level gradient capture).
 - [ ] **Table extraction**: Not currently handled. Design discussion from Session 3 (hybrid approach). High likelihood testers will hit this.
 - [ ] **Overflow detection warnings (original port)**: Port getBodyDimensions() overflow check from original repo. May be redundant now with our own overflow detection — needs review.
 
@@ -145,9 +147,21 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [ ] Chart/table insertion into placeholders
 - [ ] Single-file-per-slide mode
 - [ ] Template-based creation
-- [ ] Element-level gradient rasterisation (currently detection + warning only)
+- [ ] Element-level gradient rasterisation — now implemented in 3b, remove from future considerations
 
 ## Key Decisions Log
+
+### Session 6c Decisions
+
+1. **Single capture pass for SVGs and gradients** — Both element-level capture types use `capturePage()` and run in the same post-extraction phase while the hidden window is still open. A single `captureElementImages()` function handles both, avoiding duplicate DOM iteration.
+
+2. **Gradient capture hides text, not just children** — Setting `color: transparent` on the target element hides direct text nodes that `visibility: hidden` on children doesn't cover. Without this, captured gradient images contain baked-in text, producing duplication when `addText()` renders text on top.
+
+3. **Element gradient capture requires slide isolation** — On stacked layouts (e.g. agile-slides with `position: absolute`), other slide containers must be hidden before element-level capture, same as slide-level gradient capture. Without isolation, overlapping containers contaminate the captured image.
+
+4. **Gradient shapes use layered rendering in PptxGenJS** — PptxGenJS `addText()` does not support `fill: { data: '...' }` for image fills. Gradient shapes are rendered as two layers: `addImage()` for the gradient background, then `addText()` with no fill for text on top.
+
+5. **JSON contract extended: `captureRect` on elements, `fillImage` on shapes** — `captureRect` is transient (removed after capture). `fillImage` is consumed by the generator as an alternative to solid fill colour.
 
 ### Session 6 Decisions
 
@@ -241,6 +255,9 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 20. **Transform stripping must be scoped, not global** — Stripping transforms from all elements breaks gradient capture because content elements inside stacked slides may use transforms that interact with the hide/show visibility logic. Only strip from slide containers and their ancestors.
 21. **The `processed` Set is the primary defence against duplicate extraction** — Every extraction path that captures text from child elements MUST mark those children as processed. This is an invariant, not a case-by-case decision.
 22. **Div-text fallback must be aware of children's visual properties** — A container div with no background but with visually-styled children is NOT a text element — it's a layout container whose children should be extracted individually.
+23. **PptxGenJS addText() does not support image fills** — `fill: { data: '...' }` only works with `addImage()`. For gradient backgrounds on shapes with text, use a two-layer approach: `addImage()` for the background, `addText()` with no fill for the text overlay.
+24. **Element-level capturePage() needs the same slide isolation as slide-level** — On stacked layouts, other containers must be hidden before capturing individual elements. The same hide-all/reveal-target pattern from `captureGradients()` applies to `captureElementImages()`.
+25. **Hiding children is not enough for gradient capture — must also hide text** — `visibility: hidden` on child elements doesn't affect direct text nodes. Setting `color: transparent` on the target element ensures the captured image contains only the gradient background, preventing duplicate text when the generator overlays text via `addText()`.
 
 ## Testing Notes
 
@@ -264,6 +281,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - User has tested agile-slides.html rendering and confirmed Session 4 fixes resolve badge, shape text, and CSS triangle issues
 - User has validated lpm-slides-v1.html rendering with Session 5 fixes — standalone spans, HR lines, and flex-centred arrows confirmed working
 - User has validated hr-skills-slide.html and modern-it-skills.html with Session 6 fixes — correct detection, transform stripping, SVG skipping, no regressions on agile-slides gradient capture
+- User has validated Session 6c SVG rasterisation (hr-skills-slide SVG icons appear as images) and element gradient capture (agile-slides badge/pill gradients rendered, hr-skills banner gradient rendered)
 
 ## Conversation History
 
@@ -277,14 +295,15 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 5. **Session 5** — Addressed three rendering issues from visual review of lpm-slides-v1.html. (1) Standalone text span extraction: SPAN/A/LABEL elements without backgrounds now extracted as div-text — captures tags, metric values, contrast labels, and numbered markers. (2) HR element extraction: `<hr>` elements extracted as lines with colour fallback chain. (3) Flex centering detection: div-text fallback detects flex containers and emits valign/align; generator reads valign from style. All three validated against lpm-slides-v1.html (215 elements across 12 slides) and agile-slides.html (no regressions). Also tested against conformant_sample.html and modern-it-skills.html.
 
-6. **Session 6** (current) — Fixed critical failures with viewport-scaled single-slide HTML files (hr-skills-slide.html, modern-it-skills.html). Three fixes: (1) Single-slide class detection: `>= 1` instead of `> 1` for `class-slide` and `data-slide-number`. (2) Transform-aware extraction: CSS transforms stripped from slide containers and ancestors before extraction, ensuring native layout coordinates. Initial global stripping broke agile-slides gradient capture — scoped to ancestors only. (3) SVG element handling: inline SVGs and subtrees skipped with summary warning. Then Session 6b: fixed duplicate text extraction by propagating the `processed` Set to descendants in all extraction paths (lists, shape text, text elements, div-text). Added visual-children check in div-text fallback to skip when children have backgrounds. Reduced element counts where duplicates existed (hr-skills 96->88, sample-slide 8->4) with no regressions.
+6. **Session 6** — Fixed critical failures with viewport-scaled single-slide HTML files (hr-skills-slide.html, modern-it-skills.html). Three fixes: (1) Single-slide class detection: `>= 1` instead of `> 1` for `class-slide` and `data-slide-number`. (2) Transform-aware extraction: CSS transforms stripped from slide containers and ancestors before extraction, ensuring native layout coordinates. Initial global stripping broke agile-slides gradient capture — scoped to ancestors only. (3) SVG element handling: inline SVGs and subtrees skipped with summary warning. Then Session 6b: fixed duplicate text extraction by propagating the `processed` Set to descendants in all extraction paths (lists, shape text, text elements, div-text). Added visual-children check in div-text fallback to skip when children have backgrounds. Reduced element counts where duplicates existed (hr-skills 96->88, sample-slide 8->4) with no regressions.
+
+7. **Session 6c** (current) — Implemented SVG rasterisation and element-level gradient rasterisation, both using `capturePage()`. SVGs: extraction emits `svg-capture` placeholders, post-extraction step captures rendered pixels and replaces with standard image elements. Element gradients: shapes with CSS gradients get `captureRect`, post-extraction step hides text (`color: transparent`) and children (`visibility: hidden`), captures background, stores as `fillImage`. Generator renders gradient shapes as two layers: `addImage()` for gradient background + `addText()` for text overlay, since PptxGenJS `addText()` doesn't support image fills. Both capture types use slide isolation for stacked layouts (same hide-all/reveal-target pattern as slide-level gradient capture). Validated on hr-skills-slide.html (SVG icons + gradient banner), agile-slides.html (badge/pill gradients), and all regression fixtures.
 
 ### Next Session Priorities
 1. **Table extraction** (3b) — finalise design decision and implement. Hybrid approach recommended.
 2. **Integration test harness** — fixture-driven pipeline tests using electron-mocha. Baseline rendering quality should be established first.
 3. **Packaging with electron-builder** (3d) — .exe installer for Windows 11
 4. **Extraction window height** (3a) — test with longer fixture to confirm if real issue
-5. **SVG rasterisation** (3e) — capturePage()-based rasterisation of inline SVGs as future enhancement.
 
 ## Checkpoint Discipline
 
