@@ -36,6 +36,11 @@
 //   minus border widths) rather than computed.width, which is unreliable
 //   with box-sizing: border-box.
 //
+// Key Changes (Session 7b):
+// - captureGradients() re-queries container bounding rect at capture time
+//   instead of trusting extraction-time coordinates, making gradient capture
+//   resilient to layout shifts from display-none fix and DOM manipulations.
+//
 // Key Changes (Session 3):
 // - Overflow detection: container-level and element-level
 // - Gradient capture fix for stacked/overlapping slide layouts
@@ -1247,11 +1252,39 @@ async function captureGradients(result, hiddenWindow) {
 
       await new Promise(resolve => setTimeout(resolve, 50));
 
+      // Re-query the target container's bounding rect at capture time.
+      // The stored captureRect from extraction may be stale if DOM
+      // manipulations (display-none fix, position changes, window
+      // resizing, or the hide/show dance above) have shifted layout.
+      // This makes captureGradients() self-sufficient — it does not
+      // depend on extraction-time coordinates remaining accurate.
+      const freshRect = await hiddenWindow.webContents.executeJavaScript(`
+        (function() {
+          var containers = ${RESOLVE_CONTAINERS_JS};
+          var target = containers[${slideIndex}];
+          if (!target) return null;
+          var r = target.getBoundingClientRect();
+          return { x: r.left, y: r.top, w: r.width, h: r.height };
+        })()
+      `);
+
+      if (!freshRect || freshRect.w === 0 || freshRect.h === 0) {
+        throw new Error('Target container not found or has zero dimensions at capture time');
+      }
+
+      if (Math.abs(freshRect.x - rect.x) > 1 || Math.abs(freshRect.y - rect.y) > 1) {
+        console.log(
+          `[Extractor] Slide ${slide.index + 1}: capture rect shifted — ` +
+          `stored (${Math.round(rect.x)},${Math.round(rect.y)}) → ` +
+          `fresh (${Math.round(freshRect.x)},${Math.round(freshRect.y)})`
+        );
+      }
+
       const nativeImage = await hiddenWindow.webContents.capturePage({
-        x: Math.round(rect.x),
-        y: Math.round(rect.y),
-        width: Math.round(rect.w),
-        height: Math.round(rect.h)
+        x: Math.round(freshRect.x),
+        y: Math.round(freshRect.y),
+        width: Math.round(freshRect.w),
+        height: Math.round(freshRect.h)
       });
 
       // Restore all containers and children
@@ -1287,7 +1320,7 @@ async function captureGradients(result, hiddenWindow) {
 
       console.log(
         `[Extractor] Slide ${slide.index + 1}: gradient captured as PNG ` +
-        `(${Math.round(rect.w)}×${Math.round(rect.h)}px)`
+        `(${Math.round(freshRect.w)}×${Math.round(freshRect.h)}px)`
       );
 
     } catch (err) {

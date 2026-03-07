@@ -1,6 +1,6 @@
 # Issue: Slide-level gradient capture shows text on taxonomy-deck-html.html
 
-## Status: OPEN (Session 7a)
+## Status: OPEN (Session 7b — Theory A ruled out)
 
 ## Problem
 
@@ -40,10 +40,8 @@ Set `display: none` on all direct children of the target container (completely r
 
 ## Theories to investigate
 
-### A. capturePage() coordinate mismatch
-The `captureRect` is computed during extraction (inside EXTRACTION_SCRIPT via `containerRect.left/top/width/height`). The `capturePage()` call uses these coordinates later. If the layout shifted between extraction and capture (e.g., due to DOM changes from the gradient capture process itself), the capture rect might be pointing at the wrong area — possibly capturing a different slide or the raw page content.
-
-**How to test:** Add diagnostic logging to compare the `captureRect` from extraction with a fresh `getBoundingClientRect()` at capture time. If they differ, the coordinates are stale.
+### A. capturePage() coordinate mismatch — RULED OUT (Session 7b)
+`captureGradients()` now re-queries the container's bounding rect at capture time (fresh `getBoundingClientRect()` after the hide/show manipulation). Diagnostic logging confirmed no significant shift between stored and fresh coordinates (all within 1px). The fresh rect code is kept as a defensive improvement, but coordinates are NOT the root cause. All 8 taxonomy slides capture "successfully" (no fallback to solid colour) — the issue is that the captured pixels still contain text despite the children being hidden.
 
 ### B. Window sizing / capturePage viewport issue
 The re-measurement sets the window to `scrollHeight` (e.g., ~4320px for 8 slides). The original `h * 10` would have been much larger. `capturePage()` may behave differently with different window sizes — perhaps it clips or composites differently when the content exactly fills the viewport vs. having headroom.
@@ -70,10 +68,11 @@ If the capture can't be fixed, fall back to the solid colour for slides that wen
 
 ## Recommended next steps
 
-1. Start with **Theory A** (coordinate mismatch) — cheapest to diagnose with logging.
-2. Try **Theory E** (longer wait / forced repaint) — quick to test.
-3. Try **Theory D** (overlay inside container) — different approach to the overlay.
-4. If none work, implement **Theory F** (skip capture for display-none slides) as a pragmatic fallback.
+1. ~~**Theory A** (coordinate mismatch)~~ — RULED OUT in Session 7b. Fresh rect matches stored rect.
+2. Try **Theory E** (longer wait / forced repaint) — quick to test. The taxonomy deck has 8 complex slides; 50ms may not be enough for Chromium to fully repaint after hiding children with `display: none`.
+3. Try **Theory D** (overlay inside container) — different stacking context approach.
+4. Investigate **CSS `!important` override** — the taxonomy deck's stylesheet may use `!important` on display/visibility rules (e.g. `.slide.active { display: flex !important }`), which would override our inline `display: none` on children. Fix: use `setProperty('display', 'none', 'important')`.
+5. If none work, implement **Theory F** (skip capture for display-none slides) as a pragmatic fallback.
 
 ## Files involved
 
