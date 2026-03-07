@@ -393,12 +393,13 @@ function addElements(slideData, targetSlide, pres, htmlDir) {
       continue;
     }
 
-    // ── Div text fallback (our addition) ──────────────────────
+    // ── Div text fallback (strict mode skip) ──────────────────
     if (el.type === 'div-text' && el.isDivFallback) {
       const config = getConfig();
       if (config.divTextHandling === 'strict') {
         continue;
       }
+      // In 'fallback' mode, falls through to text rendering below
     }
 
     // ── Text (P, H1-H6, and div-text fallback) ────────────────

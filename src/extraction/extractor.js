@@ -654,9 +654,12 @@ const EXTRACTION_SCRIPT = `
             'TABLE','THEAD','TBODY','TR','H1','H2','H3','H4','H5','H6',
             'P','BLOCKQUOTE','PRE','HR','ADDRESS'
           ]);
-          let hasBlockChild = false;
-          for (const child of el.children) {
-            if (BLOCK_TAGS_SET.has(child.tagName)) { hasBlockChild = true; break; }
+          var hasBlockChild = false;
+          for (var bci = 0; bci < el.children.length; bci++) {
+            if (BLOCK_TAGS_SET.has(el.children[bci].tagName)) {
+              hasBlockChild = true;
+              break;
+            }
           }
 
           const directText = Array.from(el.childNodes)
@@ -678,8 +681,11 @@ const EXTRACTION_SCRIPT = `
               var vcBgImg = vcComp.backgroundImage;
               if ((vcBg && vcBg !== 'rgba(0, 0, 0, 0)' && vcBg !== 'transparent') ||
                   (vcBgImg && vcBgImg !== 'none' && vcBgImg.includes('gradient'))) {
-                hasVisualChildren = true;
-                break;
+                var vcText = el.children[vci].textContent ? el.children[vci].textContent.trim() : '';
+                if (vcText.length > 0) {
+                  hasVisualChildren = true;
+                  break;
+                }
               }
             }
             if (hasVisualChildren) {
@@ -753,11 +759,179 @@ const EXTRACTION_SCRIPT = `
                   }
                 });
               }
-              el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
+              el.querySelectorAll('*').forEach(function(child) {
+                // Don't mark SVG elements as processed — let SVG extraction
+                // handle them (rasterised to PNG via capturePage).
+                if (child.tagName === 'svg' || child.tagName === 'SVG' || child instanceof SVGElement) {
+                  return;
+                }
+                // Don't mark text-less block children with visual fills — let
+                // shape extraction handle them separately (e.g. legend swatches,
+                // decorative dots). Marking them processed would suppress their
+                // shape, losing the visual element.
+                if (BLOCK_TAGS_SET.has(child.tagName)) {
+                  var cpText = child.textContent ? child.textContent.trim() : '';
+                  if (cpText.length === 0) {
+                    var cpComp = window.getComputedStyle(child);
+                    var cpBg = cpComp.backgroundColor;
+                    var cpBgImg = cpComp.backgroundImage;
+                    var cpHasVisual = (cpBg && cpBg !== 'rgba(0, 0, 0, 0)' && cpBg !== 'transparent') ||
+                      (cpBgImg && cpBgImg !== 'none' && cpBgImg.includes('gradient'));
+                    if (cpHasVisual) return; // skip — shape extraction will handle
+                  }
+                }
+                processed.add(child);
+              });
               processed.add(el);
               return;
             }
           }
+
+          // ── Mixed container text rescue (Session 8a) ────────────
+          // When a container has block children but ALL are text-less
+          // (decorative swatches, dots), extract the text content using
+          // Range-based positioning so the text box covers only the
+          // text area, not the decorative block children's space.
+          if (hasBlockChild && fullText.length > 0) {
+          var allBlockChildrenTextless = true;
+          for (var mci = 0; mci < el.children.length; mci++) {
+            if (BLOCK_TAGS_SET.has(el.children[mci].tagName)) {
+              var mciText = el.children[mci].textContent ? el.children[mci].textContent.trim() : '';
+              if (mciText.length > 0) {
+                allBlockChildrenTextless = false;
+                break;
+              }
+            }
+          }
+
+          if (allBlockChildrenTextless) {
+            // Collect text-bearing child nodes (text nodes + inline elements)
+            var textBearingNodes = [];
+            for (var tbn = 0; tbn < el.childNodes.length; tbn++) {
+              var tbNode = el.childNodes[tbn];
+              if (tbNode.nodeType === Node.TEXT_NODE && tbNode.textContent.trim().length > 0) {
+                textBearingNodes.push(tbNode);
+              } else if (tbNode.nodeType === Node.ELEMENT_NODE &&
+                         !BLOCK_TAGS_SET.has(tbNode.tagName) &&
+                         tbNode.textContent.trim().length > 0) {
+                textBearingNodes.push(tbNode);
+              }
+            }
+
+            if (textBearingNodes.length > 0) {
+              var range = document.createRange();
+              range.setStartBefore(textBearingNodes[0]);
+              range.setEndAfter(textBearingNodes[textBearingNodes.length - 1]);
+              var textRect = range.getBoundingClientRect();
+
+              if (textRect.width > 0 && textRect.height > 0) {
+                var computed3 = window.getComputedStyle(el);
+                var rotation3 = getRotation(computed3.transform, computed3.writingMode);
+
+                var baseStyle3 = {
+                  fontSize: pxToPoints(computed3.fontSize),
+                  fontFace: computed3.fontFamily.split(',')[0].replace(/['"]/g, '').trim(),
+                  color: rgbToHex(computed3.color),
+                  align: computed3.textAlign === 'start' ? 'left' : computed3.textAlign,
+                  lineSpacing: pxToPoints(computed3.lineHeight),
+                  paraSpaceBefore: 0,
+                  paraSpaceAfter: 0,
+                  margin: [0, 0, 0, 0]
+                };
+
+                var trans3 = extractAlpha(computed3.color);
+                if (trans3 !== null) baseStyle3.transparency = trans3;
+                if (rotation3 !== null) baseStyle3.rotate = rotation3;
+
+                // Detect flex centering
+                var display3 = computed3.display;
+                if (display3 === 'flex' || display3 === 'inline-flex') {
+                  var alignItems3 = computed3.alignItems;
+                  if (alignItems3 === 'center' || alignItems3 === 'safe center') {
+                    baseStyle3.valign = 'middle';
+                  }
+                }
+
+                // Build text content — check for inline formatting
+                var hasFormatting3 = false;
+                for (var fi = 0; fi < textBearingNodes.length; fi++) {
+                  if (textBearingNodes[fi].nodeType === Node.ELEMENT_NODE) {
+                    hasFormatting3 = true;
+                    break;
+                  }
+                }
+
+                // Collect text from non-block children only
+                var rangeText = '';
+                for (var rti = 0; rti < el.childNodes.length; rti++) {
+                  var rtNode = el.childNodes[rti];
+                  if (rtNode.nodeType === Node.TEXT_NODE) {
+                    rangeText += rtNode.textContent;
+                  } else if (rtNode.nodeType === Node.ELEMENT_NODE &&
+                             !BLOCK_TAGS_SET.has(rtNode.tagName)) {
+                    rangeText += rtNode.textContent;
+                  }
+                }
+                rangeText = rangeText.trim();
+
+                if (rangeText.length > 0) {
+                  var textTransform3 = computed3.textTransform;
+
+                  if (hasFormatting3) {
+                    // Block children are text-less so parseInlineFormatting
+                    // on the parent produces correct runs (no phantom text
+                    // from decorative children).
+                    var runs3 = parseInlineFormatting(el);
+                    var transformedRuns3 = runs3.map(function(run) {
+                      return Object.assign({}, run, { text: applyTextTransform(run.text, textTransform3) });
+                    });
+                    elements.push({
+                      type: 'div-text', isDivFallback: true, text: transformedRuns3,
+                      position: { x: pxToInch(textRect.left - offX), y: pxToInch(textRect.top - offY),
+                                  w: pxToInch(textRect.width), h: pxToInch(textRect.height) },
+                      style: baseStyle3
+                    });
+                  } else {
+                    var isBold3 = computed3.fontWeight === 'bold' || parseInt(computed3.fontWeight) >= 600;
+                    elements.push({
+                      type: 'div-text', isDivFallback: true,
+                      text: applyTextTransform(rangeText, textTransform3),
+                      position: { x: pxToInch(textRect.left - offX), y: pxToInch(textRect.top - offY),
+                                  w: pxToInch(textRect.width), h: pxToInch(textRect.height) },
+                      style: {
+                        ...baseStyle3,
+                        bold: isBold3 && !shouldSkipBold(computed3.fontFamily),
+                        italic: computed3.fontStyle === 'italic',
+                        underline: computed3.textDecoration.includes('underline')
+                      }
+                    });
+                  }
+
+                  // Mark non-block, non-SVG descendants as processed
+                  el.querySelectorAll('*').forEach(function(child) {
+                    if (child.tagName === 'svg' || child.tagName === 'SVG' || child instanceof SVGElement) {
+                      return;
+                    }
+                    if (BLOCK_TAGS_SET.has(child.tagName)) {
+                      var cpText = child.textContent ? child.textContent.trim() : '';
+                      if (cpText.length === 0) {
+                        var cpComp = window.getComputedStyle(child);
+                        var cpBg = cpComp.backgroundColor;
+                        var cpBgImg = cpComp.backgroundImage;
+                        var cpHasVisual = (cpBg && cpBg !== 'rgba(0, 0, 0, 0)' && cpBg !== 'transparent') ||
+                          (cpBgImg && cpBgImg !== 'none' && cpBgImg.includes('gradient'));
+                        if (cpHasVisual) return;
+                      }
+                    }
+                    processed.add(child);
+                  });
+                  processed.add(el);
+                  return;
+                }
+              }
+            }
+          }
+        }
         }
       }
 

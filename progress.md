@@ -27,7 +27,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 | `doc2-design-principles.md` | Visual communication guidance | Stable reference |
 | `doc3-brand-tokens.md` | Brand identity tokens | Stable reference |
 
-**Session start checklist:** Paste `progress.md` and `PRINCIPLES.md`. Attach current source files per the File Status table below. Optionally attach `uc1-guardrails.md` if working on extraction/detection logic.
+**Session start checklist:** Paste `progress.md` and `PRINCIPLES.md`. Attach current source files per the File Status table below. Optionally attach `uc1-guardrails.md` if working on extraction or detection logic.
 
 ## Source Repository
 
@@ -66,8 +66,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 7d | **Updated** | Clone-based gradient capture at viewport origin. Containers hidden with display:none !important, gradient cloned to empty div at (0,0), captured there. Resolves taxonomy-deck text-leaking issue. Fresh bounding rect query. Display-none visibility fix. |
-| `src/generation/generator.js` | Session 6c | **Updated** | Gradient image fill: layered addImage() + addText() for shapes with captured gradients. |
+| `src/extraction/extractor.js` | Session 8a | **Updated** | Mixed container text rescue via Range API for containers with text-less decorative block children (legend swatches, dots). Visual-children check refined to require text content. Processed-set protects SVGs and text-less visual block children from suppression. |
+| `src/generation/generator.js` | Session 8a | **Updated** | Div-text strict-mode skip: explicit fall-through comment for readability. |
 | `src/main/main.js` | Session 2 | Current | No changes this session |
 | `src/main/preload.js` | Session 2 | Current | No changes this session |
 | `src/main/security.js` | Session 1 | Current | No changes this session |
@@ -95,7 +95,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [x] sample-slide.html — VALIDATED (after h1/p fix + config additions)
 - [x] Stress tested with esoteric examples — rendering good, minor issues noted
 
-### Phase 3 — MVP Polish & Package (IN PROGRESS — Sessions 2–6)
+### Phase 3 — MVP Polish & Package (IN PROGRESS — Sessions 2–7)
 
 #### 3a: MVP Priority ✅ COMPLETE
 - [x] **Validation/warning display in UI**: Warnings in amber, errors in red, surfaced in status panel.
@@ -151,6 +151,16 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [ ] Template-based creation
 
 ## Key Decisions Log
+
+### Session 8a Decisions
+
+1. **Relaxing hasBlockChild is too broad** — The initial approach (requiring block children to have text content before blocking div-text extraction) caused positioning regressions across flex/grid layout containers (modern-it-skills, hr-skills, taxonomy-deck). A parent div's bounding rect includes the decorative child's area, producing overlapping text boxes. The `hasBlockChild` check was reverted to its original form.
+
+2. **Range-based positioning for mixed containers** — Instead of relaxing `hasBlockChild`, a new "mixed container text rescue" path handles containers with ONLY text-less block children. Uses `Range.getBoundingClientRect()` on the text-bearing nodes (text nodes + inline elements) to get a precise bounding rect that excludes the decorative block children's area. This preserves correct positioning in flex layouts where swatches/icons sit alongside text.
+
+3. **Visual-children check requires text content** — The `hasVisualChildren` guard (Session 6b anti-duplication) now only triggers when a child has BOTH a visual fill AND text content. A text-less visual child (swatch, dot) cannot produce duplication, so it should not block parent text extraction.
+
+4. **Processed-set must protect SVGs and decorative shapes** — The div-text fallback's `querySelectorAll('*').forEach(processed.add)` now skips SVG elements (and their children via `instanceof SVGElement`) and text-less block children with visual fills. SVGs must remain unprocessed for the SVG rasterisation path. Decorative shapes must remain unprocessed for shape extraction.
 
 ### Session 7d Decisions
 
@@ -238,7 +248,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 | **CSS slideshow (stacked)** | `agile-slides.html` | `class-slide` (div.slide) | All slides `position: absolute; inset: 0` in a wrapper, toggled via opacity | Gradient capture, interactive chrome filtering, badge/shape text, CSS triangles. Most rendering issues identified and fixed in Session 4. |
 | **Div-heavy (ChatGPT/Copilot)** | Not yet tested | Expected: `uniform-divs` or `body-fallback` | Deeply nested wrapper divs, text in bare divs | Div-text fallback essential. No fixture yet. |
 | **Viewport-scaled single slide** | `hr-skills-slide.html`, `modern-it-skills.html` | `class-slide` (single) | Single slide at 1280x720 inside a scaling wrapper. JS applies `transform: scale(...)` to fit viewport. | Transform distorts bounding rects. Inline SVGs for icons. Requires transform stripping before extraction. |
-| **Interactive slideshow (display:none)** | `taxonomy-deck-html.html` | `class-slide` (div.slide) | 8 slides, `display:none` toggled by `.active` class. `position:absolute` inside wrapper. | Hidden slides have zero-size bounding rects; requires pre-extraction display-none fix. Gradient capture on these slides has open text-leaking issue. |
+| **Interactive slideshow (display:none)** | `taxonomy-deck-html.html` | `class-slide` (div.slide) | 8 slides, `display:none` toggled by `.active` class. `position:absolute` inside wrapper. | Hidden slides have zero-size bounding rects; requires pre-extraction display-none fix. Gradient capture resolved via clone at viewport origin (Session 7d). |
 | **Table-heavy** | Not yet tested | N/A | `<table>` elements for data display | Tables currently ignored. Design discussion in progress. |
 
 ## Key Learnings
@@ -269,10 +279,13 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 24. **Element-level capturePage() needs the same slide isolation as slide-level** — On stacked layouts, other containers must be hidden before capturing individual elements. The same hide-all/reveal-target pattern from `captureGradients()` applies to `captureElementImages()`.
 25. **Hiding children is not enough for gradient capture — must also hide text** — `visibility: hidden` on child elements doesn't affect direct text nodes. Setting `color: transparent` on the target element ensures the captured image contains only the gradient background, preventing duplicate text when the generator overlays text via `addText()`.
 26. **capturePage() coordinates should be fresh, not stored** — DOM manipulations between extraction and capture can shift layout (especially with flex centering, position changes, and window resizing). `captureGradients()` now re-queries bounding rects at capture time. In practice, coordinates matched for all current fixtures, but the pattern is defensive best practice.
-27. **Coordinate correctness does not guarantee clean captures** — The taxonomy-deck gradient text-leaking issue persists despite correct capture coordinates. The problem is in the rendering layer (text still visible in the captured pixels despite `display: none` on children), not in geometry.
+27. **Coordinate correctness does not guarantee clean captures** — The taxonomy-deck gradient text-leaking issue persisted despite correct capture coordinates. The problem was in the rendering layer (stale compositor frames), not in geometry.
 28. **capturePage() serves stale frames for off-viewport regions** — Chromium's compositor does not reliably re-render content far from the viewport origin. The taxonomy deck's slides at y:8000+ retained their pre-hide appearance in the capture buffer despite confirmed `display:none` in the DOM. The fix: always capture gradient clones at (0,0) where the compositor maintains fresh frames.
 29. **Diagnostic PNG-to-disk writes are invaluable** — Writing captured PNGs to the temp directory and visually inspecting them immediately revealed that slide 1 (`.active`) had text while slides 2-8 were clean. This pointed directly at the compositor stale-frame issue, ending a multi-session investigation.
 30. **For pixel capture, prefer clean clones over in-place hiding** — Creating an empty element with the same CSS background is more reliable than hiding content within the real element. In-place hiding must fight CSS specificity, `!important` rules, pseudo-elements, compositor timing, and stacking contexts. A clone has none of these problems.
+31. **Relaxing extraction guards has wide blast radius** — Changing `hasBlockChild` to require text content seemed targeted but affected every flex/grid layout container with decorative block children. The parent's bounding rect includes the decorative child's area, producing overlap. Extraction guard changes must be validated against all layout patterns, not just the target fixture.
+32. **Range API provides precise text-only bounding rects** — `Range.getBoundingClientRect()` on text nodes and inline elements gives the exact area occupied by text, excluding sibling block elements. This is essential for flex containers where text and decorative blocks share a parent but occupy different spatial regions.
+33. **The processed Set must never suppress SVG elements** — SVG elements require the `svg-capture` extraction path (rasterised to PNG via `capturePage()`). If a parent div-text marks SVGs as processed, the SVG path never fires and icons are silently lost. The `instanceof SVGElement` check catches both top-level `<svg>` and child elements (path, circle, etc.).
 
 ## Testing Notes
 
@@ -301,6 +314,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - User has validated Session 6c SVG rasterisation (hr-skills-slide SVG icons appear as images) and element gradient capture (agile-slides badge/pill gradients rendered, hr-skills banner gradient rendered)
 - Session 7a: display-none fix validated — taxonomy-deck-html.html extracts all 8 slides. No regressions on other fixtures after conditional re-measurement fix.
 - Session 7d: taxonomy-deck gradient capture RESOLVED — all 8 slides have clean gradient backgrounds with no text leaking. Clone-based capture at viewport origin. All 11 fixtures validated with zero failures.
+- Session 8a: taxonomy-deck slide 3 legend text FIXED — Range-based extraction captures text next to decorative swatches with correct positioning. modern-it-skills SVG icons now fully captured (12 SVGs, up from 6 — both icon-wrap and arrow SVGs). All fixtures validated with zero failures.
 - conformant_sample.html slide 3 has known overlap between bullet items and step-duration labels (flex layout fidelity limit, not a duplication bug)
 
 ## Conversation History
@@ -325,12 +339,16 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 10. **Session 7c** — Replaced content-hiding approach in `captureGradients()` with clone-based capture. Despite the clone having no children, the taxonomy deck still showed ghosted text. This narrowed the problem to the capture mechanism itself, not the hiding strategy.
 
-11. **Session 7d** (current) — RESOLVED the taxonomy-deck gradient capture issue. Diagnostic PNG writes revealed: slide 1 PNG had baked-in text, slides 2-8 were clean. The `.active` slide was the only one affected. Key diagnostic: containers were confirmed `display:none` (computed style verified), clone was correctly positioned with gradient — but at y:8272 (far down the page after 8 slides stacked vertically). Root cause: `capturePage()` serves stale compositor frames for off-viewport regions. Fix: position the clone at (0,0) and capture there. The gradient is position-independent — only the colours matter. Combined with `display:none !important` on all containers (to handle CSS class rules on the `.active` slide), this produces clean gradient-only captures for all slides. Body-fallback gradient captures also now work (executive_workshop_agenda, Team6_Challenge, Workshop Agenda). All 11 fixtures validated with zero failures.
+11. **Session 7d** — RESOLVED the taxonomy-deck gradient capture issue. Diagnostic PNG writes revealed: slide 1 PNG had baked-in text, slides 2-8 were clean. The `.active` slide was the only one affected. Key diagnostic: containers were confirmed `display:none` (computed style verified), clone was correctly positioned with gradient — but at y:8272 (far down the page after 8 slides stacked vertically). Root cause: `capturePage()` serves stale compositor frames for off-viewport regions. Fix: position the clone at (0,0) and capture there. The gradient is position-independent — only the colours matter. Combined with `display:none !important` on all containers (to handle CSS class rules on the `.active` slide), this produces clean gradient-only captures for all slides. All 11 fixtures validated with zero failures.
+
+12. **Session 7 chat** — Partnered with Claude Code across sessions 7a–7d to resolve two issues with taxonomy-deck-html.html (8-slide interactive deck using display:none toggling). First issue (display-none visibility): solved in 7a with pre-extraction step that forces hidden containers visible and adjusts position for stacked layouts. Second issue (gradient capture text leaking): investigated across 7b–7d, trying fresh coordinate queries (7b), clone-based capture (7c), and finally diagnostic PNG-to-disk writes (7d) that revealed the root cause — Chromium's compositor serves stale frames for off-viewport regions. Fix: clone gradient to empty div at (0,0) and capture there, with `display:none !important` on all containers to handle CSS class specificity. All 11 fixtures pass clean. Architectural review identified extractor.js complexity growth as a maintainability concern — readability refactor task drafted for next session before table extraction begins.
+
+13. **Session 8a** — Fixed taxonomy-deck slide 3 legend text disappearance and clarified generator div-text fall-through. Three extraction changes: (1) Visual-children check refined to require text content — text-less visual children (swatches, dots) no longer trigger the anti-duplication guard. (2) Processed-set protections — SVG elements and text-less visual block children are no longer marked as processed by the div-text fallback, preserving them for SVG rasterisation and shape extraction. (3) Mixed container text rescue — new extraction path using Range API for containers whose block children are all text-less; uses `Range.getBoundingClientRect()` on text-bearing nodes for precise positioning that excludes decorative block children. Initial approach (relaxing `hasBlockChild` to require text content) caused positioning regressions across flex layouts — reverted in favour of the Range-based approach. Generator change: added explicit fall-through comment on div-text strict-mode skip. Bonus: modern-it-skills now captures 12 SVGs (both 34×34 icons and 18×18 arrows) thanks to the processed-set SVG protection. All fixtures validated.
 
 ### Next Session Priorities
-1. ~~**Fix taxonomy gradient capture**~~ — RESOLVED in Session 7d
-2. **Table extraction** (3b) — finalise design decision and implement. Hybrid approach recommended.
-3. **Integration test harness** — fixture-driven pipeline tests using electron-mocha
+1. **Extractor readability refactor** — Extract pre-processing steps in `extractFromHTML()` into named functions (`stripContainerTransforms`, `forceHiddenSlidesVisible`, `remeasureAfterDisplayFix`). Consolidate `RESOLVE_CONTAINERS_JS` duplication into a single `buildContainerResolverJS()` factory. Add phase comments. No functional changes — regression test against all fixtures. See `tasks/task-extractor-readability.md`. Do this before table extraction to keep the codebase clean as it grows.
+2. **Table extraction** (3b) — finalise design decision and implement. Hybrid approach recommended (native pptxgenjs tables for simple structures, positioned text boxes for complex). Need a table-heavy fixture.
+3. **Integration test harness** — fixture-driven pipeline tests using electron-mocha. Baseline rendering quality before packaging.
 4. **Packaging with electron-builder** (3d) — .exe installer for Windows 11
 
 ## Checkpoint Discipline
