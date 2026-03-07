@@ -124,6 +124,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [x] **Single-slide class detection (Session 6)**: `class-slide` and `data-slide-number` detection accepts single-element matches (>= 1 instead of > 1). Enables correct detection of single-slide HTML files with `class="slide"`.
 - [x] **Transform-aware extraction (Session 6)**: CSS transforms stripped from slide containers and their ancestors before extraction runs, ensuring `getBoundingClientRect()` returns native layout coordinates. Scoped to ancestors only — content element transforms preserved to avoid breaking gradient capture hiding.
 - [x] **SVG element handling (Session 6)**: Inline `<svg>` elements and their subtrees skipped during extraction with summary warning. Prevents malformed extraction data from SVG paths, circles, and other vector elements.
+- [x] **Processed set propagation (Session 6b)**: All extraction paths (list, shape text, text elements, div-text) now mark descendants as processed after capturing their text. Div-text fallback skips extraction when children have visual fills. Fixes duplicate text in hr-skills-slide, sample-slide, and similar patterns.
 - [ ] **Table extraction**: Not currently handled. Design discussion from Session 3 (hybrid approach). High likelihood testers will hit this.
 - [ ] **Overflow detection warnings (original port)**: Port getBodyDimensions() overflow check from original repo. May be redundant now with our own overflow detection — needs review.
 
@@ -155,6 +156,10 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 2. **Transform stripping scoped to ancestors, not all elements** — Initial implementation stripped transforms from ALL elements, which broke gradient capture on agile-slides (content bled through on slide 1). Fix: only strip transforms from slide containers and their ancestors (the viewport-scaling wrapper divs). Content element transforms are preserved, keeping gradient capture's hide/show logic intact.
 
 3. **SVG skip with warning, not rasterisation** — Rasterising SVGs via `capturePage()` is technically feasible (same approach as gradient capture) but adds complexity. For MVP, skipping with a warning is the right balance. Users can replace inline SVGs with `<img>` tags referencing PNG/SVG files for better conversion.
+
+4. **Processed set must propagate to descendants** — When any extraction path captures text from child elements, all descendants must be marked in the `processed` Set. The Session 4/5 additions (standalone span extraction, shape text capture) created new extraction paths that could re-capture text already captured by a parent. The fix is systematic: every path that captures text from children marks those children as processed.
+
+5. **Div-text skips when children have visual fills** — A parent div whose children have backgrounds will produce duplication if extracted as div-text, because the children will also be individually extracted as shapes. The div-text fallback now checks for visual children first and defers to individual child extraction when found.
 
 ### Session 5 Decisions
 
@@ -234,6 +239,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 18. **Single-slide HTML files are a valid and common pattern** — The detection cascade must not assume multiple containers. `class-slide` and `data-slide-number` are intentional markup signals valid with any count >= 1.
 19. **SVG elements in HTML documents may have lowercase tag names** — Unlike HTML elements (`DIV`, `SPAN`), SVG elements may report `svg`, `path` etc. Use `instanceof SVGElement` or check both cases.
 20. **Transform stripping must be scoped, not global** — Stripping transforms from all elements breaks gradient capture because content elements inside stacked slides may use transforms that interact with the hide/show visibility logic. Only strip from slide containers and their ancestors.
+21. **The `processed` Set is the primary defence against duplicate extraction** — Every extraction path that captures text from child elements MUST mark those children as processed. This is an invariant, not a case-by-case decision.
+22. **Div-text fallback must be aware of children's visual properties** — A container div with no background but with visually-styled children is NOT a text element — it's a layout container whose children should be extracted individually.
 
 ## Testing Notes
 

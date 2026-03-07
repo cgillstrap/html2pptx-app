@@ -572,6 +572,8 @@ const EXTRACTION_SCRIPT = `
                   pxToPoints(computed.paddingTop)
                 ]
               };
+              // Mark descendants as processed to prevent re-extraction.
+              el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
             }
 
             if (hasVisualFill || hasUniformBorder) {
@@ -628,6 +630,26 @@ const EXTRACTION_SCRIPT = `
 
           const fullText = el.textContent ? el.textContent.trim() : '';
           if (!hasBlockChild && fullText.length > 0) {
+            // ── Skip if children have visual fills (Session 6b) ────
+            // If child elements have backgrounds/gradients, they'll be
+            // individually extracted as shapes. Don't also extract the
+            // parent as combined text — that produces duplication.
+            var hasVisualChildren = false;
+            for (var vci = 0; vci < el.children.length; vci++) {
+              var vcComp = window.getComputedStyle(el.children[vci]);
+              var vcBg = vcComp.backgroundColor;
+              var vcBgImg = vcComp.backgroundImage;
+              if ((vcBg && vcBg !== 'rgba(0, 0, 0, 0)' && vcBg !== 'transparent') ||
+                  (vcBgImg && vcBgImg !== 'none' && vcBgImg.includes('gradient'))) {
+                hasVisualChildren = true;
+                break;
+              }
+            }
+            if (hasVisualChildren) {
+              processed.add(el);
+              return;
+            }
+
             const rect = el.getBoundingClientRect();
             if (rect.width > 0 && rect.height > 0) {
               const computed2 = window.getComputedStyle(el);
@@ -694,6 +716,7 @@ const EXTRACTION_SCRIPT = `
                   }
                 });
               }
+              el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
               processed.add(el);
               return;
             }
@@ -867,7 +890,7 @@ const EXTRACTION_SCRIPT = `
             margin: [marginLeft, 0, 0, 0]
           }
         });
-        liElements.forEach(li => processed.add(li));
+        el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
         processed.add(el);
         return;
       }
@@ -941,6 +964,7 @@ const EXTRACTION_SCRIPT = `
           }
         });
       }
+      el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
       processed.add(el);
     });
 
