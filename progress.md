@@ -66,7 +66,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 6 | **Updated** | Single-slide class detection (>= 1), transform-aware extraction (scoped to ancestors), SVG element skipping with warning |
+| `src/extraction/extractor.js` | Session 6b | **Updated** | Processed set propagation: all extraction paths mark descendants. Div-text skips when children have visual fills. Fixes duplicate text. |
 | `src/generation/generator.js` | Session 5 | Current | No changes this session |
 | `src/main/main.js` | Session 2 | Current | No changes this session |
 | `src/main/preload.js` | Session 2 | Current | No changes this session |
@@ -277,7 +277,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 5. **Session 5** — Addressed three rendering issues from visual review of lpm-slides-v1.html. (1) Standalone text span extraction: SPAN/A/LABEL elements without backgrounds now extracted as div-text — captures tags, metric values, contrast labels, and numbered markers. (2) HR element extraction: `<hr>` elements extracted as lines with colour fallback chain. (3) Flex centering detection: div-text fallback detects flex containers and emits valign/align; generator reads valign from style. All three validated against lpm-slides-v1.html (215 elements across 12 slides) and agile-slides.html (no regressions). Also tested against conformant_sample.html and modern-it-skills.html.
 
-6. **Session 6** (current) — Fixed critical failures with viewport-scaled single-slide HTML files (hr-skills-slide.html, modern-it-skills.html). Three fixes: (1) Single-slide class detection: `>= 1` instead of `> 1` for `class-slide` and `data-slide-number`. (2) Transform-aware extraction: CSS transforms stripped from slide containers and ancestors before extraction, ensuring native layout coordinates. Initial global stripping broke agile-slides gradient capture — scoped to ancestors only. (3) SVG element handling: inline SVGs and subtrees skipped with summary warning. Validated against all fixtures including hr-skills-slide (96 elements, 4 SVGs skipped), modern-it-skills (34 elements, 12 SVGs skipped), agile-slides (gradient capture clean, no regressions), lpm-slides-v1, and others.
+6. **Session 6** (current) — Fixed critical failures with viewport-scaled single-slide HTML files (hr-skills-slide.html, modern-it-skills.html). Three fixes: (1) Single-slide class detection: `>= 1` instead of `> 1` for `class-slide` and `data-slide-number`. (2) Transform-aware extraction: CSS transforms stripped from slide containers and ancestors before extraction, ensuring native layout coordinates. Initial global stripping broke agile-slides gradient capture — scoped to ancestors only. (3) SVG element handling: inline SVGs and subtrees skipped with summary warning. Then Session 6b: fixed duplicate text extraction by propagating the `processed` Set to descendants in all extraction paths (lists, shape text, text elements, div-text). Added visual-children check in div-text fallback to skip when children have backgrounds. Reduced element counts where duplicates existed (hr-skills 96->88, sample-slide 8->4) with no regressions.
 
 ### Next Session Priorities
 1. **Table extraction** (3b) — finalise design decision and implement. Hybrid approach recommended.
