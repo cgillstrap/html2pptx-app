@@ -66,7 +66,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 7b | **Updated** | Fresh bounding rect query in captureGradients() — re-queries geometry at capture time instead of trusting extraction-time coordinates. Display-none visibility fix for hidden slide containers. See `docs/issue-taxonomy-gradient-capture.md` for open gradient text-leaking issue (Theory A ruled out). |
+| `src/extraction/extractor.js` | Session 7d | **Updated** | Clone-based gradient capture at viewport origin. Containers hidden with display:none !important, gradient cloned to empty div at (0,0), captured there. Resolves taxonomy-deck text-leaking issue. Fresh bounding rect query. Display-none visibility fix. |
 | `src/generation/generator.js` | Session 6c | **Updated** | Gradient image fill: layered addImage() + addText() for shapes with captured gradients. |
 | `src/main/main.js` | Session 2 | Current | No changes this session |
 | `src/main/preload.js` | Session 2 | Current | No changes this session |
@@ -128,7 +128,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [x] **SVG rasterisation (Session 6c)**: Inline SVGs captured as PNG images via `capturePage()`. Extraction emits `svg-capture` placeholder elements with position and capture rect. Post-extraction step captures each SVG's rendered pixels and replaces placeholder with standard image element. Stacked layout support via slide isolation.
 - [x] **Element gradient rasterisation (Session 6c)**: Elements with CSS gradient backgrounds captured via `capturePage()` with text hidden (`color: transparent`) and children hidden (`visibility: hidden`). Captured PNG used as background image layer in PptxGenJS, with text rendered on top via separate `addText()` call. Solid colour fallback preserved for capture failures. Stacked layout support via slide isolation (same pattern as slide-level gradient capture).
 - [x] **Display-none slide visibility fix (Session 7a)**: Pre-extraction step forces hidden slide containers (`display: none`) to visible, with position adjustment for stacked layouts. Enables extraction of interactive slideshow decks. Re-measurement conditional on changes to avoid regressions.
-- [ ] **Slide-level gradient capture on taxonomy deck (Session 7a/7b)**: OPEN ISSUE — text leaks into gradient background captures on taxonomy-deck-html.html. Session 7b ruled out coordinate mismatch (Theory A) — fresh rect query added but coordinates were correct. Root cause is in the rendering/hiding, not geometry. See `docs/issue-taxonomy-gradient-capture.md`. All other fixtures unaffected.
+- [x] **Slide-level gradient capture on taxonomy deck (Session 7a–7d)**: RESOLVED. Root cause: `capturePage()` serves stale compositor frames for regions far down the page. The fix uses clone-based capture at the viewport origin (0,0) with `display:none !important` on all containers. See Session 7d decisions for details.
 - [ ] **Table extraction**: Not currently handled. Design discussion from Session 3 (hybrid approach). High likelihood testers will hit this.
 - [ ] **Overflow detection warnings (original port)**: Port getBodyDimensions() overflow check from original repo. May be redundant now with our own overflow detection — needs review.
 
@@ -151,6 +151,14 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [ ] Template-based creation
 
 ## Key Decisions Log
+
+### Session 7d Decisions
+
+1. **Clone-based gradient capture at viewport origin** — Instead of hiding children inside the real slide container (which failed five different ways), `captureGradients()` now: (a) reads the target's geometry and gradient styles, (b) hides all containers with `display:none !important`, (c) creates an empty div clone with only the gradient at position (0,0), (d) captures at (0,0). This resolves two independent problems: CSS specificity battles (the `.active` class overriding inline styles), and stale compositor frames for off-viewport regions.
+
+2. **capturePage() has a stale frame problem for off-viewport content** — Chromium's compositor does not reliably re-render regions far from the viewport origin (e.g. y:8000+) within 50-200ms of DOM changes. Content that was previously rendered at those coordinates persists in the capture buffer. The fix is to always capture at (0,0) where the compositor maintains a fresh frame. This is position-independent for gradients since only the colours matter.
+
+3. **display:none !important needed for .active class** — The taxonomy deck's CSS rule `.slide.active { display: flex }` overrides plain inline `style.opacity = '0'`. Using `setProperty('display', 'none', 'important')` ensures the container is fully removed from the render tree regardless of stylesheet rules.
 
 ### Session 6c Decisions
 
@@ -262,6 +270,9 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 25. **Hiding children is not enough for gradient capture — must also hide text** — `visibility: hidden` on child elements doesn't affect direct text nodes. Setting `color: transparent` on the target element ensures the captured image contains only the gradient background, preventing duplicate text when the generator overlays text via `addText()`.
 26. **capturePage() coordinates should be fresh, not stored** — DOM manipulations between extraction and capture can shift layout (especially with flex centering, position changes, and window resizing). `captureGradients()` now re-queries bounding rects at capture time. In practice, coordinates matched for all current fixtures, but the pattern is defensive best practice.
 27. **Coordinate correctness does not guarantee clean captures** — The taxonomy-deck gradient text-leaking issue persists despite correct capture coordinates. The problem is in the rendering layer (text still visible in the captured pixels despite `display: none` on children), not in geometry.
+28. **capturePage() serves stale frames for off-viewport regions** — Chromium's compositor does not reliably re-render content far from the viewport origin. The taxonomy deck's slides at y:8000+ retained their pre-hide appearance in the capture buffer despite confirmed `display:none` in the DOM. The fix: always capture gradient clones at (0,0) where the compositor maintains fresh frames.
+29. **Diagnostic PNG-to-disk writes are invaluable** — Writing captured PNGs to the temp directory and visually inspecting them immediately revealed that slide 1 (`.active`) had text while slides 2-8 were clean. This pointed directly at the compositor stale-frame issue, ending a multi-session investigation.
+30. **For pixel capture, prefer clean clones over in-place hiding** — Creating an empty element with the same CSS background is more reliable than hiding content within the real element. In-place hiding must fight CSS specificity, `!important` rules, pseudo-elements, compositor timing, and stacking contexts. A clone has none of these problems.
 
 ## Testing Notes
 
@@ -275,7 +286,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 | `hr-skills-slide.html` | `test/extraction/fixtures/` | Single slide: viewport-scaled wrapper pattern, 1280x720, CSS grid 4-column layout, inline SVGs, gradient banner, skill pills as styled spans. |
 | `modern-it-skills.html` | `test/extraction/fixtures/` | Single slide: viewport-scaled wrapper pattern, 1280x720, CSS grid tabular layout, inline SVGs for icons and arrows, gradient banner. |
 | `conformant_sample.html` | `test/extraction/fixtures/` | 3 slides: guardrails-compliant structure. Tests tag/span extraction, card grids, sequence layout. Known overlap on slide 3 (flex layout fidelity limit). |
-| `taxonomy-deck-html.html` | `tests/extraction/fixtures/` | 8 slides: interactive slideshow (display:none toggling). Tests display-none visibility fix, gradient capture on forced-visible slides. **Known issue:** gradient capture includes text. |
+| `taxonomy-deck-html.html` | `tests/extraction/fixtures/` | 8 slides: interactive slideshow (display:none toggling). Tests display-none visibility fix, gradient capture on forced-visible slides. Gradient capture resolved in Session 7d. |
 
 ### Known Gaps in Test Coverage
 - No fixture with `<img>` tags (image path resolution untested)
@@ -288,7 +299,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - User has validated lpm-slides-v1.html rendering with Session 5 fixes — standalone spans, HR lines, and flex-centred arrows confirmed working
 - User has validated hr-skills-slide.html and modern-it-skills.html with Session 6 fixes — correct detection, transform stripping, SVG skipping, no regressions on agile-slides gradient capture
 - User has validated Session 6c SVG rasterisation (hr-skills-slide SVG icons appear as images) and element gradient capture (agile-slides badge/pill gradients rendered, hr-skills banner gradient rendered)
-- Session 7a: display-none fix validated — taxonomy-deck-html.html extracts all 8 slides. No regressions on other fixtures after conditional re-measurement fix. Slide-level gradient capture on taxonomy deck has open text-leaking issue.
+- Session 7a: display-none fix validated — taxonomy-deck-html.html extracts all 8 slides. No regressions on other fixtures after conditional re-measurement fix.
+- Session 7d: taxonomy-deck gradient capture RESOLVED — all 8 slides have clean gradient backgrounds with no text leaking. Clone-based capture at viewport origin. All 11 fixtures validated with zero failures.
 - conformant_sample.html slide 3 has known overlap between bullet items and step-duration labels (flex layout fidelity limit, not a duplication bug)
 
 ## Conversation History
@@ -309,10 +321,14 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 8. **Session 7a** — Implemented display-none visibility fix for taxonomy-deck-html.html (8-slide interactive deck using `display:none` toggling). Pre-extraction step detects hidden slide containers, forces them visible by matching sibling display mode, and adjusts position from absolute to relative for stacked layouts. Re-measurement conditional on changes to avoid regressions on other fixtures. Display-none fix working: all 8 slides extracted. However, slide-level gradient capture on the taxonomy deck has an unresolved issue: text content leaks into the captured gradient background image despite multiple hiding approaches (visibility:hidden on descendants, color:transparent, display:none on children, overlay div). See `docs/issue-taxonomy-gradient-capture.md`. All other fixtures (hr-skills, multi-slide-test, agile-slides, lpm, conformant, sample, modern-it) pass without regression.
 
-9. **Session 7b** (current) — Investigated taxonomy gradient capture text-leaking issue. Added fresh bounding rect query in `captureGradients()` — re-queries container geometry at capture time after hide/show manipulation, making gradient capture self-sufficient (no longer trusts extraction-time coordinates). Diagnostic logging confirmed no significant coordinate shift (all within 1px), ruling out Theory A (coordinate mismatch). The code improvement is kept as defensive best practice. The root cause of text leaking remains unresolved — the captured pixels contain text despite children being set to `display: none`. Remaining theories: repaint timing (Theory E), CSS `!important` overrides, stacking context (Theory D). All fixtures validated with no regressions.
+9. **Session 7b** — Investigated taxonomy gradient capture text-leaking issue. Added fresh bounding rect query in `captureGradients()` — re-queries container geometry at capture time after hide/show manipulation, making gradient capture self-sufficient (no longer trusts extraction-time coordinates). Diagnostic logging confirmed no significant coordinate shift (all within 1px), ruling out Theory A (coordinate mismatch). The code improvement is kept as defensive best practice. All fixtures validated with no regressions.
+
+10. **Session 7c** — Replaced content-hiding approach in `captureGradients()` with clone-based capture. Despite the clone having no children, the taxonomy deck still showed ghosted text. This narrowed the problem to the capture mechanism itself, not the hiding strategy.
+
+11. **Session 7d** (current) — RESOLVED the taxonomy-deck gradient capture issue. Diagnostic PNG writes revealed: slide 1 PNG had baked-in text, slides 2-8 were clean. The `.active` slide was the only one affected. Key diagnostic: containers were confirmed `display:none` (computed style verified), clone was correctly positioned with gradient — but at y:8272 (far down the page after 8 slides stacked vertically). Root cause: `capturePage()` serves stale compositor frames for off-viewport regions. Fix: position the clone at (0,0) and capture there. The gradient is position-independent — only the colours matter. Combined with `display:none !important` on all containers (to handle CSS class rules on the `.active` slide), this produces clean gradient-only captures for all slides. Body-fallback gradient captures also now work (executive_workshop_agenda, Team6_Challenge, Workshop Agenda). All 11 fixtures validated with zero failures.
 
 ### Next Session Priorities
-1. **Fix taxonomy gradient capture** — Theory A ruled out. Try Theory E (longer repaint wait), CSS !important override check, or Theory D (overlay inside container). See `docs/issue-taxonomy-gradient-capture.md`
+1. ~~**Fix taxonomy gradient capture**~~ — RESOLVED in Session 7d
 2. **Table extraction** (3b) — finalise design decision and implement. Hybrid approach recommended.
 3. **Integration test harness** — fixture-driven pipeline tests using electron-mocha
 4. **Packaging with electron-builder** (3d) — .exe installer for Windows 11

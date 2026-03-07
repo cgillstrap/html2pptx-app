@@ -36,10 +36,14 @@
 //   minus border widths) rather than computed.width, which is unreliable
 //   with box-sizing: border-box.
 //
-// Key Changes (Session 7b):
-// - captureGradients() re-queries container bounding rect at capture time
-//   instead of trusting extraction-time coordinates, making gradient capture
-//   resilient to layout shifts from display-none fix and DOM manipulations.
+// Key Changes (Session 7d):
+// - captureGradients() completely redesigned: clone-based capture at origin.
+//   Creates a temporary empty div with the gradient background, hides all
+//   containers with display:none !important, positions the clone at (0,0),
+//   and captures there. Solves two issues: (1) in-place content hiding
+//   fought CSS specificity, and (2) capturePage() served stale compositor
+//   frames for regions far down the page (y:8000+). Capturing at the
+//   viewport origin guarantees a fresh frame.
 //
 // Key Changes (Session 3):
 // - Overflow detection: container-level and element-level
@@ -1221,44 +1225,9 @@ async function captureGradients(result, hiddenWindow) {
     const slideIndex = slide.index;
 
     try {
-      // Hide all content so only the container's gradient background
-      // is visible for capture. Uses display:none on children (not
-      // visibility:hidden) because display:none completely removes
-      // elements from rendering with no possibility of leaking through.
-      // Also hides non-target containers with opacity:0.
-      await hiddenWindow.webContents.executeJavaScript(`
-        (function() {
-          var containers = ${RESOLVE_CONTAINERS_JS};
-          // Hide all containers
-          for (var i = 0; i < containers.length; i++) {
-            var c = containers[i];
-            c.dataset._prevOpacity = c.style.opacity || '';
-            c.dataset._prevVisibility = c.style.visibility || '';
-            c.style.opacity = '0';
-            c.style.visibility = 'hidden';
-          }
-          // Reveal target container, but display:none all its children
-          var target = containers[${slideIndex}];
-          if (!target) return;
-          target.style.opacity = '1';
-          target.style.visibility = 'visible';
-          var children = target.children;
-          for (var j = 0; j < children.length; j++) {
-            children[j].dataset._gcPrevDisplay = children[j].style.display || '';
-            children[j].style.display = 'none';
-          }
-        })()
-      `);
-
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // Re-query the target container's bounding rect at capture time.
-      // The stored captureRect from extraction may be stale if DOM
-      // manipulations (display-none fix, position changes, window
-      // resizing, or the hide/show dance above) have shifted layout.
-      // This makes captureGradients() self-sufficient — it does not
-      // depend on extraction-time coordinates remaining accurate.
-      const freshRect = await hiddenWindow.webContents.executeJavaScript(`
+      // Step 1: Query geometry and gradient styles BEFORE hiding containers.
+      // Must happen first because display:none zeroes getBoundingClientRect().
+      const captureInfo = await hiddenWindow.webContents.executeJavaScript(`
         (function() {
           var containers = ${RESOLVE_CONTAINERS_JS};
           var target = containers[${slideIndex}];
@@ -1268,44 +1237,89 @@ async function captureGradients(result, hiddenWindow) {
         })()
       `);
 
-      if (!freshRect || freshRect.w === 0 || freshRect.h === 0) {
+      if (!captureInfo || captureInfo.w === 0 || captureInfo.h === 0) {
         throw new Error('Target container not found or has zero dimensions at capture time');
       }
 
-      if (Math.abs(freshRect.x - rect.x) > 1 || Math.abs(freshRect.y - rect.y) > 1) {
+      if (Math.abs(captureInfo.x - rect.x) > 1 || Math.abs(captureInfo.y - rect.y) > 1) {
         console.log(
           `[Extractor] Slide ${slide.index + 1}: capture rect shifted — ` +
           `stored (${Math.round(rect.x)},${Math.round(rect.y)}) → ` +
-          `fresh (${Math.round(freshRect.x)},${Math.round(freshRect.y)})`
+          `fresh (${Math.round(captureInfo.x)},${Math.round(captureInfo.y)})`
         );
       }
 
-      const nativeImage = await hiddenWindow.webContents.capturePage({
-        x: Math.round(freshRect.x),
-        y: Math.round(freshRect.y),
-        width: Math.round(freshRect.w),
-        height: Math.round(freshRect.h)
-      });
-
-      // Restore all containers and children
+      // Step 2: In a single DOM operation — read gradient from target,
+      // hide ALL containers with display:none !important, and create
+      // a clean clone div with only the gradient background.
+      // display:none !important is needed because the taxonomy deck's
+      // .active class has CSS rules that override opacity/visibility.
+      // Reading the gradient and creating the clone in the same call
+      // ensures we capture styles before the target is hidden.
       await hiddenWindow.webContents.executeJavaScript(`
         (function() {
           var containers = ${RESOLVE_CONTAINERS_JS};
+          var target = containers[${slideIndex}];
+          // Read gradient styles before hiding
+          var bgImage = '';
+          var bgColor = '';
+          var borderRadius = '';
+          if (target) {
+            var cs = window.getComputedStyle(target);
+            bgImage = cs.backgroundImage;
+            bgColor = cs.backgroundColor;
+            borderRadius = cs.borderRadius;
+          }
+          // Hide all containers
           for (var i = 0; i < containers.length; i++) {
             var c = containers[i];
-            c.style.opacity = c.dataset._prevOpacity || '';
-            c.style.visibility = c.dataset._prevVisibility || '';
-            delete c.dataset._prevOpacity;
-            delete c.dataset._prevVisibility;
+            c.dataset._prevDisplay = c.style.display || '';
+            c.style.setProperty('display', 'none', 'important');
           }
-          var target = containers[${slideIndex}];
-          if (!target) return;
-          var children = target.children;
-          for (var j = 0; j < children.length; j++) {
-            if (children[j].dataset._gcPrevDisplay !== undefined) {
-              children[j].style.display = children[j].dataset._gcPrevDisplay || '';
-              delete children[j].dataset._gcPrevDisplay;
-            }
+          // Create empty clone with only the gradient.
+          // Position at (0,0) — NOT at the original slide coordinates.
+          // capturePage() may serve stale compositor frames for regions
+          // far down the page (e.g. y:8000+), so we capture at the origin
+          // where the compositor is guaranteed to have a fresh frame.
+          var clone = document.createElement('div');
+          clone.id = '__gradient_capture_clone__';
+          clone.style.position = 'absolute';
+          clone.style.left = '0px';
+          clone.style.top = '0px';
+          clone.style.width = '${captureInfo.w}px';
+          clone.style.height = '${captureInfo.h}px';
+          clone.style.zIndex = '2147483647';
+          clone.style.pointerEvents = 'none';
+          clone.style.margin = '0';
+          clone.style.padding = '0';
+          clone.style.border = 'none';
+          clone.style.overflow = 'hidden';
+          clone.style.backgroundImage = bgImage;
+          clone.style.backgroundColor = bgColor;
+          clone.style.borderRadius = borderRadius;
+          document.body.appendChild(clone);
+        })()
+      `);
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const nativeImage = await hiddenWindow.webContents.capturePage({
+        x: 0,
+        y: 0,
+        width: Math.round(captureInfo.w),
+        height: Math.round(captureInfo.h)
+      });
+
+      // Clean up: remove clone, restore all containers
+      await hiddenWindow.webContents.executeJavaScript(`
+        (function() {
+          var clone = document.getElementById('__gradient_capture_clone__');
+          if (clone) clone.remove();
+          var containers = ${RESOLVE_CONTAINERS_JS};
+          for (var i = 0; i < containers.length; i++) {
+            var c = containers[i];
+            c.style.display = c.dataset._prevDisplay || '';
+            delete c.dataset._prevDisplay;
           }
         })()
       `);
@@ -1320,32 +1334,22 @@ async function captureGradients(result, hiddenWindow) {
 
       console.log(
         `[Extractor] Slide ${slide.index + 1}: gradient captured as PNG ` +
-        `(${Math.round(freshRect.w)}×${Math.round(freshRect.h)}px)`
+        `(${Math.round(captureInfo.w)}×${Math.round(captureInfo.h)}px)`
       );
 
     } catch (err) {
-      // Best-effort cleanup
+      // Best-effort cleanup: remove clone if created, restore containers
       try {
         await hiddenWindow.webContents.executeJavaScript(`
           (function() {
+            var clone = document.getElementById('__gradient_capture_clone__');
+            if (clone) clone.remove();
             var containers = ${RESOLVE_CONTAINERS_JS};
             for (var i = 0; i < containers.length; i++) {
               var c = containers[i];
-              if (c.dataset._prevOpacity !== undefined) {
-                c.style.opacity = c.dataset._prevOpacity || '';
-                c.style.visibility = c.dataset._prevVisibility || '';
-                delete c.dataset._prevOpacity;
-                delete c.dataset._prevVisibility;
-              }
-            }
-            var target = containers[${slideIndex}];
-            if (target) {
-              var children = target.children;
-              for (var j = 0; j < children.length; j++) {
-                if (children[j].dataset._gcPrevDisplay !== undefined) {
-                  children[j].style.display = children[j].dataset._gcPrevDisplay || '';
-                  delete children[j].dataset._gcPrevDisplay;
-                }
+              if (c.dataset._prevDisplay !== undefined) {
+                c.style.display = c.dataset._prevDisplay || '';
+                delete c.dataset._prevDisplay;
               }
             }
           })()
@@ -1585,7 +1589,6 @@ async function captureElementImages(result, hiddenWindow) {
           }
 
           const dataUri = nativeImage.toDataURL();
-
           el.shape.fillImage = dataUri;
           delete el.captureRect;
 
