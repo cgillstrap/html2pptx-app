@@ -66,8 +66,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 5 | **Updated** | Standalone text span extraction (no-bg spans), HR element extraction as lines, flex centering detection for div-text fallback |
-| `src/generation/generator.js` | Session 5 | **Updated** | Text valign read from extraction data instead of hardcoded 'top' (supports flex-centred div-text elements) |
+| `src/extraction/extractor.js` | Session 6 | **Updated** | Single-slide class detection (>= 1), transform-aware extraction (scoped to ancestors), SVG element skipping with warning |
+| `src/generation/generator.js` | Session 5 | Current | No changes this session |
 | `src/main/main.js` | Session 2 | Current | No changes this session |
 | `src/main/preload.js` | Session 2 | Current | No changes this session |
 | `src/main/security.js` | Session 1 | Current | No changes this session |
@@ -95,7 +95,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [x] sample-slide.html — VALIDATED (after h1/p fix + config additions)
 - [x] Stress tested with esoteric examples — rendering good, minor issues noted
 
-### Phase 3 — MVP Polish & Package (IN PROGRESS — Sessions 2–5)
+### Phase 3 — MVP Polish & Package (IN PROGRESS — Sessions 2–6)
 
 #### 3a: MVP Priority ✅ COMPLETE
 - [x] **Validation/warning display in UI**: Warnings in amber, errors in red, surfaced in status panel.
@@ -121,6 +121,9 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [x] **Standalone text span extraction (Session 5)**: SPAN, A, LABEL elements without background fills but with visible text now extracted as div-text. Captures styled tags, metric values, contrast labels, and numbered markers from the LPM deck.
 - [x] **HR element extraction (Session 5)**: `<hr>` elements extracted as lines, positioned at the vertical centre of the HR bounding box. Colour fallback: borderTopColor → color → light grey (#D1D5DB).
 - [x] **Flex centering detection (Session 5)**: Div-text fallback path detects `display: flex` with `align-items: center` / `justify-content: center` and emits `valign: 'middle'` / `align: 'center'`. Generator reads `valign` from style instead of hardcoding `'top'`.
+- [x] **Single-slide class detection (Session 6)**: `class-slide` and `data-slide-number` detection accepts single-element matches (>= 1 instead of > 1). Enables correct detection of single-slide HTML files with `class="slide"`.
+- [x] **Transform-aware extraction (Session 6)**: CSS transforms stripped from slide containers and their ancestors before extraction runs, ensuring `getBoundingClientRect()` returns native layout coordinates. Scoped to ancestors only — content element transforms preserved to avoid breaking gradient capture hiding.
+- [x] **SVG element handling (Session 6)**: Inline `<svg>` elements and their subtrees skipped during extraction with summary warning. Prevents malformed extraction data from SVG paths, circles, and other vector elements.
 - [ ] **Table extraction**: Not currently handled. Design discussion from Session 3 (hybrid approach). High likelihood testers will hit this.
 - [ ] **Overflow detection warnings (original port)**: Port getBodyDimensions() overflow check from original repo. May be redundant now with our own overflow detection — needs review.
 
@@ -144,6 +147,14 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [ ] Element-level gradient rasterisation (currently detection + warning only)
 
 ## Key Decisions Log
+
+### Session 6 Decisions
+
+1. **Single-element class detection is valid** — A `div.slide` or `section[data-slide-number]` with only one match is equally valid as multiple matches. The class/attribute signal is intentional markup, not a heuristic. The `section-children` and `uniform-divs` paths retain their `> 1` requirement because those are structural heuristics that only work with multiple containers.
+
+2. **Transform stripping scoped to ancestors, not all elements** — Initial implementation stripped transforms from ALL elements, which broke gradient capture on agile-slides (content bled through on slide 1). Fix: only strip transforms from slide containers and their ancestors (the viewport-scaling wrapper divs). Content element transforms are preserved, keeping gradient capture's hide/show logic intact.
+
+3. **SVG skip with warning, not rasterisation** — Rasterising SVGs via `capturePage()` is technically feasible (same approach as gradient capture) but adds complexity. For MVP, skipping with a warning is the right balance. Users can replace inline SVGs with `<img>` tags referencing PNG/SVG files for better conversion.
 
 ### Session 5 Decisions
 
@@ -198,6 +209,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 | **Content-dense compliant** | `lpm-slides-v1.html` | `data-slide-number` | Vertically stacked sections, dense card grids and two-column layouts | Overflow: slides 3 and 11 exceed 540px height. Scale-to-fit needed. |
 | **CSS slideshow (stacked)** | `agile-slides.html` | `class-slide` (div.slide) | All slides `position: absolute; inset: 0` in a wrapper, toggled via opacity | Gradient capture, interactive chrome filtering, badge/shape text, CSS triangles. Most rendering issues identified and fixed in Session 4. |
 | **Div-heavy (ChatGPT/Copilot)** | Not yet tested | Expected: `uniform-divs` or `body-fallback` | Deeply nested wrapper divs, text in bare divs | Div-text fallback essential. No fixture yet. |
+| **Viewport-scaled single slide** | `hr-skills-slide.html`, `modern-it-skills.html` | `class-slide` (single) | Single slide at 1280x720 inside a scaling wrapper. JS applies `transform: scale(...)` to fit viewport. | Transform distorts bounding rects. Inline SVGs for icons. Requires transform stripping before extraction. |
 | **Table-heavy** | Not yet tested | N/A | `<table>` elements for data display | Tables currently ignored. Design discussion in progress. |
 
 ## Key Learnings
@@ -218,6 +230,10 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 14. **Shape elements can hold text in PptxGenJS** — The `addText()` method works on shapes. The original ported code always set `text: ''` on shapes, but PptxGenJS fully supports text with font, colour, and alignment properties inside shape objects. Extending the extraction to capture text in shaped divs was a straightforward win.
 15. **`textAlign` is meaningless on flex containers** — A div with `display: flex; justify-content: center` reports `textAlign: start` from computed styles, but the actual centering comes from the flex properties. Must check `display` and read `justifyContent`/`alignItems` to detect the real alignment.
 16. **HR renders as `border-top` in browsers** — The visual line of an `<hr>` element comes from `borderTopColor` and `borderTopWidth`, not from the element's `color` or `backgroundColor`. Extraction must read border properties to get accurate colour and thickness.
+17. **`getBoundingClientRect()` returns post-transform visual coordinates** — CSS `transform: scale(0.7)` on a 1280px-wide element makes it report ~896px width. Must strip transforms before extraction to get native layout coordinates.
+18. **Single-slide HTML files are a valid and common pattern** — The detection cascade must not assume multiple containers. `class-slide` and `data-slide-number` are intentional markup signals valid with any count >= 1.
+19. **SVG elements in HTML documents may have lowercase tag names** — Unlike HTML elements (`DIV`, `SPAN`), SVG elements may report `svg`, `path` etc. Use `instanceof SVGElement` or check both cases.
+20. **Transform stripping must be scoped, not global** — Stripping transforms from all elements breaks gradient capture because content elements inside stacked slides may use transforms that interact with the hide/show visibility logic. Only strip from slide containers and their ancestors.
 
 ## Testing Notes
 
@@ -228,6 +244,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 | `multi-slide-test.html` | `test/extraction/fixtures/` | 3 slides: data-slide-number detection, shapes, CSS Grid + Flexbox, gradient on slide 1 |
 | `lpm-slides-v1.html` | `test/extraction/fixtures/` | 12 slides: content-dense compliant deck. Tests scale-to-fit (slides 3, 11 overflow). Speaker notes via data-notes. |
 | `agile-slides.html` | `test/extraction/fixtures/` | 3 slides: CSS slideshow (stacked layout). Tests gradient capture, interactive element filtering, badge/shape text capture, CSS trick detection, gradient-aware colour fallback. |
+| `hr-skills-slide.html` | `test/extraction/fixtures/` | Single slide: viewport-scaled wrapper pattern, 1280x720, CSS grid 4-column layout, inline SVGs, gradient banner, skill pills as styled spans. |
+| `modern-it-skills.html` | `test/extraction/fixtures/` | Single slide: viewport-scaled wrapper pattern, 1280x720, CSS grid tabular layout, inline SVGs for icons and arrows, gradient banner. |
 
 ### Known Gaps in Test Coverage
 - No fixture with `<img>` tags (image path resolution untested)
@@ -238,6 +256,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - Scale-to-fit centering not yet tested (current: scaled content retains top-left origin)
 - User has tested agile-slides.html rendering and confirmed Session 4 fixes resolve badge, shape text, and CSS triangle issues
 - User has validated lpm-slides-v1.html rendering with Session 5 fixes — standalone spans, HR lines, and flex-centred arrows confirmed working
+- User has validated hr-skills-slide.html and modern-it-skills.html with Session 6 fixes — correct detection, transform stripping, SVG skipping, no regressions on agile-slides gradient capture
 
 ## Conversation History
 
@@ -249,14 +268,16 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 4. **Session 4** — Focused on rendering quality before regression testing. Implemented six extractor enhancements: interactive element filtering, font validation warnings, high-transparency warnings, shape text capture (with gradient-aware colour fallback), standalone span/inline element extraction, and CSS shape trick detection (content-area based). Updated generator to apply text styling properties on shapes. Tested against agile-slides.html — confirmed fixes for: missing badge labels (Core/Portfolio/Knowledge), missing phase duration labels (Weeks 1–4 etc.), CSS triangles rendering as white boxes, and missing section headings. Two iterations needed: first pass got text appearing but badges had no colour (gradient backgroundColor = transparent); second pass added gradient colour stop extraction.
 
-5. **Session 5** (current) — Addressed three rendering issues from visual review of lpm-slides-v1.html. (1) Standalone text span extraction: SPAN/A/LABEL elements without backgrounds now extracted as div-text — captures tags, metric values, contrast labels, and numbered markers. (2) HR element extraction: `<hr>` elements extracted as lines with colour fallback chain. (3) Flex centering detection: div-text fallback detects flex containers and emits valign/align; generator reads valign from style. All three validated against lpm-slides-v1.html (215 elements across 12 slides) and agile-slides.html (no regressions). Also tested against conformant_sample.html and modern-it-skills.html.
+5. **Session 5** — Addressed three rendering issues from visual review of lpm-slides-v1.html. (1) Standalone text span extraction: SPAN/A/LABEL elements without backgrounds now extracted as div-text — captures tags, metric values, contrast labels, and numbered markers. (2) HR element extraction: `<hr>` elements extracted as lines with colour fallback chain. (3) Flex centering detection: div-text fallback detects flex containers and emits valign/align; generator reads valign from style. All three validated against lpm-slides-v1.html (215 elements across 12 slides) and agile-slides.html (no regressions). Also tested against conformant_sample.html and modern-it-skills.html.
+
+6. **Session 6** (current) — Fixed critical failures with viewport-scaled single-slide HTML files (hr-skills-slide.html, modern-it-skills.html). Three fixes: (1) Single-slide class detection: `>= 1` instead of `> 1` for `class-slide` and `data-slide-number`. (2) Transform-aware extraction: CSS transforms stripped from slide containers and ancestors before extraction, ensuring native layout coordinates. Initial global stripping broke agile-slides gradient capture — scoped to ancestors only. (3) SVG element handling: inline SVGs and subtrees skipped with summary warning. Validated against all fixtures including hr-skills-slide (96 elements, 4 SVGs skipped), modern-it-skills (34 elements, 12 SVGs skipped), agile-slides (gradient capture clean, no regressions), lpm-slides-v1, and others.
 
 ### Next Session Priorities
 1. **Table extraction** (3b) — finalise design decision and implement. Hybrid approach recommended.
 2. **Integration test harness** — fixture-driven pipeline tests using electron-mocha. Baseline rendering quality should be established first.
 3. **Packaging with electron-builder** (3d) — .exe installer for Windows 11
 4. **Extraction window height** (3a) — test with longer fixture to confirm if real issue
-5. **Continue rendering quality review** — additional fixtures or user feedback may surface new issues.
+5. **SVG rasterisation** (3e) — capturePage()-based rasterisation of inline SVGs as future enhancement.
 
 ## Checkpoint Discipline
 

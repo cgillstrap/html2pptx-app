@@ -282,6 +282,7 @@ const EXTRACTION_SCRIPT = `
     const textTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'LI'];
     const processed = new Set();
     var interactiveSkipCount = 0;
+    var svgSkipCount = 0;
 
     var INTERACTIVE_TAGS_SET = new Set([
       'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'NAV', 'FORM'
@@ -344,6 +345,17 @@ const EXTRACTION_SCRIPT = `
         el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
         processed.add(el);
         interactiveSkipCount++;
+        return;
+      }
+
+      // ── SVG element handling (Session 6) ────────────────────────
+      // Inline SVGs and their children (path, circle, rect, etc.)
+      // cannot be faithfully represented in PPTX as vector elements.
+      // Skip the entire SVG subtree and count for summary warning.
+      if (el.tagName === 'svg' || el.tagName === 'SVG' || el instanceof SVGElement) {
+        el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
+        processed.add(el);
+        if (el.tagName === 'svg' || el.tagName === 'SVG') svgSkipCount++;
         return;
       }
 
@@ -939,6 +951,14 @@ const EXTRACTION_SCRIPT = `
       );
     }
 
+    if (svgSkipCount > 0) {
+      errors.push(
+        svgSkipCount + ' inline SVG element(s) skipped — vector graphics ' +
+        'cannot be converted to PPTX shapes. Consider replacing with ' +
+        'images for better conversion fidelity.'
+      );
+    }
+
     // ── Font validation (Session 4) ─────────────────────────────
     var usedFonts = new Set();
     for (var fi = 0; fi < elements.length; fi++) {
@@ -988,12 +1008,12 @@ const EXTRACTION_SCRIPT = `
 
   function detectSlideContainers() {
     let containers = Array.from(body.querySelectorAll('[data-slide-number]'));
-    if (containers.length > 1) {
+    if (containers.length >= 1) {
       containers.sort((a, b) => parseInt(a.dataset.slideNumber) - parseInt(b.dataset.slideNumber));
       return { containers, method: 'data-slide-number' };
     }
     containers = Array.from(body.querySelectorAll('section.slide, div.slide'));
-    if (containers.length > 1) return { containers, method: 'class-slide' };
+    if (containers.length >= 1) return { containers, method: 'class-slide' };
 
     containers = Array.from(body.children).filter(el => el.tagName.toLowerCase() === 'section');
     if (containers.length > 1) return { containers, method: 'section-children' };
@@ -1286,6 +1306,34 @@ async function extractFromHTML(htmlFilePath, options = {}) {
       hiddenWindow.setContentSize(Math.round(bodyDims.w), Math.round(bodyDims.h * 10));
       await new Promise(resolve => setTimeout(resolve, 100));
     }
+
+    // Strip CSS transforms from slide containers and their ancestors only.
+    // Targets viewport-scaling patterns where JS applies transform: scale(...)
+    // to fit a fixed-size slide into the browser. Does NOT strip transforms
+    // from content elements inside slides — those may be meaningful (rotations,
+    // decorative transforms) and stripping them breaks gradient capture hiding.
+    await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        var slideEls = document.querySelectorAll('[data-slide-number], section.slide, div.slide');
+        if (slideEls.length === 0) return;
+        var toStrip = new Set();
+        for (var i = 0; i < slideEls.length; i++) {
+          toStrip.add(slideEls[i]);
+          var parent = slideEls[i].parentElement;
+          while (parent && parent !== document.documentElement) {
+            toStrip.add(parent);
+            parent = parent.parentElement;
+          }
+        }
+        toStrip.forEach(function(el) {
+          var cs = window.getComputedStyle(el);
+          if (cs.transform && cs.transform !== 'none') {
+            el.style.transform = 'none';
+          }
+        });
+      })()
+    `);
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     const result = await hiddenWindow.webContents.executeJavaScript(EXTRACTION_SCRIPT);
 
