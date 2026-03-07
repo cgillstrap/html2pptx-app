@@ -1216,30 +1216,32 @@ async function captureGradients(result, hiddenWindow) {
     const slideIndex = slide.index;
 
     try {
+      // Hide all content so only the container's gradient background
+      // is visible for capture. Uses display:none on children (not
+      // visibility:hidden) because display:none completely removes
+      // elements from rendering with no possibility of leaking through.
+      // Also hides non-target containers with opacity:0.
       await hiddenWindow.webContents.executeJavaScript(`
         (function() {
           var containers = ${RESOLVE_CONTAINERS_JS};
+          // Hide all containers
           for (var i = 0; i < containers.length; i++) {
             var c = containers[i];
             c.dataset._prevOpacity = c.style.opacity || '';
             c.dataset._prevVisibility = c.style.visibility || '';
             c.style.opacity = '0';
             c.style.visibility = 'hidden';
-            Array.from(c.children).forEach(function(child) {
-              child.dataset._prevChildVisibility = child.style.visibility || '';
-              child.style.visibility = 'hidden';
-            });
           }
-        })()
-      `);
-
-      await hiddenWindow.webContents.executeJavaScript(`
-        (function() {
-          var containers = ${RESOLVE_CONTAINERS_JS};
+          // Reveal target container, but display:none all its children
           var target = containers[${slideIndex}];
           if (!target) return;
           target.style.opacity = '1';
           target.style.visibility = 'visible';
+          var children = target.children;
+          for (var j = 0; j < children.length; j++) {
+            children[j].dataset._gcPrevDisplay = children[j].style.display || '';
+            children[j].style.display = 'none';
+          }
         })()
       `);
 
@@ -1252,6 +1254,7 @@ async function captureGradients(result, hiddenWindow) {
         height: Math.round(rect.h)
       });
 
+      // Restore all containers and children
       await hiddenWindow.webContents.executeJavaScript(`
         (function() {
           var containers = ${RESOLVE_CONTAINERS_JS};
@@ -1261,10 +1264,15 @@ async function captureGradients(result, hiddenWindow) {
             c.style.visibility = c.dataset._prevVisibility || '';
             delete c.dataset._prevOpacity;
             delete c.dataset._prevVisibility;
-            Array.from(c.children).forEach(function(child) {
-              child.style.visibility = child.dataset._prevChildVisibility || '';
-              delete child.dataset._prevChildVisibility;
-            });
+          }
+          var target = containers[${slideIndex}];
+          if (!target) return;
+          var children = target.children;
+          for (var j = 0; j < children.length; j++) {
+            if (children[j].dataset._gcPrevDisplay !== undefined) {
+              children[j].style.display = children[j].dataset._gcPrevDisplay || '';
+              delete children[j].dataset._gcPrevDisplay;
+            }
           }
         })()
       `);
@@ -1283,6 +1291,7 @@ async function captureGradients(result, hiddenWindow) {
       );
 
     } catch (err) {
+      // Best-effort cleanup
       try {
         await hiddenWindow.webContents.executeJavaScript(`
           (function() {
@@ -1295,16 +1304,20 @@ async function captureGradients(result, hiddenWindow) {
                 delete c.dataset._prevOpacity;
                 delete c.dataset._prevVisibility;
               }
-              Array.from(c.children).forEach(function(child) {
-                if (child.dataset._prevChildVisibility !== undefined) {
-                  child.style.visibility = child.dataset._prevChildVisibility || '';
-                  delete child.dataset._prevChildVisibility;
+            }
+            var target = containers[${slideIndex}];
+            if (target) {
+              var children = target.children;
+              for (var j = 0; j < children.length; j++) {
+                if (children[j].dataset._gcPrevDisplay !== undefined) {
+                  children[j].style.display = children[j].dataset._gcPrevDisplay || '';
+                  delete children[j].dataset._gcPrevDisplay;
                 }
-              });
+              }
             }
           })()
         `);
-      } catch (_) { /* best effort cleanup */ }
+      } catch (_) { /* best effort */ }
 
       console.warn(
         `[Extractor] Slide ${slide.index + 1}: gradient capture failed — ` +
@@ -1640,6 +1653,94 @@ async function extractFromHTML(htmlFilePath, options = {}) {
       })()
     `);
     await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Force display on hidden slide containers before extraction.
+    // Targets the pattern where interactive slideshows use display:none
+    // to hide inactive slides. Without this, getBoundingClientRect()
+    // returns zero-size rects and all elements are skipped.
+    //
+    // Only affects containers detected as slides — does not modify
+    // arbitrary elements. Safe for existing fixtures because:
+    // - opacity-based hiding (agile-slides) already has layout
+    // - vertically stacked slides (lpm, conformant) are all visible
+    // - viewport-scaled slides (hr-skills, modern-it) are visible
+    const displayFixResult = await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        var containers = Array.from(document.querySelectorAll('[data-slide-number]'));
+        if (containers.length === 0) {
+          containers = Array.from(document.querySelectorAll('section.slide, div.slide'));
+        }
+        if (containers.length === 0) return 0;
+
+        var changed = 0;
+        for (var i = 0; i < containers.length; i++) {
+          var cs = window.getComputedStyle(containers[i]);
+          if (cs.display === 'none') {
+            containers[i].dataset._prevDisplay = 'none';
+            // Match the visible sibling's display mode (usually flex),
+            // falling back to block if all are hidden.
+            var visibleSibling = null;
+            for (var j = 0; j < containers.length; j++) {
+              var sibCs = window.getComputedStyle(containers[j]);
+              if (sibCs.display !== 'none') {
+                visibleSibling = sibCs.display;
+                break;
+              }
+            }
+            containers[i].style.display = visibleSibling || 'block';
+            changed++;
+          }
+        }
+
+        if (changed > 0) {
+          // For stacked layouts where all slides now occupy the same
+          // position (position:absolute), force them to stack vertically
+          // so they don't overlap and contaminate each other's capture.
+          var firstCs = window.getComputedStyle(containers[0]);
+          var isStacked = firstCs.position === 'absolute' || firstCs.position === 'fixed';
+
+          if (isStacked) {
+            for (var k = 0; k < containers.length; k++) {
+              var c = containers[k];
+              c.dataset._prevPosition = c.style.position || '';
+              c.dataset._prevInset = c.style.inset || '';
+              c.dataset._prevTop = c.style.top || '';
+              c.dataset._prevLeft = c.style.left || '';
+              c.style.position = 'relative';
+              c.style.inset = 'auto';
+              c.style.top = 'auto';
+              c.style.left = 'auto';
+            }
+          }
+        }
+
+        return changed;
+      })()
+    `);
+
+    // Re-measure only when slides were made visible — the document's
+    // total height has changed and the window needs to accommodate
+    // the newly visible content. Skip for fixtures where no display
+    // changes were needed to avoid resizing from the original h*10 buffer.
+    if (displayFixResult > 0) {
+      console.log(`[Extractor] Forced ${displayFixResult} hidden slide(s) to visible`);
+      const updatedDims = await hiddenWindow.webContents.executeJavaScript(`
+        (function() {
+          var s = window.getComputedStyle(document.body);
+          return {
+            w: parseFloat(s.width) || document.body.scrollWidth,
+            h: document.body.scrollHeight
+          };
+        })()
+      `);
+      if (updatedDims.w > 0 && updatedDims.h > 0) {
+        hiddenWindow.setContentSize(
+          Math.round(updatedDims.w),
+          Math.round(updatedDims.h)
+        );
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
 
     const result = await hiddenWindow.webContents.executeJavaScript(EXTRACTION_SCRIPT);
 

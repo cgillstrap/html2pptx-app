@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIO Operating Model — Capability Taxonomy</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #060d19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+  .deck-wrapper { width: 100%; max-width: 960px; }
+  .slide { width: 100%; aspect-ratio: 16/9; background: linear-gradient(135deg, #0a1628 0%, #0d1b33 50%, #122240 100%); border-radius: 12px; position: relative; overflow: hidden; display: none; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+  .slide.active { display: flex; }
+  .slide-topbar { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #4a9eff, #d4a843, #4a9eff); }
+  .footer { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 10px 32px; font-size: 10px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.05); }
+  .label { font-size: 10px; letter-spacing: 3px; color: #d4a843; text-transform: uppercase; margin-bottom: 8px; font-weight: 600; }
+  h2.slide-title { font-size: 24px; font-weight: 600; color: #fff; margin: 0 0 24px 0; }
+  .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 0 4px; }
+  .controls button { background: #1a3a6b; color: #fff; border: none; border-radius: 6px; padding: 8px 20px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .controls button:disabled { background: rgba(255,255,255,0.05); color: #94a3b8; cursor: default; }
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.15); border: none; cursor: pointer; transition: all 0.2s; }
+  .dot.active { width: 24px; background: #4a9eff; }
+  .card-grid-2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 16px 18px; }
+  .card-icon-title { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .card-icon-title span.title { font-size: 13px; font-weight: 600; color: #6db3ff; }
+  .card p { font-size: 11.5px; color: #94a3b8; line-height: 1.55; }
+  /* Overview grid */
+  .domain-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .domain-tile { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 14px 12px; text-align: center; }
+  .domain-tile .icon { font-size: 22px; margin-bottom: 6px; }
+  .domain-tile .name { font-size: 10.5px; font-weight: 600; color: #fff; line-height: 1.3; margin-bottom: 6px; }
+  .domain-tile .count { font-size: 10px; color: #94a3b8; }
+  .legend { margin-top: 18px; display: flex; gap: 24px; justify-content: center; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: #94a3b8; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+  .legend-item strong { color: #fff; font-weight: 600; }
+  /* Detail slides */
+  .detail-grid { flex: 1; display: grid; gap: 12px; }
+  .detail-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .detail-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .detail-col { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 14px; }
+  .detail-col-header { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+  .detail-col-header .icon { font-size: 16px; }
+  .detail-col-header .name { font-size: 11px; font-weight: 700; }
+  .cap-row { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px; }
+  .cap-num { font-size: 9px; font-weight: 600; min-width: 22px; margin-top: 1px; }
+  .cap-name { font-size: 10.5px; color: #e8ecf2; line-height: 1.35; }
+  /* Usage slide */
+  .usage-grid { display: flex; gap: 12px; }
+  .usage-card { flex: 1; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 18px 14px; position: relative; }
+  .usage-step { font-size: 28px; font-weight: 800; position: absolute; top: 10px; right: 12px; opacity: 0.12; }
+  .usage-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; white-space: pre-line; line-height: 1.3; }
+  .usage-item { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 5px; }
+  .usage-dot { font-size: 8px; margin-top: 3px; }
+  .usage-text { font-size: 10.5px; color: #e8ecf2; line-height: 1.4; }
+  /* Timeline */
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline-line { position: absolute; left: 9px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(to bottom, #4a9eff, #d4a843); }
+  .timeline-item { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 18px; position: relative; }
+  .timeline-dot { width: 20px; height: 20px; border-radius: 10px; border: 3px solid #0a1628; position: absolute; left: -19px; top: 2px; z-index: 1; }
+  .timeline-content { margin-left: 16px; }
+  .timeline-header { display: flex; align-items: center; gap: 10px; margin-bottom: 3px; }
+  .timeline-phase { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+  .timeline-title { font-size: 13px; font-weight: 600; color: #fff; }
+  .timeline-desc { font-size: 11px; color: #94a3b8; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="deck-wrapper">
+  <!-- SLIDE 1: Title -->
+  <div class="slide active" id="slide-1">
+    <div class="slide-topbar"></div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:48px;text-align:center;">
+      <div style="font-size:11px;letter-spacing:4px;color:#d4a843;text-transform:uppercase;margin-bottom:20px;font-weight:600;">Back-Office Technology Functions</div>
+      <h1 style="font-size:36px;font-weight:700;color:#fff;line-height:1.2;">CIO Operating Model</h1>
+      <h2 style="font-size:22px;font-weight:300;color:#6db3ff;margin:8px 0 0 0;">Capability Taxonomy</h2>
+      <div style="width:60px;height:2px;background:#d4a843;margin:28px 0;"></div>
+      <div style="font-size:13px;color:#94a3b8;line-height:1.6;">Risk · Finance · Treasury · Controls<br>Draft v0.1 — For Stakeholder Discussion</div>
+    </div>
+    <div class="footer"><span>DRAFT — For Discussion</span><span>CIO Operating Model — Capability Taxonomy</span><span>1 / 8</span></div>
+  </div>
+
+  <!-- SLIDE 2: Context -->
+  <div class="slide" id="slide-2">
+    <div class="slide-topbar"></div>
+    <div style="padding:36px 40px 48px;">
+      <div class="label">Context</div>
+      <h2 class="slide-title">Why a Common Capability Taxonomy?</h2>
+      <div class="card-grid-2x2">
+        <div class="card"><div class="card-icon-title"><span style="font-size:18px;">⚡</span><span class="title">The Capacity Challenge</span></div><p>Regulatory and compliance-driven change consumes a disproportionate share of delivery capacity, limiting strategic investment and innovation.</p></div>
+        <div class="card"><div class="card-icon-title"><span style="font-size:18px;">🤖</span><span class="title">AI as a Lever</span></div><p>AI adoption is moving from experimentation to scale. A structured view of capabilities helps identify where AI can create the most capacity.</p></div>
+        <div class="card"><div class="card-icon-title"><span style="font-size:18px;">🔄</span><span class="title">Consistency Across Functions</span></div><p>A shared language enables comparison across CIO functions — identifying where practices can be shared and where bespoke approaches are justified.</p></div>
+        <div class="card"><div class="card-icon-title"><span style="font-size:18px;">📊</span><span class="title">Peer Benchmarking</span></div><p>A common taxonomy provides the structure to benchmark against competing universal banks and identify areas of relative strength or gap.</p></div>
+      </div>
+    </div>
+    <div class="footer"><span>DRAFT — For Discussion</span><span>CIO Operating Model — Capability Taxonomy</span><span>2 / 8</span></div>
+  </div>
+
+  <!-- SLIDE 3: Overview -->
+  <div class="slide" id="slide-3">
+    <div class="slide-topbar"></div>
+    <div style="padding:36px 40px 48px;">
+      <div class="label">Overview</div>
+      <h2 class="slide-title">10 Capability Domains · ~50 Capabilities</h2>
+      <div class="domain-grid">
+        <div class="domain-tile" style="border:1px solid rgba(74,158,255,0.2);border-top:2px solid #4a9eff;"><div class="icon">📊</div><div class="name">Demand & Portfolio Management</div><div class="count">6 capabilities</div></div>
+        <div class="domain-tile" style="border:1px solid rgba(99,102,241,0.2);border-top:2px solid #6366f1;"><div class="icon">🏗️</div><div class="name">Solution Design & Architecture</div><div class="count">5 capabilities</div></div>
+        <div class="domain-tile" style="border:1px solid rgba(139,92,246,0.2);border-top:2px solid #8b5cf6;"><div class="icon">⚙️</div><div class="name">Software Engineering & Delivery</div><div class="count">7 capabilities</div></div>
+        <div class="domain-tile" style="border:1px solid rgba(14,165,233,0.2);border-top:2px solid #0ea5e9;"><div class="icon">🖥️</div><div class="name">Production Operations & Support</div><div class="count">7 capabilities</div></div>
+        <div class="domain-tile" style="border:1px solid rgba(20,184,166,0.2);border-top:2px solid #14b8a6;"><div class="icon">📈</div><div class="name">Data Management & Analytics</div><div class="count">5 capabilities</div></div>
+        <div class="domain-tile" style="border:1px solid rgba(6,182,212,0.2);border-top:2px solid #06b6d4;"><div class="icon">☁️</div><div class="name">Infrastructure & Cloud</div><div class="count">4 capabilities</div></div>
+        <div class="domain-tile" style="border:1px solid rgba(245,158,11,0.2);border-top:2px solid #f59e0b;"><div class="icon">🛡️</div><div class="name">Security, Risk & Compliance</div><div class="count">5 capabilities</div></div>
+        <div class="domain-tile" style="border:1px solid rgba(249,115,22,0.2);border-top:2px solid #f97316;"><div class="icon">👥</div><div class="name">Workforce, Talent & Sourcing</div><div class="count">5 capabilities</div></div>
+        <div class="domain-tile" style="border:1px solid rgba(168,85,247,0.2);border-top:2px solid #a855f7;"><div class="icon">🤖</div><div class="name">AI & Intelligent Automation</div><div class="count">5 capabilities</div></div>
+        <div class="domain-tile" style="border:1px solid rgba(100,116,139,0.2);border-top:2px solid #64748b;"><div class="icon">📋</div><div class="name">Governance, Standards & Improvement</div><div class="count">5 capabilities</div></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#4a9eff;"></div><strong>Change</strong> — Domains 1–3</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#14b8a6;"></div><strong>Run</strong> — Domains 4–6</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#d4a843;"></div><strong>Govern</strong> — Domains 7 & 10</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#a855f7;"></div><strong>Enable</strong> — Domains 8–9</div>
+      </div>
+    </div>
+    <div class="footer"><span>DRAFT — For Discussion</span><span>CIO Operating Model — Capability Taxonomy</span><span>3 / 8</span></div>
+  </div>
+
+  <!-- SLIDE 4: Change Domains -->
+  <div class="slide" id="slide-4">
+    <div class="slide-topbar"></div>
+    <div style="padding:32px 40px 48px;flex:1;display:flex;flex-direction:column;">
+      <div class="label">Capability Details</div>
+      <h2 style="font-size:20px;font-weight:600;color:#fff;margin:0 0 16px 0;">Change — Demand, Architecture & Delivery</h2>
+      <div class="detail-grid cols-3">
+        <div class="detail-col" style="border:1px solid rgba(74,158,255,0.13);border-top:2px solid #4a9eff;">
+          <div class="detail-col-header"><span class="icon">📊</span><span class="name" style="color:#4a9eff;">1. Demand & Portfolio Mgmt</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#4a9eff;">1.1</span><span class="cap-name">Demand Intake & Classification</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#4a9eff;">1.2</span><span class="cap-name">Portfolio Prioritisation & Sequencing</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#4a9eff;">1.3</span><span class="cap-name">Investment & Funding Management</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#4a9eff;">1.4</span><span class="cap-name">Capacity Planning & Allocation</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#4a9eff;">1.5</span><span class="cap-name">Portfolio Governance & Reporting</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#4a9eff;">1.6</span><span class="cap-name">Dependency Management</span></div>
+        </div>
+        <div class="detail-col" style="border:1px solid rgba(99,102,241,0.13);border-top:2px solid #6366f1;">
+          <div class="detail-col-header"><span class="icon">🏗️</span><span class="name" style="color:#6366f1;">2. Solution Design & Architecture</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#6366f1;">2.1</span><span class="cap-name">Enterprise & Domain Architecture</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#6366f1;">2.2</span><span class="cap-name">Solution Design</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#6366f1;">2.3</span><span class="cap-name">Architecture Governance & Review</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#6366f1;">2.4</span><span class="cap-name">Technology Strategy & Lifecycle</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#6366f1;">2.5</span><span class="cap-name">Data Architecture & Modelling</span></div>
+        </div>
+        <div class="detail-col" style="border:1px solid rgba(139,92,246,0.13);border-top:2px solid #8b5cf6;">
+          <div class="detail-col-header"><span class="icon">⚙️</span><span class="name" style="color:#8b5cf6;">3. Software Engineering & Delivery</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#8b5cf6;">3.1</span><span class="cap-name">Requirements & Analysis</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#8b5cf6;">3.2</span><span class="cap-name">Software Development</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#8b5cf6;">3.3</span><span class="cap-name">Testing & Quality Assurance</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#8b5cf6;">3.4</span><span class="cap-name">Release & Deployment Management</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#8b5cf6;">3.5</span><span class="cap-name">Environment Management</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#8b5cf6;">3.6</span><span class="cap-name">DevOps & CI/CD</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#8b5cf6;">3.7</span><span class="cap-name">Delivery Methodology & Practices</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span>DRAFT — For Discussion</span><span>CIO Operating Model — Capability Taxonomy</span><span>4 / 8</span></div>
+  </div>
+
+  <!-- SLIDE 5: Run Domains -->
+  <div class="slide" id="slide-5">
+    <div class="slide-topbar"></div>
+    <div style="padding:32px 40px 48px;flex:1;display:flex;flex-direction:column;">
+      <div class="label">Capability Details</div>
+      <h2 style="font-size:20px;font-weight:600;color:#fff;margin:0 0 16px 0;">Run — Operations, Data & Infrastructure</h2>
+      <div class="detail-grid cols-3">
+        <div class="detail-col" style="border:1px solid rgba(14,165,233,0.13);border-top:2px solid #0ea5e9;">
+          <div class="detail-col-header"><span class="icon">🖥️</span><span class="name" style="color:#0ea5e9;">4. Production Operations & Support</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#0ea5e9;">4.1</span><span class="cap-name">Incident Management</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#0ea5e9;">4.2</span><span class="cap-name">Problem Management</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#0ea5e9;">4.3</span><span class="cap-name">Service Monitoring & Observability</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#0ea5e9;">4.4</span><span class="cap-name">Change & Configuration Management</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#0ea5e9;">4.5</span><span class="cap-name">Batch & Job Scheduling</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#0ea5e9;">4.6</span><span class="cap-name">DR & Business Continuity</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#0ea5e9;">4.7</span><span class="cap-name">Production Support (L1/L2/L3)</span></div>
+        </div>
+        <div class="detail-col" style="border:1px solid rgba(20,184,166,0.13);border-top:2px solid #14b8a6;">
+          <div class="detail-col-header"><span class="icon">📈</span><span class="name" style="color:#14b8a6;">5. Data Management & Analytics</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#14b8a6;">5.1</span><span class="cap-name">Data Governance & Quality</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#14b8a6;">5.2</span><span class="cap-name">Data Integration & ETL</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#14b8a6;">5.3</span><span class="cap-name">Reporting & MI</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#14b8a6;">5.4</span><span class="cap-name">Data Platform & Infrastructure</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#14b8a6;">5.5</span><span class="cap-name">Advanced Analytics & AI/ML</span></div>
+        </div>
+        <div class="detail-col" style="border:1px solid rgba(6,182,212,0.13);border-top:2px solid #06b6d4;">
+          <div class="detail-col-header"><span class="icon">☁️</span><span class="name" style="color:#06b6d4;">6. Infrastructure & Cloud</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#06b6d4;">6.1</span><span class="cap-name">Cloud Platform Management</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#06b6d4;">6.2</span><span class="cap-name">Compute & Storage</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#06b6d4;">6.3</span><span class="cap-name">Network & Connectivity</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#06b6d4;">6.4</span><span class="cap-name">Infrastructure Automation</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span>DRAFT — For Discussion</span><span>CIO Operating Model — Capability Taxonomy</span><span>5 / 8</span></div>
+  </div>
+
+  <!-- SLIDE 6: Govern & Enable Domains -->
+  <div class="slide" id="slide-6">
+    <div class="slide-topbar"></div>
+    <div style="padding:32px 40px 48px;flex:1;display:flex;flex-direction:column;">
+      <div class="label">Capability Details</div>
+      <h2 style="font-size:20px;font-weight:600;color:#fff;margin:0 0 16px 0;">Govern & Enable — Security, Workforce, AI & Governance</h2>
+      <div class="detail-grid cols-4">
+        <div class="detail-col" style="border:1px solid rgba(245,158,11,0.13);border-top:2px solid #f59e0b;">
+          <div class="detail-col-header"><span class="icon">🛡️</span><span class="name" style="color:#f59e0b;">7. Security, Risk & Compliance</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#f59e0b;">7.1</span><span class="cap-name">Technology Risk Mgmt</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#f59e0b;">7.2</span><span class="cap-name">Cyber Security Ops</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#f59e0b;">7.3</span><span class="cap-name">Regulatory & Compliance Mgmt</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#f59e0b;">7.4</span><span class="cap-name">Controls Assurance & Testing</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#f59e0b;">7.5</span><span class="cap-name">Third-Party & Vendor Risk</span></div>
+        </div>
+        <div class="detail-col" style="border:1px solid rgba(249,115,22,0.13);border-top:2px solid #f97316;">
+          <div class="detail-col-header"><span class="icon">👥</span><span class="name" style="color:#f97316;">8. Workforce, Talent & Sourcing</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#f97316;">8.1</span><span class="cap-name">Workforce Planning & Design</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#f97316;">8.2</span><span class="cap-name">Sourcing Strategy & Model</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#f97316;">8.3</span><span class="cap-name">Vendor & SI Management</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#f97316;">8.4</span><span class="cap-name">Skills & Capability Development</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#f97316;">8.5</span><span class="cap-name">Contingent Workforce Mgmt</span></div>
+        </div>
+        <div class="detail-col" style="border:1px solid rgba(168,85,247,0.13);border-top:2px solid #a855f7;">
+          <div class="detail-col-header"><span class="icon">🤖</span><span class="name" style="color:#a855f7;">9. AI & Intelligent Automation</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#a855f7;">9.1</span><span class="cap-name">AI-Assisted Development</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#a855f7;">9.2</span><span class="cap-name">Intelligent Automation (RPA+)</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#a855f7;">9.3</span><span class="cap-name">AI for Operations (AIOps)</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#a855f7;">9.4</span><span class="cap-name">AI Governance & Responsible Use</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#a855f7;">9.5</span><span class="cap-name">AI Enablement & Experimentation</span></div>
+        </div>
+        <div class="detail-col" style="border:1px solid rgba(100,116,139,0.13);border-top:2px solid #64748b;">
+          <div class="detail-col-header"><span class="icon">📋</span><span class="name" style="color:#64748b;">10. Governance & Improvement</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#64748b;">10.1</span><span class="cap-name">Operating Model Governance</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#64748b;">10.2</span><span class="cap-name">Standards & Policies</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#64748b;">10.3</span><span class="cap-name">Metrics & Performance Mgmt</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#64748b;">10.4</span><span class="cap-name">Continuous Improvement</span></div>
+          <div class="cap-row"><span class="cap-num" style="color:#64748b;">10.5</span><span class="cap-name">Knowledge Management</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span>DRAFT — For Discussion</span><span>CIO Operating Model — Capability Taxonomy</span><span>6 / 8</span></div>
+  </div>
+
+  <!-- SLIDE 7: Usage -->
+  <div class="slide" id="slide-7">
+    <div class="slide-topbar"></div>
+    <div style="padding:36px 40px 48px;">
+      <div class="label">Application</div>
+      <h2 class="slide-title">How the Taxonomy Will Be Used</h2>
+      <div class="usage-grid">
+        <div class="usage-card" style="border:1px solid rgba(74,158,255,0.2);border-top:3px solid #4a9eff;">
+          <div class="usage-step" style="color:#4a9eff;">01</div>
+          <div class="usage-title" style="color:#4a9eff;">Current State
+Baseline</div>
+          <div class="usage-item"><span class="usage-dot" style="color:#4a9eff;">●</span><span class="usage-text">Maturity assessment per CIO function</span></div>
+          <div class="usage-item"><span class="usage-dot" style="color:#4a9eff;">●</span><span class="usage-text">Capacity & cost mapping (change / run / support)</span></div>
+          <div class="usage-item"><span class="usage-dot" style="color:#4a9eff;">●</span><span class="usage-text">Sourcing profile per capability</span></div>
+        </div>
+        <div class="usage-card" style="border:1px solid rgba(168,85,247,0.2);border-top:3px solid #a855f7;">
+          <div class="usage-step" style="color:#a855f7;">02</div>
+          <div class="usage-title" style="color:#a855f7;">AI Opportunity
+Mapping</div>
+          <div class="usage-item"><span class="usage-dot" style="color:#a855f7;">●</span><span class="usage-text">Automation potential per capability</span></div>
+          <div class="usage-item"><span class="usage-dot" style="color:#a855f7;">●</span><span class="usage-text">Effort/complexity scoring</span></div>
+          <div class="usage-item"><span class="usage-dot" style="color:#a855f7;">●</span><span class="usage-text">Prioritised use case pipeline by horizon</span></div>
+        </div>
+        <div class="usage-card" style="border:1px solid rgba(20,184,166,0.2);border-top:3px solid #14b8a6;">
+          <div class="usage-step" style="color:#14b8a6;">03</div>
+          <div class="usage-title" style="color:#14b8a6;">Peer
+Benchmarking</div>
+          <div class="usage-item"><span class="usage-dot" style="color:#14b8a6;">●</span><span class="usage-text">Structured comparison vs. competing banks</span></div>
+          <div class="usage-item"><span class="usage-dot" style="color:#14b8a6;">●</span><span class="usage-text">Identify leading practices</span></div>
+          <div class="usage-item"><span class="usage-dot" style="color:#14b8a6;">●</span><span class="usage-text">Sourcing model comparison</span></div>
+        </div>
+        <div class="usage-card" style="border:1px solid rgba(212,168,67,0.2);border-top:3px solid #d4a843;">
+          <div class="usage-step" style="color:#d4a843;">04</div>
+          <div class="usage-title" style="color:#d4a843;">Target Operating
+Model (1/3/5yr)</div>
+          <div class="usage-item"><span class="usage-dot" style="color:#d4a843;">●</span><span class="usage-text">Future-state maturity targets</span></div>
+          <div class="usage-item"><span class="usage-dot" style="color:#d4a843;">●</span><span class="usage-text">Workforce & sourcing evolution</span></div>
+          <div class="usage-item"><span class="usage-dot" style="color:#d4a843;">●</span><span class="usage-text">Capacity reallocation roadmap</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span>DRAFT — For Discussion</span><span>CIO Operating Model — Capability Taxonomy</span><span>7 / 8</span></div>
+  </div>
+
+  <!-- SLIDE 8: Next Steps -->
+  <div class="slide" id="slide-8">
+    <div class="slide-topbar"></div>
+    <div style="padding:36px 40px 48px;">
+      <div class="label">Next Steps</div>
+      <h2 class="slide-title">Proposed Path Forward</h2>
+      <div class="timeline">
+        <div class="timeline-line"></div>
+        <div class="timeline-item"><div class="timeline-dot" style="background:#4a9eff;"></div><div class="timeline-content"><div class="timeline-header"><span class="timeline-phase" style="color:#4a9eff;background:rgba(74,158,255,0.1);">Week 1–2</span><span class="timeline-title">Taxonomy Validation</span></div><div class="timeline-desc">Working sessions with CIO representatives to validate domains, capabilities, and language. Identify any gaps specific to the bank's context.</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot" style="background:#6366f1;"></div><div class="timeline-content"><div class="timeline-header"><span class="timeline-phase" style="color:#6366f1;background:rgba(99,102,241,0.1);">Week 2–3</span><span class="timeline-title">Maturity Model Design</span></div><div class="timeline-desc">Define maturity levels (1–5) for each capability. Establish assessment criteria and evidence requirements.</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot" style="background:#14b8a6;"></div><div class="timeline-content"><div class="timeline-header"><span class="timeline-phase" style="color:#14b8a6;background:rgba(20,184,166,0.1);">Week 3–5</span><span class="timeline-title">Current State Assessment</span></div><div class="timeline-desc">Conduct structured assessments across each CIO function. Map capacity, cost, and sourcing against the taxonomy.</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot" style="background:#a855f7;"></div><div class="timeline-content"><div class="timeline-header"><span class="timeline-phase" style="color:#a855f7;background:rgba(168,85,247,0.1);">Week 4–6</span><span class="timeline-title">AI Opportunity Mapping & Benchmarking</span></div><div class="timeline-desc">Assess AI/automation potential per capability. Initiate peer benchmarking against the common taxonomy.</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot" style="background:#d4a843;"></div><div class="timeline-content"><div class="timeline-header"><span class="timeline-phase" style="color:#d4a843;background:rgba(212,168,67,0.1);">Week 6–8</span><span class="timeline-title">Target Operating Model — Draft</span></div><div class="timeline-desc">Define 1, 3, and 5-year target states. Articulate the capacity creation roadmap and investment case.</div></div></div>
+      </div>
+    </div>
+    <div class="footer"><span>DRAFT — For Discussion</span><span>CIO Operating Model — Capability Taxonomy</span><span>8 / 8</span></div>
+  </div>
+
+  <!-- Navigation Controls -->
+  <div class="controls">
+    <button id="prev-btn" disabled onclick="navigate(-1)">← Previous</button>
+    <div class="dots" id="dots"></div>
+    <button id="next-btn" onclick="navigate(1)">Next →</button>
+  </div>
+</div>
+
+<script>
+  let current = 0;
+  const total = 8;
+
+  function buildDots() {
+    const c = document.getElementById('dots');
+    c.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const d = document.createElement('button');
+      d.className = 'dot' + (i === current ? ' active' : '');
+      d.onclick = () => goTo(i);
+      c.appendChild(d);
+    }
+  }
+
+  function goTo(idx) {
+    document.getElementById('slide-' + (current + 1)).classList.remove('active');
+    current = idx;
+    document.getElementById('slide-' + (current + 1)).classList.add('active');
+    document.getElementById('prev-btn').disabled = current === 0;
+    document.getElementById('next-btn').disabled = current === total - 1;
+    buildDots();
+  }
+
+  function navigate(dir) { goTo(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' && current < total - 1) navigate(1);
+    if (e.key === 'ArrowLeft' && current > 0) navigate(-1);
+  });
+
+  buildDots();
+</script>
+</body>
+</html>

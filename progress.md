@@ -66,7 +66,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 6c | **Updated** | SVG rasterisation via capturePage(). Element gradient rasterisation with stacked layout support. |
+| `src/extraction/extractor.js` | Session 7a | **Updated** | Display-none visibility fix for hidden slide containers. Slide-level gradient capture refactored (display:none children approach). See `docs/issue-taxonomy-gradient-capture.md` for open issue. |
 | `src/generation/generator.js` | Session 6c | **Updated** | Gradient image fill: layered addImage() + addText() for shapes with captured gradients. |
 | `src/main/main.js` | Session 2 | Current | No changes this session |
 | `src/main/preload.js` | Session 2 | Current | No changes this session |
@@ -127,6 +127,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [x] **Processed set propagation (Session 6b)**: All extraction paths (list, shape text, text elements, div-text) now mark descendants as processed after capturing their text. Div-text fallback skips extraction when children have visual fills. Fixes duplicate text in hr-skills-slide, sample-slide, and similar patterns.
 - [x] **SVG rasterisation (Session 6c)**: Inline SVGs captured as PNG images via `capturePage()`. Extraction emits `svg-capture` placeholder elements with position and capture rect. Post-extraction step captures each SVG's rendered pixels and replaces placeholder with standard image element. Stacked layout support via slide isolation.
 - [x] **Element gradient rasterisation (Session 6c)**: Elements with CSS gradient backgrounds captured via `capturePage()` with text hidden (`color: transparent`) and children hidden (`visibility: hidden`). Captured PNG used as background image layer in PptxGenJS, with text rendered on top via separate `addText()` call. Solid colour fallback preserved for capture failures. Stacked layout support via slide isolation (same pattern as slide-level gradient capture).
+- [x] **Display-none slide visibility fix (Session 7a)**: Pre-extraction step forces hidden slide containers (`display: none`) to visible, with position adjustment for stacked layouts. Enables extraction of interactive slideshow decks. Re-measurement conditional on changes to avoid regressions.
+- [ ] **Slide-level gradient capture on taxonomy deck (Session 7a)**: OPEN ISSUE — text leaks into gradient background captures on taxonomy-deck-html.html despite multiple hiding approaches. See `docs/issue-taxonomy-gradient-capture.md`. All other fixtures unaffected.
 - [ ] **Table extraction**: Not currently handled. Design discussion from Session 3 (hybrid approach). High likelihood testers will hit this.
 - [ ] **Overflow detection warnings (original port)**: Port getBodyDimensions() overflow check from original repo. May be redundant now with our own overflow detection — needs review.
 
@@ -147,7 +149,6 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [ ] Chart/table insertion into placeholders
 - [ ] Single-file-per-slide mode
 - [ ] Template-based creation
-- [ ] Element-level gradient rasterisation — now implemented in 3b, remove from future considerations
 
 ## Key Decisions Log
 
@@ -169,7 +170,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 2. **Transform stripping scoped to ancestors, not all elements** — Initial implementation stripped transforms from ALL elements, which broke gradient capture on agile-slides (content bled through on slide 1). Fix: only strip transforms from slide containers and their ancestors (the viewport-scaling wrapper divs). Content element transforms are preserved, keeping gradient capture's hide/show logic intact.
 
-3. **SVG skip with warning, not rasterisation** — Rasterising SVGs via `capturePage()` is technically feasible (same approach as gradient capture) but adds complexity. For MVP, skipping with a warning is the right balance. Users can replace inline SVGs with `<img>` tags referencing PNG/SVG files for better conversion.
+3. **SVG skip with warning as interim approach** — Initially implemented as skip-with-warning for MVP simplicity. *(Superseded by Session 6c: SVG rasterisation implemented using `capturePage()`. The skip-with-warning approach served as the interim solution for one sub-session before rasterisation was added.)*
 
 4. **Processed set must propagate to descendants** — When any extraction path captures text from child elements, all descendants must be marked in the `processed` Set. The Session 4/5 additions (standalone span extraction, shape text capture) created new extraction paths that could re-capture text already captured by a parent. The fix is systematic: every path that captures text from children marks those children as processed.
 
@@ -215,7 +216,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 2. **Gradient rasterisation via capturePage() instead of Sharp** — Sharp would add native binary packaging complexity with no benefit.
 
-3. **Element-level gradients: detect + warn, don't rasterise** — Per-element capture has complications. MVP: detect, fall back to solid colour, surface warning.
+3. **Element-level gradients: detect + warn, don't rasterise** — Per-element capture has complications. MVP: detect, fall back to solid colour, surface warning. *(Superseded by Session 6c: element-level gradient rasterisation implemented using the same `capturePage()` pattern, with text hiding and slide isolation.)*
 
 4. **Listener cleanup pattern** — removeAllListeners() called at batch start, not batch end.
 
@@ -229,6 +230,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 | **CSS slideshow (stacked)** | `agile-slides.html` | `class-slide` (div.slide) | All slides `position: absolute; inset: 0` in a wrapper, toggled via opacity | Gradient capture, interactive chrome filtering, badge/shape text, CSS triangles. Most rendering issues identified and fixed in Session 4. |
 | **Div-heavy (ChatGPT/Copilot)** | Not yet tested | Expected: `uniform-divs` or `body-fallback` | Deeply nested wrapper divs, text in bare divs | Div-text fallback essential. No fixture yet. |
 | **Viewport-scaled single slide** | `hr-skills-slide.html`, `modern-it-skills.html` | `class-slide` (single) | Single slide at 1280x720 inside a scaling wrapper. JS applies `transform: scale(...)` to fit viewport. | Transform distorts bounding rects. Inline SVGs for icons. Requires transform stripping before extraction. |
+| **Interactive slideshow (display:none)** | `taxonomy-deck-html.html` | `class-slide` (div.slide) | 8 slides, `display:none` toggled by `.active` class. `position:absolute` inside wrapper. | Hidden slides have zero-size bounding rects; requires pre-extraction display-none fix. Gradient capture on these slides has open text-leaking issue. |
 | **Table-heavy** | Not yet tested | N/A | `<table>` elements for data display | Tables currently ignored. Design discussion in progress. |
 
 ## Key Learnings
@@ -270,6 +272,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 | `agile-slides.html` | `test/extraction/fixtures/` | 3 slides: CSS slideshow (stacked layout). Tests gradient capture, interactive element filtering, badge/shape text capture, CSS trick detection, gradient-aware colour fallback. |
 | `hr-skills-slide.html` | `test/extraction/fixtures/` | Single slide: viewport-scaled wrapper pattern, 1280x720, CSS grid 4-column layout, inline SVGs, gradient banner, skill pills as styled spans. |
 | `modern-it-skills.html` | `test/extraction/fixtures/` | Single slide: viewport-scaled wrapper pattern, 1280x720, CSS grid tabular layout, inline SVGs for icons and arrows, gradient banner. |
+| `conformant_sample.html` | `test/extraction/fixtures/` | 3 slides: guardrails-compliant structure. Tests tag/span extraction, card grids, sequence layout. Known overlap on slide 3 (flex layout fidelity limit). |
+| `taxonomy-deck-html.html` | `tests/extraction/fixtures/` | 8 slides: interactive slideshow (display:none toggling). Tests display-none visibility fix, gradient capture on forced-visible slides. **Known issue:** gradient capture includes text. |
 
 ### Known Gaps in Test Coverage
 - No fixture with `<img>` tags (image path resolution untested)
@@ -282,6 +286,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - User has validated lpm-slides-v1.html rendering with Session 5 fixes — standalone spans, HR lines, and flex-centred arrows confirmed working
 - User has validated hr-skills-slide.html and modern-it-skills.html with Session 6 fixes — correct detection, transform stripping, SVG skipping, no regressions on agile-slides gradient capture
 - User has validated Session 6c SVG rasterisation (hr-skills-slide SVG icons appear as images) and element gradient capture (agile-slides badge/pill gradients rendered, hr-skills banner gradient rendered)
+- Session 7a: display-none fix validated — taxonomy-deck-html.html extracts all 8 slides. No regressions on other fixtures after conditional re-measurement fix. Slide-level gradient capture on taxonomy deck has open text-leaking issue.
+- conformant_sample.html slide 3 has known overlap between bullet items and step-duration labels (flex layout fidelity limit, not a duplication bug)
 
 ## Conversation History
 
@@ -297,13 +303,15 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 6. **Session 6** — Fixed critical failures with viewport-scaled single-slide HTML files (hr-skills-slide.html, modern-it-skills.html). Three fixes: (1) Single-slide class detection: `>= 1` instead of `> 1` for `class-slide` and `data-slide-number`. (2) Transform-aware extraction: CSS transforms stripped from slide containers and ancestors before extraction, ensuring native layout coordinates. Initial global stripping broke agile-slides gradient capture — scoped to ancestors only. (3) SVG element handling: inline SVGs and subtrees skipped with summary warning. Then Session 6b: fixed duplicate text extraction by propagating the `processed` Set to descendants in all extraction paths (lists, shape text, text elements, div-text). Added visual-children check in div-text fallback to skip when children have backgrounds. Reduced element counts where duplicates existed (hr-skills 96->88, sample-slide 8->4) with no regressions.
 
-7. **Session 6c** (current) — Implemented SVG rasterisation and element-level gradient rasterisation, both using `capturePage()`. SVGs: extraction emits `svg-capture` placeholders, post-extraction step captures rendered pixels and replaces with standard image elements. Element gradients: shapes with CSS gradients get `captureRect`, post-extraction step hides text (`color: transparent`) and children (`visibility: hidden`), captures background, stores as `fillImage`. Generator renders gradient shapes as two layers: `addImage()` for gradient background + `addText()` for text overlay, since PptxGenJS `addText()` doesn't support image fills. Both capture types use slide isolation for stacked layouts (same hide-all/reveal-target pattern as slide-level gradient capture). Validated on hr-skills-slide.html (SVG icons + gradient banner), agile-slides.html (badge/pill gradients), and all regression fixtures.
+7. **Session 6c** — Implemented SVG rasterisation and element-level gradient rasterisation, both using `capturePage()`. SVGs: extraction emits `svg-capture` placeholders, post-extraction step captures rendered pixels and replaces with standard image elements. Element gradients: shapes with CSS gradients get `captureRect`, post-extraction step hides text (`color: transparent`) and children (`visibility: hidden`), captures background, stores as `fillImage`. Generator renders gradient shapes as two layers: `addImage()` for gradient background + `addText()` for text overlay, since PptxGenJS `addText()` doesn't support image fills. Both capture types use slide isolation for stacked layouts (same hide-all/reveal-target pattern as slide-level gradient capture). Validated on hr-skills-slide.html (SVG icons + gradient banner), agile-slides.html (badge/pill gradients), and all regression fixtures.
+
+8. **Session 7a** (current) — Implemented display-none visibility fix for taxonomy-deck-html.html (8-slide interactive deck using `display:none` toggling). Pre-extraction step detects hidden slide containers, forces them visible by matching sibling display mode, and adjusts position from absolute to relative for stacked layouts. Re-measurement conditional on changes to avoid regressions on other fixtures. Display-none fix working: all 8 slides extracted. However, slide-level gradient capture on the taxonomy deck has an unresolved issue: text content leaks into the captured gradient background image despite multiple hiding approaches (visibility:hidden on descendants, color:transparent, display:none on children, overlay div). See `docs/issue-taxonomy-gradient-capture.md`. All other fixtures (hr-skills, multi-slide-test, agile-slides, lpm, conformant, sample, modern-it) pass without regression.
 
 ### Next Session Priorities
-1. **Table extraction** (3b) — finalise design decision and implement. Hybrid approach recommended.
-2. **Integration test harness** — fixture-driven pipeline tests using electron-mocha. Baseline rendering quality should be established first.
-3. **Packaging with electron-builder** (3d) — .exe installer for Windows 11
-4. **Extraction window height** (3a) — test with longer fixture to confirm if real issue
+1. **Fix taxonomy gradient capture** — see `docs/issue-taxonomy-gradient-capture.md` for investigation notes and approaches to try
+2. **Table extraction** (3b) — finalise design decision and implement. Hybrid approach recommended.
+3. **Integration test harness** — fixture-driven pipeline tests using electron-mocha
+4. **Packaging with electron-builder** (3d) — .exe installer for Windows 11
 
 ## Checkpoint Discipline
 
