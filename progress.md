@@ -66,7 +66,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 8a | **Updated** | Mixed container text rescue via Range API for containers with text-less decorative block children (legend swatches, dots). Visual-children check refined to require text content. Processed-set protects SVGs and text-less visual block children from suppression. |
+| `src/extraction/extractor.js` | Session 8b | **Updated** | Readability refactor: pre-processing steps extracted to named functions (stripContainerTransforms, forceHiddenSlidesVisible, remeasureAfterDisplayFix), RESOLVE_CONTAINERS_JS consolidated to single buildContainerResolverJS() factory, phase comments added to extractFromHTML(). Zero functional changes. |
 | `src/generation/generator.js` | Session 8a | **Updated** | Div-text strict-mode skip: explicit fall-through comment for readability. |
 | `src/main/main.js` | Session 2 | Current | No changes this session |
 | `src/main/preload.js` | Session 2 | Current | No changes this session |

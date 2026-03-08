@@ -1360,13 +1360,20 @@ const EXTRACTION_SCRIPT = `
  * @param {Electron.BrowserWindow} hiddenWindow - The still-open hidden window
  * @returns {Promise<{ captured: number, failed: number }>} Capture summary
  */
-async function captureGradients(result, hiddenWindow) {
-  let captured = 0;
-  let failed = 0;
-
-  const method = result.detectionMethod;
-
-  const RESOLVE_CONTAINERS_JS = `
+/**
+ * Returns a JavaScript string that, when executed in the browser context,
+ * resolves and returns the slide container elements using the same
+ * detection logic as the extraction script.
+ *
+ * This is the single source of truth for container resolution in all
+ * post-extraction capture functions. If detection methods change in
+ * EXTRACTION_SCRIPT, update this function to match.
+ *
+ * @param {string} method - Detection method from extraction result
+ * @returns {string} JavaScript source to execute via executeJavaScript()
+ */
+function buildContainerResolverJS(method) {
+  return `
     (function() {
       var method = '${method}';
       var containers;
@@ -1391,6 +1398,14 @@ async function captureGradients(result, hiddenWindow) {
       return containers;
     })()
   `;
+}
+
+async function captureGradients(result, hiddenWindow) {
+  let captured = 0;
+  let failed = 0;
+
+  const method = result.detectionMethod;
+  const RESOLVE_CONTAINERS_JS = buildContainerResolverJS(method);
 
   for (const slide of result.slides) {
     if (!slide.background || slide.background.type !== 'gradient') continue;
@@ -1567,33 +1582,7 @@ async function captureElementImages(result, hiddenWindow) {
   let gradientsFailed = 0;
 
   const method = result.detectionMethod;
-
-  // Same container resolution logic as captureGradients()
-  const RESOLVE_CONTAINERS_JS = `
-    (function() {
-      var method = '${method}';
-      var containers;
-      if (method === 'data-slide-number') {
-        containers = Array.from(document.body.querySelectorAll('[data-slide-number]'));
-        containers.sort(function(a, b) {
-          return parseInt(a.dataset.slideNumber) - parseInt(b.dataset.slideNumber);
-        });
-      } else if (method === 'class-slide') {
-        containers = Array.from(document.body.querySelectorAll('section.slide, div.slide'));
-      } else if (method === 'section-children') {
-        containers = Array.from(document.body.children).filter(function(el) {
-          return el.tagName.toLowerCase() === 'section';
-        });
-      } else if (method === 'uniform-divs') {
-        containers = Array.from(document.body.children).filter(function(el) {
-          return el.tagName.toLowerCase() === 'div';
-        });
-      } else {
-        containers = [document.body];
-      }
-      return containers;
-    })()
-  `;
+  const RESOLVE_CONTAINERS_JS = buildContainerResolverJS(method);
 
   // Helper: hide all containers except the target slide, showing its
   // content so the target element is visible for capture.
@@ -1792,6 +1781,149 @@ async function captureElementImages(result, hiddenWindow) {
   return { svgsCaptured, svgsFailed, gradientsCaptured, gradientsFailed };
 }
 
+// ── Pre-extraction DOM preparation helpers ──────────────────────────
+// Each addresses a specific HTML pattern that would break extraction
+// if left unhandled. Extracted from extractFromHTML() for readability.
+
+/**
+ * Strips CSS transforms from slide containers and their ancestors.
+ * Targets viewport-scaling patterns (e.g. hr-skills-slide.html) where
+ * JS applies transform: scale(...) to fit a fixed-size slide into the
+ * browser. Without stripping, getBoundingClientRect() returns scaled
+ * coordinates instead of native layout dimensions.
+ *
+ * Scoped to containers and ancestors only — content element transforms
+ * are preserved to avoid breaking gradient capture visibility logic.
+ *
+ * @param {Electron.BrowserWindow} hiddenWindow
+ */
+async function stripContainerTransforms(hiddenWindow) {
+  await hiddenWindow.webContents.executeJavaScript(`
+    (function() {
+      var slideEls = document.querySelectorAll('[data-slide-number], section.slide, div.slide');
+      if (slideEls.length === 0) return;
+      var toStrip = new Set();
+      for (var i = 0; i < slideEls.length; i++) {
+        toStrip.add(slideEls[i]);
+        var parent = slideEls[i].parentElement;
+        while (parent && parent !== document.documentElement) {
+          toStrip.add(parent);
+          parent = parent.parentElement;
+        }
+      }
+      toStrip.forEach(function(el) {
+        var cs = window.getComputedStyle(el);
+        if (cs.transform && cs.transform !== 'none') {
+          el.style.transform = 'none';
+        }
+      });
+    })()
+  `);
+  await new Promise(resolve => setTimeout(resolve, 100));
+}
+
+/**
+ * Forces display on hidden slide containers before extraction.
+ * Targets interactive slideshow decks (e.g. taxonomy-deck-html.html)
+ * that use display:none to hide inactive slides. Without this,
+ * getBoundingClientRect() returns zero-size rects for hidden slides.
+ *
+ * Also handles stacked layouts (position:absolute) by switching to
+ * position:relative so slides stack vertically instead of overlapping.
+ *
+ * Only affects containers detected as slides — does not modify
+ * arbitrary elements. Safe for existing fixtures because:
+ * - opacity-based hiding (agile-slides) already has layout
+ * - vertically stacked slides (lpm, conformant) are all visible
+ * - viewport-scaled slides (hr-skills, modern-it) are visible
+ *
+ * @param {Electron.BrowserWindow} hiddenWindow
+ * @returns {Promise<number>} Number of containers that were made visible
+ */
+async function forceHiddenSlidesVisible(hiddenWindow) {
+  return await hiddenWindow.webContents.executeJavaScript(`
+    (function() {
+      var containers = Array.from(document.querySelectorAll('[data-slide-number]'));
+      if (containers.length === 0) {
+        containers = Array.from(document.querySelectorAll('section.slide, div.slide'));
+      }
+      if (containers.length === 0) return 0;
+
+      var changed = 0;
+      for (var i = 0; i < containers.length; i++) {
+        var cs = window.getComputedStyle(containers[i]);
+        if (cs.display === 'none') {
+          containers[i].dataset._prevDisplay = 'none';
+          // Match the visible sibling's display mode (usually flex),
+          // falling back to block if all are hidden.
+          var visibleSibling = null;
+          for (var j = 0; j < containers.length; j++) {
+            var sibCs = window.getComputedStyle(containers[j]);
+            if (sibCs.display !== 'none') {
+              visibleSibling = sibCs.display;
+              break;
+            }
+          }
+          containers[i].style.display = visibleSibling || 'block';
+          changed++;
+        }
+      }
+
+      if (changed > 0) {
+        // For stacked layouts where all slides now occupy the same
+        // position (position:absolute), force them to stack vertically
+        // so they don't overlap and contaminate each other's capture.
+        var firstCs = window.getComputedStyle(containers[0]);
+        var isStacked = firstCs.position === 'absolute' || firstCs.position === 'fixed';
+
+        if (isStacked) {
+          for (var k = 0; k < containers.length; k++) {
+            var c = containers[k];
+            c.dataset._prevPosition = c.style.position || '';
+            c.dataset._prevInset = c.style.inset || '';
+            c.dataset._prevTop = c.style.top || '';
+            c.dataset._prevLeft = c.style.left || '';
+            c.style.position = 'relative';
+            c.style.inset = 'auto';
+            c.style.top = 'auto';
+            c.style.left = 'auto';
+          }
+        }
+      }
+
+      return changed;
+    })()
+  `);
+}
+
+/**
+ * Re-measures body dimensions after display-none fix has changed
+ * the document layout, and resizes the hidden window to fit.
+ *
+ * Only called when forceHiddenSlidesVisible() made changes, to avoid
+ * resizing from the original h*10 buffer that other fixtures rely on.
+ *
+ * @param {Electron.BrowserWindow} hiddenWindow
+ */
+async function remeasureAfterDisplayFix(hiddenWindow) {
+  const updatedDims = await hiddenWindow.webContents.executeJavaScript(`
+    (function() {
+      var s = window.getComputedStyle(document.body);
+      return {
+        w: parseFloat(s.width) || document.body.scrollWidth,
+        h: document.body.scrollHeight
+      };
+    })()
+  `);
+  if (updatedDims.w > 0 && updatedDims.h > 0) {
+    hiddenWindow.setContentSize(
+      Math.round(updatedDims.w),
+      Math.round(updatedDims.h)
+    );
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+}
+
 /**
  * Loads an HTML file into a hidden BrowserWindow and extracts
  * per-slide element data using the ported html2pptx-local.cjs logic.
@@ -1820,6 +1952,8 @@ async function extractFromHTML(htmlFilePath, options = {}) {
     });
 
     installNavigationGuards(hiddenWindow);
+
+    // ── Phase 1: Load and measure ─────────────────────────────
     await hiddenWindow.loadFile(htmlFilePath);
 
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -1836,122 +1970,15 @@ async function extractFromHTML(htmlFilePath, options = {}) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    // Strip CSS transforms from slide containers and their ancestors only.
-    // Targets viewport-scaling patterns where JS applies transform: scale(...)
-    // to fit a fixed-size slide into the browser. Does NOT strip transforms
-    // from content elements inside slides — those may be meaningful (rotations,
-    // decorative transforms) and stripping them breaks gradient capture hiding.
-    await hiddenWindow.webContents.executeJavaScript(`
-      (function() {
-        var slideEls = document.querySelectorAll('[data-slide-number], section.slide, div.slide');
-        if (slideEls.length === 0) return;
-        var toStrip = new Set();
-        for (var i = 0; i < slideEls.length; i++) {
-          toStrip.add(slideEls[i]);
-          var parent = slideEls[i].parentElement;
-          while (parent && parent !== document.documentElement) {
-            toStrip.add(parent);
-            parent = parent.parentElement;
-          }
-        }
-        toStrip.forEach(function(el) {
-          var cs = window.getComputedStyle(el);
-          if (cs.transform && cs.transform !== 'none') {
-            el.style.transform = 'none';
-          }
-        });
-      })()
-    `);
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    // Force display on hidden slide containers before extraction.
-    // Targets the pattern where interactive slideshows use display:none
-    // to hide inactive slides. Without this, getBoundingClientRect()
-    // returns zero-size rects and all elements are skipped.
-    //
-    // Only affects containers detected as slides — does not modify
-    // arbitrary elements. Safe for existing fixtures because:
-    // - opacity-based hiding (agile-slides) already has layout
-    // - vertically stacked slides (lpm, conformant) are all visible
-    // - viewport-scaled slides (hr-skills, modern-it) are visible
-    const displayFixResult = await hiddenWindow.webContents.executeJavaScript(`
-      (function() {
-        var containers = Array.from(document.querySelectorAll('[data-slide-number]'));
-        if (containers.length === 0) {
-          containers = Array.from(document.querySelectorAll('section.slide, div.slide'));
-        }
-        if (containers.length === 0) return 0;
-
-        var changed = 0;
-        for (var i = 0; i < containers.length; i++) {
-          var cs = window.getComputedStyle(containers[i]);
-          if (cs.display === 'none') {
-            containers[i].dataset._prevDisplay = 'none';
-            // Match the visible sibling's display mode (usually flex),
-            // falling back to block if all are hidden.
-            var visibleSibling = null;
-            for (var j = 0; j < containers.length; j++) {
-              var sibCs = window.getComputedStyle(containers[j]);
-              if (sibCs.display !== 'none') {
-                visibleSibling = sibCs.display;
-                break;
-              }
-            }
-            containers[i].style.display = visibleSibling || 'block';
-            changed++;
-          }
-        }
-
-        if (changed > 0) {
-          // For stacked layouts where all slides now occupy the same
-          // position (position:absolute), force them to stack vertically
-          // so they don't overlap and contaminate each other's capture.
-          var firstCs = window.getComputedStyle(containers[0]);
-          var isStacked = firstCs.position === 'absolute' || firstCs.position === 'fixed';
-
-          if (isStacked) {
-            for (var k = 0; k < containers.length; k++) {
-              var c = containers[k];
-              c.dataset._prevPosition = c.style.position || '';
-              c.dataset._prevInset = c.style.inset || '';
-              c.dataset._prevTop = c.style.top || '';
-              c.dataset._prevLeft = c.style.left || '';
-              c.style.position = 'relative';
-              c.style.inset = 'auto';
-              c.style.top = 'auto';
-              c.style.left = 'auto';
-            }
-          }
-        }
-
-        return changed;
-      })()
-    `);
-
-    // Re-measure only when slides were made visible — the document's
-    // total height has changed and the window needs to accommodate
-    // the newly visible content. Skip for fixtures where no display
-    // changes were needed to avoid resizing from the original h*10 buffer.
-    if (displayFixResult > 0) {
-      console.log(`[Extractor] Forced ${displayFixResult} hidden slide(s) to visible`);
-      const updatedDims = await hiddenWindow.webContents.executeJavaScript(`
-        (function() {
-          var s = window.getComputedStyle(document.body);
-          return {
-            w: parseFloat(s.width) || document.body.scrollWidth,
-            h: document.body.scrollHeight
-          };
-        })()
-      `);
-      if (updatedDims.w > 0 && updatedDims.h > 0) {
-        hiddenWindow.setContentSize(
-          Math.round(updatedDims.w),
-          Math.round(updatedDims.h)
-        );
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+    // ── Phase 2: Pre-extraction DOM preparation ───────────────
+    await stripContainerTransforms(hiddenWindow);
+    const displayFixCount = await forceHiddenSlidesVisible(hiddenWindow);
+    if (displayFixCount > 0) {
+      console.log(`[Extractor] Forced ${displayFixCount} hidden slide(s) to visible`);
+      await remeasureAfterDisplayFix(hiddenWindow);
     }
 
+    // ── Phase 3: Extract slide data ───────────────────────────
     const result = await hiddenWindow.webContents.executeJavaScript(EXTRACTION_SCRIPT);
 
     if (!result || !result.slides || result.slides.length === 0) {
@@ -1963,6 +1990,7 @@ async function extractFromHTML(htmlFilePath, options = {}) {
       `${result.slideCount} slide(s) via "${result.detectionMethod}"`
     );
 
+    // ── Phase 4: Post-extraction captures ─────────────────────
     const hasGradients = result.slides.some(
       s => s.background && s.background.type === 'gradient'
     );
@@ -1975,7 +2003,6 @@ async function extractFromHTML(htmlFilePath, options = {}) {
       );
     }
 
-    // Element-level captures (SVGs and gradient elements)
     const hasElementCaptures = result.slides.some(s =>
       s.elements.some(el =>
         el.type === 'svg-capture' || (el.type === 'shape' && el.captureRect)
