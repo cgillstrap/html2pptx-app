@@ -17,6 +17,11 @@
 // detection layer, speaker notes from data-notes attributes, and
 // scale-to-fit when content exceeds the slide viewport.
 //
+// Key Changes (Session 9):
+// - Table rendering via pptxgenjs addTable(). Maps extracted table JSON
+//   (rows, cells, text/runs, styles, rowspan/colspan) to native PPTX tables.
+//   Scale-to-fit extended to scale table cell fonts and border widths.
+//
 // Key Changes (Session 4):
 // - Shape text styling: shapes can now contain text with font, size, colour,
 //   bold, italic, alignment, and margin properties. The shape rendering path
@@ -191,6 +196,26 @@ function applyScaling(slideData, scale, offsetX, offsetY) {
           if (item.options.fontSize) item.options.fontSize *= scale;
           if (item.options.bullet && item.options.bullet.indent) {
             item.options.bullet.indent *= scale;
+          }
+        }
+      }
+    }
+
+    // ── Table cells: scale font sizes and border widths ────
+    if (el.type === 'table' && el.rows) {
+      for (const row of el.rows) {
+        for (const cell of row) {
+          if (cell.style) {
+            if (cell.style.fontSize) cell.style.fontSize *= scale;
+            if (cell.style.borderWidth) cell.style.borderWidth *= scale;
+          }
+          // Scale inline text runs within table cells
+          if (Array.isArray(cell.text)) {
+            for (const run of cell.text) {
+              if (run.options && run.options.fontSize) {
+                run.options.fontSize *= scale;
+              }
+            }
           }
         }
       }
@@ -374,6 +399,98 @@ function addElements(slideData, targetSlide, pres, htmlDir) {
       continue;
     }
 
+    // ── Tables (Session 9, Bug fixes 9b) ────────────────────────
+    if (el.type === 'table') {
+      // Bug 1: Clamp table dimensions to available slide area
+      const slideVpW = slideData.viewport.w / PX_PER_IN;
+      const slideVpH = slideData.viewport.h / PX_PER_IN;
+      const maxTableW = slideVpW - el.position.x;
+      const maxTableH = slideVpH - el.position.y;
+      const tableW = Math.min(el.position.w, maxTableW);
+      const tableH = Math.min(el.position.h, maxTableH);
+
+      const pptxRows = [];
+      for (const row of el.rows) {
+        const pptxRow = [];
+        for (const cell of row) {
+          // Bug 2: Skip null sentinel cells (covered by rowspan from above).
+          // pptxgenjs auto-inserts vMerge cells when it processes the
+          // rowspan option on the starting cell — do not include our own.
+          if (cell === null) continue;
+
+          // Bug 3: Defensive defaults for cell text
+          const cellText = (cell.text == null) ? '' : cell.text;
+
+          const cellOpts = {
+            fontSize: cell.style.fontSize,
+            fontFace: cell.style.fontFace,
+            color: cell.style.color,
+            bold: cell.style.bold,
+            italic: cell.style.italic,
+            align: cell.style.align,
+            valign: cell.style.valign,
+            // PptxGenJS margin order: [left, right, bottom, top]
+            margin: [4, 4, 4, 4]
+          };
+
+          // Bug 3: Only include fill if valid hex string
+          if (cell.style.fill && typeof cell.style.fill === 'string') {
+            cellOpts.fill = { color: cell.style.fill };
+          }
+
+          // Bug 2: pptxgenjs uses lowercase rowspan/colspan
+          if (cell.rowSpan > 1) cellOpts.rowspan = cell.rowSpan;
+          if (cell.colSpan > 1) cellOpts.colspan = cell.colSpan;
+
+          // Bug 3: Only include border if both color and width are valid
+          if (cell.style.borderColor && cell.style.borderWidth) {
+            cellOpts.border = { type: 'solid', color: cell.style.borderColor, pt: cell.style.borderWidth };
+          } else {
+            cellOpts.border = { type: 'solid', color: 'CFCFCF', pt: 0.5 };
+          }
+
+          pptxRow.push({ text: cellText, options: cellOpts });
+        }
+        pptxRows.push(pptxRow);
+      }
+
+      // Estimate pptxgenjs rendered height: each row ≈ max font size * 1.5 + margins.
+      // If this exceeds available slide height, scale font sizes and margins down.
+      const availH = maxTableH;
+      const CELL_MARGIN_PT = 4;
+      let estRowHeights = 0;
+      for (const row of pptxRows) {
+        let maxFontPt = 0;
+        for (const cell of row) {
+          const fs = cell.options && cell.options.fontSize ? cell.options.fontSize : 10;
+          if (fs > maxFontPt) maxFontPt = fs;
+        }
+        estRowHeights += (maxFontPt * 1.5 + CELL_MARGIN_PT * 2) / 72; // convert pt to inches
+      }
+
+      if (estRowHeights > availH && availH > 0) {
+        const tableScale = availH / estRowHeights;
+        const scaledMargin = Math.max(1, Math.round(CELL_MARGIN_PT * tableScale));
+        const cellMargin = [scaledMargin, scaledMargin, scaledMargin, scaledMargin];
+        for (const row of pptxRows) {
+          for (const cell of row) {
+            if (cell.options) {
+              if (cell.options.fontSize) cell.options.fontSize *= tableScale;
+              cell.options.margin = cellMargin;
+            }
+          }
+        }
+      }
+
+      targetSlide.addTable(pptxRows, {
+        x: el.position.x,
+        y: el.position.y,
+        w: tableW,
+        autoPage: false
+      });
+      continue;
+    }
+
     // ── Lists (UL/OL) ─────────────────────────────────────────
     if (el.type === 'list') {
       const listOpts = {
@@ -502,6 +619,27 @@ async function generatePPTX(extractionResult, outputPath, options = {}) {
 
   const pres = new PptxGenJS();
   const warnings = [];
+
+  // ── Viewport normalization (Session 9b) ──────────────────────
+  // Slides using CSS viewport units (100vh) can have inflated heights
+  // when the display-none fix resizes the hidden window to fit all
+  // stacked slides. Detect and normalize: if a slide's viewport height
+  // exceeds 1.5× its width (taller than 3:2), cap to 9:16 ratio from
+  // the width, which matches standard landscape slide proportions.
+  // Element positions are NOT rescaled — they are extracted relative
+  // to the container's top-left corner and already occupy the correct
+  // region within the top portion of the inflated container.
+  for (const slide of slides) {
+    const vp = slide.viewport;
+    if (vp.h > vp.w * 1.5) {
+      const normalizedH = Math.round(vp.w * (9 / 16));
+      console.log(
+        `[Generator] Viewport normalized: ${vp.w}×${vp.h}px → ` +
+        `${vp.w}×${normalizedH}px (100vh inflation detected)`
+      );
+      vp.h = normalizedH;
+    }
+  }
 
   const firstVP = slides[0].viewport;
   const layoutW = firstVP.w / PX_PER_IN;

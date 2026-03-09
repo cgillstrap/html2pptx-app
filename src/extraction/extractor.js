@@ -466,6 +466,155 @@ const EXTRACTION_SCRIPT = `
         }
       }
 
+      // ── Table extraction (Session 9) ────────────────────────────
+      // Intercepts <table> elements before their cells can be individually
+      // processed as shapes or div-text. Extracts full table structure
+      // (rows, cells, text, styles, rowspan/colspan) as a single element.
+      if (el.tagName === 'TABLE') {
+        var tableRect = el.getBoundingClientRect();
+        if (tableRect.width > 0 && tableRect.height > 0) {
+          var tableRows = [];
+          var tableRowEls = el.querySelectorAll('tr');
+
+          // Track active rowspans: spanTracker[colIndex] = remaining rows to skip.
+          // pptxgenjs requires spanned positions to be omitted entirely from the
+          // row array — including a cell (even null) at a spanned position creates
+          // a visible box instead of a merged cell.
+          var spanTracker = [];
+
+          for (var tri = 0; tri < tableRowEls.length; tri++) {
+            var tr = tableRowEls[tri];
+            var trComputed = window.getComputedStyle(tr);
+            var rowFill = null;
+            if (trComputed.backgroundColor && trComputed.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+                trComputed.backgroundColor !== 'transparent') {
+              rowFill = rgbToHex(trComputed.backgroundColor);
+            }
+
+            var cells = [];
+            var cellEls = tr.querySelectorAll('td, th');
+            var cellIdx = 0; // index into actual DOM cells
+            var colPos = 0;  // logical column position
+
+            while (cellIdx < cellEls.length || colPos < spanTracker.length) {
+              // If this column is covered by a rowspan from above, emit sentinel
+              if (colPos < spanTracker.length && spanTracker[colPos] > 0) {
+                cells.push(null);
+                spanTracker[colPos]--;
+                colPos++;
+                continue;
+              }
+
+              // No more DOM cells to process
+              if (cellIdx >= cellEls.length) break;
+
+              var cell = cellEls[cellIdx];
+              var cellComputed = window.getComputedStyle(cell);
+
+              // Cell text: use parseInlineFormatting if inline formatting present
+              var cellHasFormatting = cell.querySelector('b, i, u, strong, em, span');
+              var cellText;
+              if (cellHasFormatting) {
+                cellText = parseInlineFormatting(cell);
+                if (cellComputed.textTransform && cellComputed.textTransform !== 'none') {
+                  cellText = cellText.map(function(run) {
+                    return Object.assign({}, run, {
+                      text: applyTextTransform(run.text, cellComputed.textTransform)
+                    });
+                  });
+                }
+              } else {
+                var rawCellText = cell.textContent ? cell.textContent.trim() : '';
+                cellText = applyTextTransform(rawCellText, cellComputed.textTransform);
+              }
+
+              // Cell fill: own backgroundColor if not transparent, else row fill
+              var cellFill = null;
+              if (cellComputed.backgroundColor && cellComputed.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+                  cellComputed.backgroundColor !== 'transparent') {
+                cellFill = rgbToHex(cellComputed.backgroundColor);
+              } else {
+                cellFill = rowFill;
+              }
+
+              var isHeader = cell.tagName === 'TH';
+              var cellFontWeight = parseInt(cellComputed.fontWeight) || 400;
+              var cellBold = (isHeader || cellFontWeight >= 600);
+              if (cellBold && shouldSkipBold(cellComputed.fontFamily)) {
+                cellBold = false;
+              }
+
+              // Border detection
+              var cellBorderWidth = parseFloat(cellComputed.borderWidth) || 0;
+              var cellBorderColor = null;
+              var cellBorderPt = null;
+              if (cellBorderWidth > 0) {
+                cellBorderColor = rgbToHex(cellComputed.borderColor);
+                cellBorderPt = pxToPoints(cellComputed.borderWidth);
+              }
+
+              // Vertical text detection
+              if (cellComputed.writingMode && cellComputed.writingMode.indexOf('vertical') !== -1) {
+                errors.push(
+                  'Table cell uses vertical text (writing-mode: ' + cellComputed.writingMode +
+                  '). Text will render horizontally in PPTX.'
+                );
+              }
+
+              var cellObj = {
+                text: cellText,
+                isHeader: isHeader,
+                rowSpan: cell.rowSpan || 1,
+                colSpan: cell.colSpan || 1,
+                style: {
+                  fill: cellFill,
+                  fontSize: pxToPoints(cellComputed.fontSize),
+                  fontFace: cellComputed.fontFamily.split(',')[0].replace(/['"]/g, '').trim(),
+                  color: rgbToHex(cellComputed.color),
+                  bold: cellBold,
+                  italic: cellComputed.fontStyle === 'italic',
+                  align: cellComputed.textAlign === 'start' ? 'left' : cellComputed.textAlign,
+                  valign: cellComputed.verticalAlign === 'middle' ? 'middle' : 'top',
+                  borderColor: cellBorderColor,
+                  borderWidth: cellBorderPt
+                }
+              };
+              cells.push(cellObj);
+
+              // Register rowspan in tracker for subsequent rows
+              var rs = cell.rowSpan || 1;
+              var cs = cell.colSpan || 1;
+              if (rs > 1) {
+                for (var spi = 0; spi < cs; spi++) {
+                  while (spanTracker.length <= colPos + spi) spanTracker.push(0);
+                  spanTracker[colPos + spi] = rs - 1;
+                }
+              }
+
+              colPos += cs;
+              cellIdx++;
+            }
+            tableRows.push(cells);
+          }
+
+          elements.push({
+            type: 'table',
+            position: {
+              x: pxToInch(tableRect.left - offX),
+              y: pxToInch(tableRect.top - offY),
+              w: pxToInch(tableRect.width),
+              h: pxToInch(tableRect.height)
+            },
+            rows: tableRows
+          });
+
+          // Mark all descendants as processed to prevent re-extraction
+          processed.add(el);
+          el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
+          return;
+        }
+      }
+
       // DIV shapes
       const isContainer = el.tagName === 'DIV' && !textTags.includes(el.tagName);
       if (isContainer) {
@@ -1201,12 +1350,23 @@ const EXTRACTION_SCRIPT = `
       );
     }
 
-    // ── Font validation (Session 4) ─────────────────────────────
+    // ── Font validation (Session 4, extended Session 9 for tables) ──
     var usedFonts = new Set();
     for (var fi = 0; fi < elements.length; fi++) {
       var elFont = elements[fi];
       if (elFont.style && elFont.style.fontFace) {
         usedFonts.add(elFont.style.fontFace);
+      }
+      // Table cells: iterate rows/cells to collect fonts
+      if (elFont.type === 'table' && elFont.rows) {
+        for (var fri = 0; fri < elFont.rows.length; fri++) {
+          for (var fci = 0; fci < elFont.rows[fri].length; fci++) {
+            var fCell = elFont.rows[fri][fci];
+            if (fCell && fCell.style && fCell.style.fontFace) {
+              usedFonts.add(fCell.style.fontFace);
+            }
+          }
+        }
       }
     }
     var unsafeFonts = [];
@@ -1925,6 +2085,46 @@ async function remeasureAfterDisplayFix(hiddenWindow) {
 }
 
 /**
+ * Fixes slide containers whose height is inflated by CSS viewport units
+ * (100vh). After the display-none fix resizes the hidden window to fit
+ * all stacked slides, 100vh recalculates to the full document height,
+ * making each slide container enormously tall. This distorts element
+ * positions (e.g. flex-centered content sits at y ≈ 32,000px).
+ *
+ * Detects containers taller than 1.5× their width and overrides with
+ * a pixel height based on 16:9 ratio from the container's width. Must
+ * run after remeasureAfterDisplayFix() and before extraction.
+ *
+ * @param {Electron.BrowserWindow} hiddenWindow
+ * @returns {Promise<number>} Number of containers that were fixed
+ */
+async function fixViewportUnitHeights(hiddenWindow) {
+  return await hiddenWindow.webContents.executeJavaScript(`
+    (function() {
+      var containers = Array.from(document.querySelectorAll('[data-slide-number]'));
+      if (containers.length === 0) {
+        containers = Array.from(document.querySelectorAll('section.slide, div.slide'));
+      }
+      if (containers.length === 0) return 0;
+
+      var fixed = 0;
+      for (var i = 0; i < containers.length; i++) {
+        var c = containers[i];
+        var rect = c.getBoundingClientRect();
+        if (rect.height > rect.width * 1.5 && rect.width > 0) {
+          var targetH = Math.round(rect.width * 9 / 16);
+          c.style.height = targetH + 'px';
+          c.style.maxHeight = targetH + 'px';
+          c.style.overflow = 'hidden';
+          fixed++;
+        }
+      }
+      return fixed;
+    })()
+  `);
+}
+
+/**
  * Loads an HTML file into a hidden BrowserWindow and extracts
  * per-slide element data using the ported html2pptx-local.cjs logic.
  *
@@ -1976,6 +2176,11 @@ async function extractFromHTML(htmlFilePath, options = {}) {
     if (displayFixCount > 0) {
       console.log(`[Extractor] Forced ${displayFixCount} hidden slide(s) to visible`);
       await remeasureAfterDisplayFix(hiddenWindow);
+      const vhFixCount = await fixViewportUnitHeights(hiddenWindow);
+      if (vhFixCount > 0) {
+        console.log(`[Extractor] Fixed ${vhFixCount} container(s) with inflated viewport-unit heights`);
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
     }
 
     // ── Phase 3: Extract slide data ───────────────────────────

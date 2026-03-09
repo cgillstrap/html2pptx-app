@@ -11,11 +11,9 @@ This is a **quick win** supporting a broader strategic initiative to get a consu
 This app is one piece of a larger initiative that includes:
 - **Presentation Design Principles** (doc2-design-principles.md) — medium-agnostic visual communication guidance for AI-assisted content creation
 - **Brand Token Layer** (doc3-brand-tokens.md) — brand-specific visual identity tokens (currently Accenture) with CSS class structure enabling brand reskinning
-- **Technical Output Profile / Guardrails** (uc1-guardrails.md) — defines the HTML/CSS subset that conversion tooling can handle, prescribing the `<section class="slide" data-slide-number="...">` convention
+- **Converter Capability Profile** (uc1-converter-capability-profile.md) — three-tier capability model documenting what converts faithfully, what degrades gracefully, and what is not supported. Replaces the original uc1-guardrails.md as the primary conversion reference.
 
-The guardrails document prescribes a constrained HTML subset (no position:absolute, no box-shadow, no rgba, no gradients). Our ported converter is MORE capable than this subset — it handles absolute positioning, shadows, rgba transparency, and partial borders. This means:
-- Compliant HTML (following guardrails) will convert cleanly
-- Non-compliant HTML (from other AI engines or legacy sources) degrades gracefully via our fallback mechanisms
+The original guardrails document prescribed a constrained HTML subset (no position:absolute, no box-shadow, no rgba, no gradients). Our ported converter is MORE capable than this subset — it handles absolute positioning, shadows, rgba transparency, and partial borders. The capability profile documents this expanded range with empirical evidence from testing across Claude, Copilot and ChatGPT output.
 
 ## Reference Documents
 
@@ -23,11 +21,12 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 |----------|---------|-----------------|
 | `progress.md` (this file) | Decision journal, session checkpoint, work tracker | Every session |
 | `PRINCIPLES.md` | Architectural principles and code standards for this project | Rarely — only when principles are revised |
-| `uc1-guardrails.md` | Prescribed HTML structure for compliant output | Stable reference |
+| `uc1-converter-capability-profile.md` | Converter capability tiers, regression fixtures, engine-specific guidance. Replaces the original uc1-guardrails.md as the primary conversion reference. | Updated when converter capabilities change |
+| `uc1-guardrails.md` | Original prescribed HTML structure for compliant output (superseded by capability profile) | Archived — retained for reference |
 | `doc2-design-principles.md` | Visual communication guidance | Stable reference |
 | `doc3-brand-tokens.md` | Brand identity tokens | Stable reference |
 
-**Session start checklist:** Paste `progress.md` and `PRINCIPLES.md`. Attach current source files per the File Status table below. Optionally attach `uc1-guardrails.md` if working on extraction or detection logic.
+**Session start checklist:** Paste `progress.md` and `PRINCIPLES.md`. Attach current source files per the File Status table below. Optionally attach `uc1-converter-capability-profile.md` if working on extraction or detection logic.
 
 ## Source Repository
 
@@ -66,8 +65,8 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 8b | **Updated** | Readability refactor: pre-processing steps extracted to named functions (stripContainerTransforms, forceHiddenSlidesVisible, remeasureAfterDisplayFix), RESOLVE_CONTAINERS_JS consolidated to single buildContainerResolverJS() factory, phase comments added to extractFromHTML(). Zero functional changes. |
-| `src/generation/generator.js` | Session 8a | **Updated** | Div-text strict-mode skip: explicit fall-through comment for readability. |
+| `src/extraction/extractor.js` | Session 9b | **Updated** | Table extraction with rowspan tracking (spanTracker emits null sentinels). Viewport-unit height fix: new fixViewportUnitHeights() overrides inflated 100vh containers with computed pixel heights before extraction. Table cell fonts included in font validation with null guard. |
+| `src/generation/generator.js` | Session 9b | **Updated** | Table generation: lowercase rowspan/colspan for pptxgenjs, null sentinels skipped, width/height clamped to slide bounds, table-specific scale-to-fit for overflow. Viewport normalization safety net for 100vh inflation. Defensive null checks on cell text/fill/border. |
 | `src/main/main.js` | Session 2 | Current | No changes this session |
 | `src/main/preload.js` | Session 2 | Current | No changes this session |
 | `src/main/security.js` | Session 1 | Current | No changes this session |
@@ -95,7 +94,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [x] sample-slide.html — VALIDATED (after h1/p fix + config additions)
 - [x] Stress tested with esoteric examples — rendering good, minor issues noted
 
-### Phase 3 — MVP Polish & Package (IN PROGRESS — Sessions 2–7)
+### Phase 3 — MVP Polish & Package (IN PROGRESS — Sessions 2–9)
 
 #### 3a: MVP Priority ✅ COMPLETE
 - [x] **Validation/warning display in UI**: Warnings in amber, errors in red, surfaced in status panel.
@@ -129,7 +128,9 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [x] **Element gradient rasterisation (Session 6c)**: Elements with CSS gradient backgrounds captured via `capturePage()` with text hidden (`color: transparent`) and children hidden (`visibility: hidden`). Captured PNG used as background image layer in PptxGenJS, with text rendered on top via separate `addText()` call. Solid colour fallback preserved for capture failures. Stacked layout support via slide isolation (same pattern as slide-level gradient capture).
 - [x] **Display-none slide visibility fix (Session 7a)**: Pre-extraction step forces hidden slide containers (`display: none`) to visible, with position adjustment for stacked layouts. Enables extraction of interactive slideshow decks. Re-measurement conditional on changes to avoid regressions.
 - [x] **Slide-level gradient capture on taxonomy deck (Session 7a–7d)**: RESOLVED. Root cause: `capturePage()` serves stale compositor frames for regions far down the page. The fix uses clone-based capture at the viewport origin (0,0) with `display:none !important` on all containers. See Session 7d decisions for details.
-- [ ] **Table extraction**: Not currently handled. Design discussion from Session 3 (hybrid approach). High likelihood testers will hit this.
+- [x] **Display:none block-child visibility checks (Session 8c — attempted and reverted)**: Attempted to skip `display:none` children in block-child checks to handle heatmap cells with hidden tooltips (taxonomy-deck-v2). Fix did not resolve the issue. Decision: hidden interactive content (tooltips, accordions, hover-dependent elements) is a Tier 3 hard limit addressed through engine guidance, not converter logic. Static HTML without hidden content converts correctly.
+- [x] **Table extraction (Session 9)**: Implemented — Option A (native pptxgenjs tables). TABLE handler in element traversal captures rows, cells, text (with inline formatting via parseInlineFormatting), styles (fill with row-level fallback, font, alignment, borders), rowspan/colspan. Vertical text emits Tier 2 warning. Table cell fonts included in font validation. Generation maps to pptxgenjs addTable(). Scale-to-fit extended for table cell fonts and border widths.
+- [x] **Data URI image handling (Session 9)**: Already implemented — generator image path already detects `data:` prefix and uses pptxgenjs `data` property. No change needed.
 - [ ] **Overflow detection warnings (original port)**: Port getBodyDimensions() overflow check from original repo. May be redundant now with our own overflow detection — needs review.
 
 #### 3c: Configuration & Settings
@@ -151,6 +152,48 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - [ ] Template-based creation
 
 ## Key Decisions Log
+
+### Session 9b Decisions
+
+1. **pptxgenjs uses lowercase `rowspan`/`colspan`** — The library checks `cell.options.rowspan`, not `cell.options.rowSpan`. Camel-case properties are silently ignored, producing tables with no merge attributes in the XML. The library auto-inserts `vMerge` continuation cells when it sees `rowspan` on a starting cell — the generator must omit cells at spanned positions (not include empty placeholders).
+
+2. **100vh slides inflate when display-none fix resizes the window** — CSS viewport units (`100vh`) recalculate when `setContentSize()` changes the hidden window dimensions. With 10 stacked slides at `100vh` each, the window height spirals and each slide becomes ~65,000px tall. This distorts element positions (flex-centered content at y≈32,000px), breaks the PPTX layout (677" tall slides), and triggers repair errors. Fixed at the extraction level: `fixViewportUnitHeights()` overrides inflated containers with computed pixel heights (width × 9/16) before extraction runs. Generator viewport normalization kept as a safety net.
+
+3. **JS-generated charts extract correctly through existing paths** — The `makeBarChart()`/`makeStackChart()` functions in barclays-static-presentation.html are synchronous and execute within the 300ms post-load wait. Chart elements (`.bar-row`, `.bar-fill`, `.stack-row`) extract as shapes (bar fills) and div-text (labels/values). No chart-specific extraction logic needed. Visual fidelity depends on positioned-shape approximation of bar layouts — acceptable for the current use case.
+
+4. **Table height overflow requires font/margin scaling** — pptxgenjs ignores the `h` constraint on `addTable()`, rendering cells at their natural height. When estimated table height (row count × (max font × 1.5 + margins)) exceeds available slide space, cell font sizes and margins are scaled down proportionally. This is table-specific scale-to-fit, complementing the existing element-level scale-to-fit.
+
+### Session 9 Chat Decisions
+
+1. **Option A confirmed for table extraction — native pptxgenjs tables** — Three engines tested (Claude, ChatGPT, Copilot) with table-heavy prompt variants. All three produce real `<table>` HTML elements for tabular content. No engine produced div-based grids when the content was genuinely tabular. The hybrid approach (Option C from Session 3 — native tables for simple structures, positioned text boxes for complex) is unnecessary. All observed table complexity falls within pptxgenjs's `addTable()` capability.
+
+2. **Vertical text in table cells is Tier 2 graceful degradation** — The taxonomy-deck-tables fixture uses `writing-mode: vertical-lr` with `transform: rotate(180deg)` on category label cells. pptxgenjs table cells do not support text rotation. The text is extracted normally and rendered horizontal. A warning is emitted. The category labels ("Change", "Run", "Govern", "Enable") are short enough that horizontal rendering is readable and arguably more practical for editing.
+
+3. **`border-spacing` is a Tier 2 visual difference** — `border-collapse: separate` with `border-spacing: 2px` (taxonomy-deck-tables) produces visible gaps between cells. pptxgenjs tables do not support inter-cell gaps. The visual difference is accepted as minor. `border-collapse: collapse` (Barclays fixtures) maps naturally to pptxgenjs's default table border behaviour.
+
+4. **Data URI images must be handled in the generator** — ChatGPT embeds charts as base64 PNGs in `<img src="data:image/png;base64,...">`. The generator's image rendering path currently assumes file paths, passing `el.src` to pptxgenjs via the `path` property. Fix: detect `data:` prefix on `src` and use pptxgenjs's `data` property instead. The pattern already exists in the codebase — gradient capture and SVG rasterisation both produce data URIs and the generator handles them correctly via `data`. This extends the same pattern to standard image elements.
+
+5. **Three new test fixtures added** — (a) `taxonomy-deck-tables.html`: 12 slides, same styling/structure as taxonomy-deck-html.html but with heatmap data presented in `<table>` elements with `rowspan`, per-cell colour classes, and `writing-mode: vertical-lr` on category labels. (b) `barclays-static-presentation.html`: 10 slides, financial peer benchmarking deck produced by Claude, with data tables using `<thead>`/`<tbody>`, `tr.hl` row highlighting, JS-generated bar charts via innerHTML, display-none slideshow pattern. (c) `barclays_peer_story_draft_lite.html`: ~25 slides produced by ChatGPT, simple tables with no thead/tbody/rowspan/colspan, one embedded base64 `<img>`, `<section>`-based slide containers detected via `section-children` method.
+
+6. **Table extraction intercepts before shape/div-text paths** — When a `<table>` is encountered in the element traversal, the entire table structure is extracted as a single `type: 'table'` element, and all descendants are marked as processed. This prevents cells from being individually captured as shapes (cells with background fills) or div-text (cells with text content), which would produce a scattered collection of positioned text boxes instead of a coherent table.
+
+### Session 8 Chat Decisions
+
+1. **Pseudo-elements are a hard architectural limit** — `::before` and `::after` have no DOM representation. `querySelectorAll('*')` cannot see them, `getComputedStyle()` on the parent does not include their styles. No code change can address this. The fix is engine guidance: "use real DOM elements for all visual content."
+
+2. **Hover-dependent content is addressed through guidance, not extraction logic** — Tooltips, accordions, and other `display:none` content that appears on interaction cannot be reliably extracted. Attempting to handle hidden children in block-child checks introduced complexity without solving the underlying problem. The converter's role is to faithfully capture the visible static state of the HTML.
+
+3. **Converter capability profile replaces prescriptive guardrails** — The original uc1-guardrails.md was conservative and prescriptive (told engines what NOT to produce). The new uc1-converter-capability-profile.md is descriptive and evidence-based (documents what ACTUALLY converts at each fidelity tier). This is more useful for engine prompting because it expands the creative range rather than constraining it.
+
+4. **Three-tier capability model** — Tier 1 (faithful conversion) is the expanded safe zone validated by testing. Tier 2 (graceful degradation) covers patterns that produce usable but imperfect output. Tier 3 (not supported) is the set of hard limits that cannot be addressed through converter improvements. This structure separates "could fix with more work" from "architecturally impossible."
+
+5. **Engine-specific guidance is necessary** — Claude and Copilot produce conversion-friendly HTML by default. ChatGPT requires an explicit prompt instruction to avoid pseudo-elements and hover-dependent content. This is documented in the capability profile with a recommended prompt addition.
+
+6. **taxonomy-deck-v2 with tooltips dropped as fixture; static version adopted** — The interactive v2 with JS-generated heatmaps and hover tooltips is not a valid conversion target (Tier 3 content). The static v2 with heatmap grids as plain HTML converts correctly and is the appropriate fixture.
+
+### Session 8c Decisions
+
+1. **Hidden elements are not layout participants** — `display: none` children should not influence block-child checks that gate text extraction. This is a general principle, not a tooltip-specific fix. AI engines routinely produce HTML with hidden children (tooltips, accordions, responsive elements, tab panels). The extraction should reflect what's visible on the static slide, not what exists in the DOM tree. *Note: the implementation of this principle was attempted and reverted in Session 8c because it did not resolve the target issue. The principle remains valid and is captured in the capability profile as a Tier 3 limitation addressed through engine guidance.*
 
 ### Session 8a Decisions
 
@@ -224,7 +267,7 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 3. **Gradient capture: hide-all-then-reveal pattern** — Session 2's approach of hiding only the target slide's children broke on stacked layouts. Session 3 fix: hide ALL containers first, then reveal only the target.
 
-4. **Table extraction approach: hybrid (native + fallback)** — Recommendation is Option C: extract as native pptxgenjs tables for simple structures, fall back to positioned text boxes for complex cases. Decision not yet finalised.
+4. **Table extraction approach: hybrid (native + fallback)** — Recommendation was Option C: extract as native pptxgenjs tables for simple structures, fall back to positioned text boxes for complex cases. *(Superseded by Session 9: Option A confirmed — native pptxgenjs tables for all structures. All tested engines produce simple-to-moderate table complexity well within pptxgenjs capability.)*
 
 5. **Integration test harness design** — Three-layer approach agreed. Layer 1: extraction assertions. Layer 2: generation assertions. Layer 3: PPTX XML inspection (selective). Fixture-driven with companion `.expected.json` files.
 
@@ -249,7 +292,12 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 | **Div-heavy (ChatGPT/Copilot)** | Not yet tested | Expected: `uniform-divs` or `body-fallback` | Deeply nested wrapper divs, text in bare divs | Div-text fallback essential. No fixture yet. |
 | **Viewport-scaled single slide** | `hr-skills-slide.html`, `modern-it-skills.html` | `class-slide` (single) | Single slide at 1280x720 inside a scaling wrapper. JS applies `transform: scale(...)` to fit viewport. | Transform distorts bounding rects. Inline SVGs for icons. Requires transform stripping before extraction. |
 | **Interactive slideshow (display:none)** | `taxonomy-deck-html.html` | `class-slide` (div.slide) | 8 slides, `display:none` toggled by `.active` class. `position:absolute` inside wrapper. | Hidden slides have zero-size bounding rects; requires pre-extraction display-none fix. Gradient capture resolved via clone at viewport origin (Session 7d). |
-| **Table-heavy** | Not yet tested | N/A | `<table>` elements for data display | Tables currently ignored. Design discussion in progress. |
+| **Interactive slideshow with static data grids** | `taxonomy-deck-v2.html` | `class-slide` (div.slide) | 12 slides, `display:none` toggling, static heatmap grids with coloured cells and text labels. | Display:none slide fix handles slideshow. Dense small-text grids exercise shape text capture at scale. |
+| **Pseudo-element backgrounds (ChatGPT)** | No fixture (Tier 3 limit) | N/A | `::before`/`::after` for decorative backgrounds and accents | Hard limit: pseudo-elements have no DOM representation. Addressed through engine guidance. |
+| **Heatmap table (Claude)** | `taxonomy-deck-tables.html` | `class-slide` (div.slide) | Display-none slideshow with heatmap `<table>` elements on appendix slides. `rowspan` on category column, per-cell colour classes, vertical text via `writing-mode`. | Vertical text not supported in pptxgenjs tables (Tier 2). `border-spacing` gap not replicable (Tier 2). |
+| **Financial data tables (Claude)** | `barclays-static-presentation.html` | Slide detection TBD (display-none divs) | Display-none slideshow. Multiple data tables per slide with `<thead>`/`<tbody>`, `tr.hl` row highlighting. JS-generated bar charts alongside tables. | JS-generated chart divs exercise existing shape/div-text paths. Row-level fill must propagate to cells. |
+| **Simple tables + base64 image (ChatGPT)** | `barclays_peer_story_draft_lite.html` | `section-children` | Vertically stacked `<section>` elements. Plain tables without thead/tbody. Embedded base64 `<img>` for a chart. | Data URI image requires generator fix (use `data` not `path` in pptxgenjs). Simplest table structure — baseline case. |
+| **Table-heavy** | See above three fixtures | Various | `<table>` elements for data display | Table extraction and generation implemented in Session 9. |
 
 ## Key Learnings
 
@@ -286,6 +334,19 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 31. **Relaxing extraction guards has wide blast radius** — Changing `hasBlockChild` to require text content seemed targeted but affected every flex/grid layout container with decorative block children. The parent's bounding rect includes the decorative child's area, producing overlap. Extraction guard changes must be validated against all layout patterns, not just the target fixture.
 32. **Range API provides precise text-only bounding rects** — `Range.getBoundingClientRect()` on text nodes and inline elements gives the exact area occupied by text, excluding sibling block elements. This is essential for flex containers where text and decorative blocks share a parent but occupy different spatial regions.
 33. **The processed Set must never suppress SVG elements** — SVG elements require the `svg-capture` extraction path (rasterised to PNG via `capturePage()`). If a parent div-text marks SVGs as processed, the SVG path never fires and icons are silently lost. The `instanceof SVGElement` check catches both top-level `<svg>` and child elements (path, circle, etc.).
+34. **`display: none` children must be skipped in block-child checks** — A hidden DIV (tooltip, accordion, responsive element) is not a layout participant and should not prevent its parent from being treated as a text container or a shape with text. The `getComputedStyle().display` check is the correct filter — it catches all hiding mechanisms (CSS classes, inline styles, inherited display) regardless of how the element was hidden. *Note: implementation attempted and reverted in Session 8c — the principle is valid but the specific fix did not resolve the target issue. Addressed through engine guidance instead.*
+35. **Pseudo-elements are architecturally invisible to DOM extraction** — `::before` and `::after` exist only in the rendering layer. No JavaScript API can enumerate them via `querySelectorAll`, and `getComputedStyle()` on the parent element does not include pseudo-element styles. This is a fundamental platform limit, not an implementation gap.
+36. **Near-transparent gradients degrade in raster capture** — Gradient colour stops below ~10% opacity produce colour differences too small for 8-bit PNG to preserve without visible banding. This is a compression artifact, not a capture error.
+37. **Engine behaviour varies significantly in conversion-relevant ways** — Claude and Copilot naturally produce DOM-based visuals. ChatGPT favours pseudo-elements for decorative effects and embeds interactive features (tooltips, hover states) in content. Engine-specific prompt guidance is necessary and should be part of the design system.
+38. **Prescriptive guardrails should be replaced by descriptive capability profiles** — Telling engines "don't use X" constrains creativity unnecessarily when the converter can handle X with known trade-offs. A tiered capability profile (faithful / graceful / unsupported) gives engines maximum creative range while setting clear expectations.
+39. **All tested engines produce real `<table>` elements for tabular content** — Claude, ChatGPT, and Copilot all use `<table>/<tr>/<th>/<td>` markup when the content is genuinely tabular. No engine produced div-based grids for tables. This means table extraction can focus on `<table>` elements exclusively, relying on existing shape/div-text paths for div-based visual grids.
+40. **Table extraction must intercept before shape/div-text paths** — Without a dedicated table path, cells with background fills are individually extracted as shapes and cells with text become div-text elements. This produces a scattered collection of positioned boxes instead of a coherent editable table. The `<table>` handler must fire early in the traversal and mark all descendants as processed.
+41. **Row-level styling requires explicit propagation** — The `tr.hl` pattern applies `backgroundColor` to a `<tr>` element, which the browser renders as cell fills. But when extracting per-cell computed styles, `backgroundColor` on a `<td>` may be transparent even though it visually appears filled (the fill is inherited from the row). The extraction must check the `<tr>` computed `backgroundColor` and use it as a default for cells that have no fill of their own.
+42. **ChatGPT embeds charts as base64 data URIs in `<img>` tags** — Unlike Claude which uses div-based visual constructions for charts, ChatGPT generates actual chart images and embeds them as `data:image/png;base64,...` in `img.src`. The generator must detect the `data:` prefix and use pptxgenjs's `data` property instead of `path`.
+43. **Copilot uses `<section>` tags for slide containers** — While Claude uses `<div class="slide">` and `data-slide-number`, Copilot wraps each slide in a `<section>` tag as a direct child of `<body>`. The existing `section-children` detection method handles this correctly.
+44. **pptxgenjs table API uses lowercase property names** — `rowspan` and `colspan` (not camelCase). The library silently ignores unrecognised properties, so `rowSpan` produces no merge attributes. The library auto-inserts `vMerge` continuation cells — do not include placeholder cells at spanned positions.
+45. **CSS viewport units break when the hidden window is resized** — `100vh` is relative to the viewport, not the document. When `setContentSize()` changes the hidden window to fit all stacked slides, `100vh` recalculates to the new (much larger) viewport height, inflating every slide container. The fix must be applied at the DOM level before extraction: override inflated heights with computed pixel values.
+46. **Synchronous JS-generated content extracts without special handling** — Chart-building functions that run inline (no DOMContentLoaded wrapper) execute during page load and complete within the standard 300ms post-load wait. Their output (divs with classes, inline styles) flows through existing shape/div-text extraction paths.
 
 ## Testing Notes
 
@@ -300,14 +361,18 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 | `modern-it-skills.html` | `test/extraction/fixtures/` | Single slide: viewport-scaled wrapper pattern, 1280x720, CSS grid tabular layout, inline SVGs for icons and arrows, gradient banner. |
 | `conformant_sample.html` | `test/extraction/fixtures/` | 3 slides: guardrails-compliant structure. Tests tag/span extraction, card grids, sequence layout. Known overlap on slide 3 (flex layout fidelity limit). |
 | `taxonomy-deck-html.html` | `tests/extraction/fixtures/` | 8 slides: interactive slideshow (display:none toggling). Tests display-none visibility fix, gradient capture on forced-visible slides. Gradient capture resolved in Session 7d. |
+| `taxonomy-deck-v2.html` | `tests/extraction/fixtures/` | 12 slides: static heatmap grids with coloured cells containing text. Tests shape text capture at small font sizes across dense grid layouts. Display:none slideshow pattern (same as v1). |
+| `taxonomy-deck-tables.html` | `test/extraction/fixtures/` | 12 slides: heatmap tables with `rowspan`, per-cell colour classes (.c1–.c5), vertical text category labels (`writing-mode: vertical-lr`), display-none slideshow pattern. Tests table extraction with rowspan and styled cells. |
+| `barclays-static-presentation.html` | `test/extraction/fixtures/` | 10 slides: financial peer benchmarking. Multiple data tables with `<thead>`/`<tbody>`, `tr.hl` row highlighting, JS-generated bar charts. Display-none slideshow. Tests table extraction with row-level fill propagation, header detection, and coexistence with non-table content. |
+| `barclays_peer_story_draft_lite.html` | `test/extraction/fixtures/` | ~25 slides: simple tables (no thead/tbody, no rowspan/colspan), one embedded base64 `<img>` element, `<section>`-based slide containers. Tests baseline table extraction and data URI image handling. |
 
 ### Known Gaps in Test Coverage
-- No fixture with `<img>` tags (image path resolution untested)
+- No fixture with `<img>` tags referencing external file paths (image path resolution untested for file:// sources)
 - No fixture with deeply nested wrapper divs (ChatGPT/Copilot patterns)
-- No fixture with `<table>` elements
 - No fixture testing `uniform-divs` detection path
 - No fixture with mixed detection signals (e.g. some slides with data-slide-number, some without)
 - Scale-to-fit centering not yet tested (current: scaled content retains top-left origin)
+- ChatGPT pseudo-element patterns (::before/::after for backgrounds) identified as Tier 3 hard limit. No fixture needed — addressed through engine guidance in uc1-converter-capability-profile.md.
 - User has tested agile-slides.html rendering and confirmed Session 4 fixes resolve badge, shape text, and CSS triangle issues
 - User has validated lpm-slides-v1.html rendering with Session 5 fixes — standalone spans, HR lines, and flex-centred arrows confirmed working
 - User has validated hr-skills-slide.html and modern-it-skills.html with Session 6 fixes — correct detection, transform stripping, SVG skipping, no regressions on agile-slides gradient capture
@@ -315,7 +380,11 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 - Session 7a: display-none fix validated — taxonomy-deck-html.html extracts all 8 slides. No regressions on other fixtures after conditional re-measurement fix.
 - Session 7d: taxonomy-deck gradient capture RESOLVED — all 8 slides have clean gradient backgrounds with no text leaking. Clone-based capture at viewport origin. All 11 fixtures validated with zero failures.
 - Session 8a: taxonomy-deck slide 3 legend text FIXED — Range-based extraction captures text next to decorative swatches with correct positioning. modern-it-skills SVG icons now fully captured (12 SVGs, up from 6 — both icon-wrap and arrow SVGs). All fixtures validated with zero failures.
+- Session 8 chat: taxonomy-deck-v2 static version validated — heatmap grids render correctly as coloured shapes with text. Interactive version (with hover tooltips) confirmed as Tier 3 limit.
 - conformant_sample.html slide 3 has known overlap between bullet items and step-duration labels (flex layout fidelity limit, not a duplication bug)
+- Session 9b: taxonomy-deck-tables.html validated — tables on slides 10-12 render with correct rowspan merging, coloured cells, and vertical text warning. Table width clamped within slide bounds.
+- Session 9b: barclays-static-presentation.html validated — 100vh viewport inflation fixed, no repair errors, title slide renders correctly. Tables render within slide bounds. JS-generated bar charts extract as shapes (104 shapes on slide 2) and div-text (115 labels) — chart data text confirmed present.
+- Session 9b: barclays_peer_story_draft_lite.html — tables render, base64 image on slide 3 handled by existing data URI support (already implemented).
 
 ## Conversation History
 
@@ -345,11 +414,15 @@ The guardrails document prescribes a constrained HTML subset (no position:absolu
 
 13. **Session 8a** — Fixed taxonomy-deck slide 3 legend text disappearance and clarified generator div-text fall-through. Three extraction changes: (1) Visual-children check refined to require text content — text-less visual children (swatches, dots) no longer trigger the anti-duplication guard. (2) Processed-set protections — SVG elements and text-less visual block children are no longer marked as processed by the div-text fallback, preserving them for SVG rasterisation and shape extraction. (3) Mixed container text rescue — new extraction path using Range API for containers whose block children are all text-less; uses `Range.getBoundingClientRect()` on text-bearing nodes for precise positioning that excludes decorative block children. Initial approach (relaxing `hasBlockChild` to require text content) caused positioning regressions across flex layouts — reverted in favour of the Range-based approach. Generator change: added explicit fall-through comment on div-text strict-mode skip. Bonus: modern-it-skills now captures 12 SVGs (both 34×34 icons and 18×18 arrows) thanks to the processed-set SVG protection. All fixtures validated.
 
+14. **Session 8 chat** — Reviewed codebase and progress.md. Diagnosed taxonomy-deck slide 3 legend text disappearance (text-less decorative block children blocking div-text fallback). Drafted patch task for Claude Code — initial approach (relaxing hasBlockChild) caused regressions, resolved via Range-based positioning with SVG and decorative shape protections in the processed set. Reviewed and approved extractor readability refactor task — confirmed Session 8a changes (all within EXTRACTION_SCRIPT) don't conflict with the Node.js-side refactor targets. Refactor completed by Claude Code in Session 8b. Diagnosed taxonomy-deck-v2 heatmap tooltip issue (display:none children treated as layout participants). Tasked fix to Claude Code in Session 8c — did not resolve. Decided hidden interactive content is a Tier 3 hard limit addressed through engine guidance, reverted the fix. Analysed ChatGPT-generated HTML — identified pseudo-element backgrounds (`::before`/`::after`) as an architectural hard limit (no DOM representation) and near-transparent gradient banding as a PNG compression limit. Established three-tier capability model: Tier 1 (faithful), Tier 2 (graceful degradation), Tier 3 (not supported). Produced `uc1-converter-capability-profile.md` as the replacement for the original `uc1-guardrails.md`, documenting converter capabilities with engine-specific guidance and a regression fixture table. Static taxonomy-deck-v2 (without tooltips) adopted as fixture; interactive version dropped.
+
+15. **Session 9 chat** — Discussed table extraction design. Reviewed four approaches: (A) native pptxgenjs tables, (B) rasterise via capturePage(), (C) hybrid native + fallback, (D) positioned text boxes. Selected Option A based on editability requirements and observed simplicity of AI-generated table structures. Generated three test fixtures across two prompt variants (taxonomy heatmap, financial peer benchmarking) and three engines (Claude ×2, ChatGPT, Copilot). Key findings: all engines produce real `<table>` elements; structural complexity ranges from bare tables (Copilot) through row-highlighted grids (Claude) to rowspan heatmaps with per-cell colours (Claude). Identified data URI image handling gap — ChatGPT embeds charts as base64 PNGs in `<img>` tags, requiring a generator fix. Produced task document for Claude Code covering table extraction, table generation, data URI image fix, and validation. Three new fixtures added to test suite.
+
 ### Next Session Priorities
-1. **Extractor readability refactor** — Extract pre-processing steps in `extractFromHTML()` into named functions (`stripContainerTransforms`, `forceHiddenSlidesVisible`, `remeasureAfterDisplayFix`). Consolidate `RESOLVE_CONTAINERS_JS` duplication into a single `buildContainerResolverJS()` factory. Add phase comments. No functional changes — regression test against all fixtures. See `tasks/task-extractor-readability.md`. Do this before table extraction to keep the codebase clean as it grows.
-2. **Table extraction** (3b) — finalise design decision and implement. Hybrid approach recommended (native pptxgenjs tables for simple structures, positioned text boxes for complex). Need a table-heavy fixture.
-3. **Integration test harness** — fixture-driven pipeline tests using electron-mocha. Baseline rendering quality before packaging.
-4. **Packaging with electron-builder** (3d) — .exe installer for Windows 11
+1. **Table extraction** (3b) — Implement table handling in `EXTRACTION_SCRIPT` per Session 9 task document. Add `TABLE` path to element traversal, extract full table structure (rows, cells, text, styles, rowspan/colspan), mark descendants as processed. See task document for detailed specification.
+2. **Table generation** (3b) — Add table rendering path in generator.js. Map extracted table JSON to pptxgenjs `addTable()`. See task document for cell mapping and options.
+3. **Data URI image fix** — In generator.js image rendering path, detect `data:` prefix on `el.src` and use `{ data: el.src }` instead of `{ path: el.src }`.
+4. **Validate against all fixtures** — Run all existing fixtures plus three new ones. Confirm table rendering, data URI image rendering, and no regressions.
 
 ## Checkpoint Discipline
 
@@ -365,5 +438,5 @@ When checkpointing, the File Status table is updated to reflect which files chan
 When starting a new conversation:
 1. Paste `progress.md` (this file) and `PRINCIPLES.md`
 2. Attach current source files per the File Status table
-3. Optionally attach `uc1-guardrails.md` if working on extraction or detection logic
+3. Optionally attach `uc1-converter-capability-profile.md` if working on extraction or detection logic
 4. State which task to resume from (see Next Session Priorities above)
