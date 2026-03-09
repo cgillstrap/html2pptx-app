@@ -2091,14 +2091,17 @@ async function remeasureAfterDisplayFix(hiddenWindow) {
  * making each slide container enormously tall. This distorts element
  * positions (e.g. flex-centered content sits at y ≈ 32,000px).
  *
- * Detects containers taller than 1.5× their width and overrides with
- * a pixel height based on 16:9 ratio from the container's width. Must
- * run after remeasureAfterDisplayFix() and before extraction.
+ * Uses the original viewport height (pre-setContentSize) as the reference
+ * rather than hardcoding a 16:9 ratio. This correctly handles any aspect
+ * ratio (16:9, 4:3, portrait, etc.) because it restores the actual
+ * pre-inflation dimensions.
  *
  * @param {Electron.BrowserWindow} hiddenWindow
+ * @param {number} originalVpHeight - The original viewport height before
+ *   setContentSize() inflated it (typically the minHeight option, default 540)
  * @returns {Promise<number>} Number of containers that were fixed
  */
-async function fixViewportUnitHeights(hiddenWindow) {
+async function fixViewportUnitHeights(hiddenWindow, originalVpHeight) {
   return await hiddenWindow.webContents.executeJavaScript(`
     (function() {
       var containers = Array.from(document.querySelectorAll('[data-slide-number]'));
@@ -2107,14 +2110,15 @@ async function fixViewportUnitHeights(hiddenWindow) {
       }
       if (containers.length === 0) return 0;
 
+      var refHeight = ${originalVpHeight};
+
       var fixed = 0;
       for (var i = 0; i < containers.length; i++) {
         var c = containers[i];
         var rect = c.getBoundingClientRect();
-        if (rect.height > rect.width * 1.5 && rect.width > 0) {
-          var targetH = Math.round(rect.width * 9 / 16);
-          c.style.height = targetH + 'px';
-          c.style.maxHeight = targetH + 'px';
+        if (rect.height > refHeight * 2 && rect.width > 0) {
+          c.style.height = refHeight + 'px';
+          c.style.maxHeight = refHeight + 'px';
           c.style.overflow = 'hidden';
           fixed++;
         }
@@ -2176,7 +2180,7 @@ async function extractFromHTML(htmlFilePath, options = {}) {
     if (displayFixCount > 0) {
       console.log(`[Extractor] Forced ${displayFixCount} hidden slide(s) to visible`);
       await remeasureAfterDisplayFix(hiddenWindow);
-      const vhFixCount = await fixViewportUnitHeights(hiddenWindow);
+      const vhFixCount = await fixViewportUnitHeights(hiddenWindow, minHeight);
       if (vhFixCount > 0) {
         console.log(`[Extractor] Fixed ${vhFixCount} container(s) with inflated viewport-unit heights`);
         await new Promise(resolve => setTimeout(resolve, 100));

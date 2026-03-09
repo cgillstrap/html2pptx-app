@@ -620,27 +620,6 @@ async function generatePPTX(extractionResult, outputPath, options = {}) {
   const pres = new PptxGenJS();
   const warnings = [];
 
-  // ── Viewport normalization (Session 9b) ──────────────────────
-  // Slides using CSS viewport units (100vh) can have inflated heights
-  // when the display-none fix resizes the hidden window to fit all
-  // stacked slides. Detect and normalize: if a slide's viewport height
-  // exceeds 1.5× its width (taller than 3:2), cap to 9:16 ratio from
-  // the width, which matches standard landscape slide proportions.
-  // Element positions are NOT rescaled — they are extracted relative
-  // to the container's top-left corner and already occupy the correct
-  // region within the top portion of the inflated container.
-  for (const slide of slides) {
-    const vp = slide.viewport;
-    if (vp.h > vp.w * 1.5) {
-      const normalizedH = Math.round(vp.w * (9 / 16));
-      console.log(
-        `[Generator] Viewport normalized: ${vp.w}×${vp.h}px → ` +
-        `${vp.w}×${normalizedH}px (100vh inflation detected)`
-      );
-      vp.h = normalizedH;
-    }
-  }
-
   const firstVP = slides[0].viewport;
   const layoutW = firstVP.w / PX_PER_IN;
   const layoutH = firstVP.h / PX_PER_IN;
