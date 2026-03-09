@@ -63,16 +63,16 @@ This app is one piece of a larger initiative that includes:
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 10 | Current | `fixViewportUnitHeights()` now derives height from original viewport dimensions (`minHeight` param) instead of hardcoding 16:9. Supports any aspect ratio. |
-| `src/generation/generator.js` | Session 10 | Current | Viewport normalization safety net removed. Generator trusts intermediate JSON as-is (Principle 2 restored). |
+| `src/extraction/extractor.js` | Session 12b | Current | Chart container detection + slide-reposition raster capture. Chart heuristic (bar-row/stack-row children), fresh-rect query after reposition, compositor frame flush, overflow removal for capture. |
+| `src/generation/generator.js` | Session 10 | Current | Scale-to-fit already handles chart slide overflow (no changes needed in 12b). |
 | `src/main/main.js` | Session 2 | Current | |
 | `src/main/preload.js` | Session 2 | Current | |
-| `src/main/security.js` | Session 1 | Current | |
+| `src/main/security.js` | Session 12b | Current | URL-conditional CSP: renderer gets strict CSP, extraction windows get relaxed CSP with `'unsafe-inline'` on script-src for JS-generated charts. |
 | `src/main/config.js` | Session 1 | Current | |
 | `src/renderer/index.html` | Session 2 | Current | |
 | `src/renderer/renderer.js` | Session 2 | Current | |
 | `PRINCIPLES.md` | Session 2 | Current | |
-| `LEARNINGS.md` | Session 9 | **New** | Extracted from progress.md — key learnings and HTML pattern catalogue |
+| `LEARNINGS.md` | Session 12b | Current | Learnings #46 corrected, #48-51 added |
 | `package.json` | Session 1 | Current | |
 
 ## Build Phases
@@ -111,6 +111,14 @@ This app is one piece of a larger initiative that includes:
 - [ ] Template-based creation
 
 ## Key Decisions Log
+
+### Session 12b Decisions
+
+1. **CSP relaxed for extraction window only** — `script-src 'unsafe-inline'` added to extraction CSP so inline `<script>` blocks execute during page load. Renderer CSP unchanged. URL-conditional handler in `applyCSPHeaders()` applies strict CSP to `/renderer/` URLs and relaxed CSP to all others. Security rationale: extraction window is sandboxed, local-files-only, no preload, destroyed after use.
+
+2. **Slide-reposition capture for chart containers (not clone)** — Session 12 proved `cloneNode(true)` loses flex layout context. The new approach repositions the slide container to (0,0) via `position: absolute; top: 0; left: 0`, removes overflow clipping, flushes the compositor with a dummy capture, then captures each chart at its fresh bounding rect. 13 charts captured across 6 slides on barclays fixture — all showing coloured bars, bank names, and values.
+
+3. **Scale-to-fit already implemented** — The generator's `computeScaleAndOffset()` and `applyScaling()` (Session 3) handle all overflow cases described in the task, including tables, lines, and shape text. No changes needed.
 
 ### Session 10 Decisions
 
@@ -232,11 +240,12 @@ This app is one piece of a larger initiative that includes:
 | `barclays-static-presentation.html` | `test/extraction/fixtures/` | 10 slides: financial tables, tr.hl row highlighting, JS-generated charts, display-none, 100vh. |
 | `barclays_peer_story_draft_lite.html` | `test/extraction/fixtures/` | ~25 slides: simple tables, base64 image, section-based slides. |
 
-### Validation Status (Session 9b)
-- All 9 existing fixtures: no regressions
-- taxonomy-deck-tables.html: tables render with correct rowspan, coloured cells, vertical text warning
-- barclays-static-presentation.html: 100vh fixed, no repair errors, tables within bounds, JS charts extract as shapes/div-text
-- barclays_peer_story_draft_lite.html: tables render, base64 image handled
+### Validation Status (Session 12b)
+- taxonomy-deck-tables.html: 255 elements, 12 gradient captures — no regression from Session 10
+- lpm-slides-v1.html: 217 elements — no regression
+- sample-slide.html: 4 elements — no regression
+- barclays-static-presentation.html: 13 charts captured as raster images across slides 2-7. Slide 2 drops from 220 to 36 elements. Charts show coloured bars, bank names, and values. Tables on slides 8-10 unaffected.
+- Sequential extraction (batch testing) crashes Electron on second file load — pre-existing issue, does not affect single-file drag-and-drop usage
 
 ### Known Gaps
 - No fixture with external file path `<img>` references
@@ -259,6 +268,8 @@ This app is one piece of a larger initiative that includes:
 11. **Session 9 chat** — Table extraction design. Option A selected. Three new fixtures created across Claude/ChatGPT/Copilot. Data URI image gap identified. Task document produced.
 12. **Session 9b (Claude Code)** — Table extraction and generation implemented. Bugs found and fixed: rowspan (pptxgenjs lowercase properties + span tracker), 100vh viewport inflation (fixViewportUnitHeights), PPTX repair errors (defensive null checks). All fixtures validated. Two cleanup items flagged: hardcoded 16:9 in viewport fix, generator viewport safety net violates Principle 2.
 13. **Session 10 (Claude Code)** — Architecture cleanup: `fixViewportUnitHeights()` refactored to use original viewport height instead of hardcoded 16:9 ratio. Generator viewport safety net removed (Principle 2 restored). All 12 fixtures validated, no regressions.
+
+14. **Session 12b (Claude Code)** — Chart capture via CSP relaxation + slide-reposition. CSP `script-src 'unsafe-inline'` added for extraction windows (URL-conditional). Chart detection heuristic (bar-row/stack-row children) identifies 13 charts across 6 slides. Slide-reposition capture with fresh-rect query, compositor frame flush, and overflow removal produces correct chart images. Scale-to-fit already handled by existing generator code. Barclays fixture: slide 2 drops from 220 to 36 elements. All tested fixtures no regressions.
 
 ### Next Session Priorities
 

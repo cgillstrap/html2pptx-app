@@ -5,7 +5,7 @@ const { session } = require('electron');
 const path = require('path');
 
 /**
- * Content Security Policy applied to all renderer windows.
+ * Content Security Policy applied to the main renderer window.
  * Permits only local file resources — no external URLs, no inline scripts.
  *
  * @type {string}
@@ -20,6 +20,34 @@ const CONTENT_SECURITY_POLICY = [
   "frame-src 'none'",                   // no iframes
   "object-src 'none'",                  // no plugins
   "base-uri 'none'"                     // no <base> tag manipulation
+].join('; ');
+
+/**
+ * Relaxed CSP for hidden extraction windows only (Session 12b).
+ *
+ * Allows 'unsafe-inline' on script-src so that inline <script> blocks
+ * in loaded HTML files execute naturally. This is needed for HTML files
+ * containing JS-generated charts (e.g. makeBarChart/makeStackChart in
+ * barclays-static-presentation.html).
+ *
+ * Security rationale: the extraction window is sandboxed, processes only
+ * local files, has no preload script, and is destroyed immediately after
+ * use. The alternative (extracting script text and re-executing via
+ * executeJavaScript()) is a larger attack surface since it evaluates
+ * arbitrary code in the privileged Electron context.
+ *
+ * @type {string}
+ */
+const EXTRACTION_CONTENT_SECURITY_POLICY = [
+  "default-src 'none'",
+  "script-src 'self' 'unsafe-inline'",  // inline scripts needed for JS-generated charts
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: file:",
+  "font-src 'self' file:",
+  "connect-src 'none'",
+  "frame-src 'none'",
+  "object-src 'none'",
+  "base-uri 'none'"
 ].join('; ');
 
 /**
@@ -51,13 +79,27 @@ function getSecureWebPreferences(preloadPath = null) {
 /**
  * Applies CSP headers to all responses in the default session.
  * Must be called once during app initialisation, before any windows are created.
+ *
+ * Uses URL-conditional logic to apply different CSPs:
+ * - The renderer window (loads index.html from /renderer/) gets the strict
+ *   CSP that blocks inline scripts.
+ * - Extraction windows (load arbitrary HTML files) get the relaxed CSP
+ *   that allows inline scripts for JS-generated charts. See Session 12b.
+ *
+ * CSP is a document-level directive — the browser enforces the CSP from
+ * the main HTML document on all its subresources, so setting CSP on
+ * subresource responses has no effect.
  */
 function applyCSPHeaders() {
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    // The renderer always loads from src/renderer/index.html.
+    // All other HTML loads are extraction windows that need relaxed CSP.
+    const isRenderer = details.url.includes('/renderer/');
+    const csp = isRenderer ? CONTENT_SECURITY_POLICY : EXTRACTION_CONTENT_SECURITY_POLICY;
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': [CONTENT_SECURITY_POLICY]
+        'Content-Security-Policy': [csp]
       }
     });
   });
@@ -119,6 +161,7 @@ function validateFilePath(filePath, allowedExtensions = ['.html', '.htm']) {
 
 module.exports = {
   CONTENT_SECURITY_POLICY,
+  EXTRACTION_CONTENT_SECURITY_POLICY,
   getSecureWebPreferences,
   applyCSPHeaders,
   installNavigationGuards,

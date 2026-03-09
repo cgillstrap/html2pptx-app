@@ -615,6 +615,50 @@ const EXTRACTION_SCRIPT = `
         }
       }
 
+      // ── Chart container detection (Session 12b) ─────────────────
+      // JS-generated charts (makeBarChart/makeStackChart) produce ~48
+      // elements per chart. Extracting individually produces fragmented
+      // output. Detect chart containers and emit a chart-capture element
+      // for raster capture, dramatically reducing element count.
+      //
+      // Heuristic: a div with 3+ direct children where >60% match
+      // bar-row|stack-row class names is a chart container.
+      if (el.tagName === 'DIV' && el.children.length >= 3) {
+        var chartChildCount = 0;
+        var chartMatchCount = 0;
+        for (var cci = 0; cci < el.children.length; cci++) {
+          chartChildCount++;
+          var ccClass = el.children[cci].className || '';
+          if (typeof ccClass === 'string' && /bar-row|stack-row/.test(ccClass)) {
+            chartMatchCount++;
+          }
+        }
+        if (chartChildCount >= 3 && chartMatchCount / chartChildCount > 0.6) {
+          var chartRect = el.getBoundingClientRect();
+          if (chartRect.width > 0 && chartRect.height > 0) {
+            elements.push({
+              type: 'chart-capture',
+              position: {
+                x: pxToInch(chartRect.left - offX),
+                y: pxToInch(chartRect.top - offY),
+                w: pxToInch(chartRect.width),
+                h: pxToInch(chartRect.height)
+              },
+              captureRect: {
+                x: chartRect.left,
+                y: chartRect.top,
+                w: chartRect.width,
+                h: chartRect.height
+              }
+            });
+            // Mark container and ALL descendants as processed
+            processed.add(el);
+            el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
+            return;
+          }
+        }
+      }
+
       // DIV shapes
       const isContainer = el.tagName === 'DIV' && !textTags.includes(el.tagName);
       if (isContainer) {
@@ -1740,6 +1784,8 @@ async function captureElementImages(result, hiddenWindow) {
   let svgsFailed = 0;
   let gradientsCaptured = 0;
   let gradientsFailed = 0;
+  let chartsCaptured = 0;
+  let chartsFailed = 0;
 
   const method = result.detectionMethod;
   const RESOLVE_CONTAINERS_JS = buildContainerResolverJS(method);
@@ -1840,11 +1886,172 @@ async function captureElementImages(result, hiddenWindow) {
     // Check if this slide has any elements needing capture
     const hasSvgs = slide.elements.some(el => el.type === 'svg-capture');
     const hasGradients = slide.elements.some(el => el.type === 'shape' && el.captureRect);
-    if (!hasSvgs && !hasGradients) continue;
+    const hasCharts = slide.elements.some(el => el.type === 'chart-capture');
+    if (!hasSvgs && !hasGradients && !hasCharts) continue;
 
     // Isolate this slide (hide other containers) for accurate capture
     await isolateSlide(slide.index);
     await new Promise(resolve => setTimeout(resolve, 30));
+
+    // ── Chart Capture: Slide-Reposition Approach (Session 12b) ──
+    // Charts stay in their original DOM with full CSS cascade intact.
+    // We reposition the slide container to (0,0) so capturePage() gets
+    // a fresh compositor frame (Learning #28), then capture each chart
+    // at its position relative to the slide origin.
+    if (hasCharts) {
+      const slideIndex = slide.index;
+
+      // Step 1: Reposition slide container to (0,0)
+      await hiddenWindow.webContents.executeJavaScript(`
+        (function() {
+          var containers = ${RESOLVE_CONTAINERS_JS};
+          var target = containers[${slideIndex}];
+          if (!target) return;
+          target.dataset._chartPrevPosition = target.style.position || '';
+          target.dataset._chartPrevTop = target.style.top || '';
+          target.dataset._chartPrevLeft = target.style.left || '';
+          target.dataset._chartPrevInset = target.style.inset || '';
+          // inset is a shorthand for top/right/bottom/left — must be
+          // set BEFORE top/left or it overwrites them.
+          target.style.inset = 'auto';
+          target.style.position = 'absolute';
+          target.style.top = '0px';
+          target.style.left = '0px';
+          // Remove overflow clipping so charts that extend below the
+          // viewport boundary are fully rendered for capturePage().
+          target.dataset._chartPrevOverflow = target.style.overflow || '';
+          target.dataset._chartPrevMaxHeight = target.style.maxHeight || '';
+          target.dataset._chartPrevHeight = target.style.height || '';
+          target.style.overflow = 'visible';
+          target.style.maxHeight = 'none';
+          target.style.height = 'auto';
+        })()
+      `);
+      // Wait for compositor to render the repositioned slide, then force
+      // a fresh frame with a dummy 1×1 capture (Learning #28: capturePage
+      // may serve stale frames after DOM changes).
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await hiddenWindow.webContents.capturePage({ x: 0, y: 0, width: 1, height: 1 });
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Query all chart container rects at once after reposition
+      // (Learning #26: use fresh coordinates, not stored).
+      // Charts are in DOM order, matching the extraction traversal order.
+      const freshChartRects = await hiddenWindow.webContents.executeJavaScript(`
+        (function() {
+          var containers = ${RESOLVE_CONTAINERS_JS};
+          var slide = containers[${slideIndex}];
+          if (!slide) return [];
+          var rects = [];
+          var divs = slide.querySelectorAll('div');
+          for (var i = 0; i < divs.length; i++) {
+            var d = divs[i];
+            if (d.children.length >= 3) {
+              var matchCount = 0;
+              for (var j = 0; j < d.children.length; j++) {
+                var cn = d.children[j].className || '';
+                if (typeof cn === 'string' && /bar-row|stack-row/.test(cn)) matchCount++;
+              }
+              if (matchCount / d.children.length > 0.6) {
+                var r = d.getBoundingClientRect();
+                if (r.width > 0 && r.height > 0) {
+                  rects.push({ x: r.left, y: r.top, w: r.width, h: r.height });
+                }
+              }
+            }
+          }
+          return rects;
+        })()
+      `);
+
+      let chartIdx = 0;
+
+      // Step 2: Capture each chart element
+      for (let i = 0; i < slide.elements.length; i++) {
+        const el = slide.elements[i];
+        if (el.type !== 'chart-capture') continue;
+
+        try {
+          const freshRect = freshChartRects[chartIdx] || null;
+          chartIdx++;
+
+          let chartXpx, chartYpx, chartWpx, chartHpx;
+          if (freshRect) {
+            chartXpx = freshRect.x;
+            chartYpx = freshRect.y;
+            chartWpx = freshRect.w;
+            chartHpx = freshRect.h;
+          } else {
+            // Fallback to stored position converted to pixels
+            chartXpx = el.position.x * 96;
+            chartYpx = el.position.y * 96;
+            chartWpx = el.position.w * 96;
+            chartHpx = el.position.h * 96;
+          }
+
+          const nativeImage = await hiddenWindow.webContents.capturePage({
+            x: Math.round(chartXpx),
+            y: Math.round(chartYpx),
+            width: Math.round(chartWpx),
+            height: Math.round(chartHpx)
+          });
+
+          if (nativeImage.isEmpty()) {
+            throw new Error('capturePage returned empty image for chart');
+          }
+
+          const dataUri = nativeImage.toDataURL();
+
+          // Replace chart-capture with standard image element
+          slide.elements[i] = {
+            type: 'image',
+            src: dataUri,
+            position: el.position
+          };
+
+          chartsCaptured++;
+          console.log(
+            `[Extractor] Slide ${slide.index + 1}: chart captured as PNG ` +
+            `(${Math.round(chartWpx)}×${Math.round(chartHpx)}px)`
+          );
+
+        } catch (err) {
+          chartsFailed++;
+          console.warn(
+            `[Extractor] Slide ${slide.index + 1}: chart capture failed — ` +
+            `removing element. ${err.message}`
+          );
+          // On failure, remove the chart-capture element rather than
+          // leaving an unhandled type. The decomposed chart elements
+          // were already marked processed, so they won't appear.
+          slide.elements.splice(i, 1);
+          i--;
+        }
+      }
+
+      // Step 3: Restore slide container position
+      await hiddenWindow.webContents.executeJavaScript(`
+        (function() {
+          var containers = ${RESOLVE_CONTAINERS_JS};
+          var target = containers[${slideIndex}];
+          if (!target) return;
+          target.style.position = target.dataset._chartPrevPosition || '';
+          target.style.top = target.dataset._chartPrevTop || '';
+          target.style.left = target.dataset._chartPrevLeft || '';
+          target.style.inset = target.dataset._chartPrevInset || '';
+          target.style.overflow = target.dataset._chartPrevOverflow || '';
+          target.style.maxHeight = target.dataset._chartPrevMaxHeight || '';
+          target.style.height = target.dataset._chartPrevHeight || '';
+          delete target.dataset._chartPrevPosition;
+          delete target.dataset._chartPrevTop;
+          delete target.dataset._chartPrevLeft;
+          delete target.dataset._chartPrevInset;
+          delete target.dataset._chartPrevOverflow;
+          delete target.dataset._chartPrevMaxHeight;
+          delete target.dataset._chartPrevHeight;
+        })()
+      `);
+    }
 
     for (let i = 0; i < slide.elements.length; i++) {
       const el = slide.elements[i];
@@ -1938,7 +2145,7 @@ async function captureElementImages(result, hiddenWindow) {
     await restoreContainers();
   }
 
-  return { svgsCaptured, svgsFailed, gradientsCaptured, gradientsFailed };
+  return { svgsCaptured, svgsFailed, gradientsCaptured, gradientsFailed, chartsCaptured, chartsFailed };
 }
 
 // ── Pre-extraction DOM preparation helpers ──────────────────────────
@@ -2214,7 +2421,9 @@ async function extractFromHTML(htmlFilePath, options = {}) {
 
     const hasElementCaptures = result.slides.some(s =>
       s.elements.some(el =>
-        el.type === 'svg-capture' || (el.type === 'shape' && el.captureRect)
+        el.type === 'svg-capture' ||
+        el.type === 'chart-capture' ||
+        (el.type === 'shape' && el.captureRect)
       )
     );
 
@@ -2222,8 +2431,12 @@ async function extractFromHTML(htmlFilePath, options = {}) {
       const elementResult = await captureElementImages(result, hiddenWindow);
       console.log(
         `[Extractor] Element captures: ` +
-        `${elementResult.svgsCaptured} SVGs, ${elementResult.gradientsCaptured} gradients succeeded. ` +
-        `${elementResult.svgsFailed} SVGs, ${elementResult.gradientsFailed} gradients failed.`
+        `${elementResult.svgsCaptured} SVGs, ` +
+        `${elementResult.chartsCaptured || 0} charts, ` +
+        `${elementResult.gradientsCaptured} gradients succeeded. ` +
+        `${elementResult.svgsFailed} SVGs, ` +
+        `${elementResult.chartsFailed || 0} charts, ` +
+        `${elementResult.gradientsFailed} gradients failed.`
       );
     }
 
