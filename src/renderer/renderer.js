@@ -235,4 +235,91 @@
     div.textContent = str;
     return div.innerHTML;
   }
+
+  // ── Version Display ──────────────────────────────────────────
+  (async function loadVersion() {
+    try {
+      const version = await window.api.getVersion();
+      const label = document.getElementById('versionLabel');
+      if (label && version) label.textContent = 'v' + version;
+    } catch (_) { /* non-critical */ }
+  })();
+
+  // ── Settings Panel ───────────────────────────────────────────
+  const settingsToggle = document.getElementById('settingsToggle');
+  const settingsPanel = document.getElementById('settingsPanel');
+
+  settingsToggle.addEventListener('click', () => {
+    const isOpen = settingsPanel.classList.toggle('open');
+    settingsToggle.classList.toggle('active', isOpen);
+  });
+
+  /**
+   * Populates the settings panel controls from the current config.
+   */
+  async function loadSettings() {
+    try {
+      const config = await window.api.getConfig();
+
+      document.getElementById('outputStrategy').value = config.outputStrategy;
+      document.getElementById('fixedFolderPath').value = config.outputFixedPath || '';
+      document.getElementById('fixedFolderRow').style.display =
+        config.outputStrategy === 'fixed-folder' ? 'flex' : 'none';
+
+      document.getElementById('defaultWidth').value =
+        config.defaultSlideWidth !== null ? config.defaultSlideWidth : '';
+      document.getElementById('defaultHeight').value =
+        config.defaultSlideHeight !== null ? config.defaultSlideHeight : '';
+
+      document.getElementById('showWarnings').checked = config.showWarnings;
+      document.getElementById('rememberLastFolder').checked = config.rememberLastFolder;
+    } catch (err) {
+      console.error('[Settings] Failed to load config:', err);
+    }
+  }
+
+  loadSettings();
+
+  // Output strategy
+  document.getElementById('outputStrategy').addEventListener('change', async (e) => {
+    const value = e.target.value;
+    document.getElementById('fixedFolderRow').style.display =
+      value === 'fixed-folder' ? 'flex' : 'none';
+    await window.api.updateConfig({ outputStrategy: value });
+  });
+
+  // Browse folder button
+  document.getElementById('browseFolder').addEventListener('click', async () => {
+    const folderPath = await window.api.selectFolder();
+    if (folderPath) {
+      document.getElementById('fixedFolderPath').value = folderPath;
+      await window.api.updateConfig({ outputFixedPath: folderPath });
+    }
+  });
+
+  // Default dimensions
+  document.getElementById('defaultWidth').addEventListener('change', async (e) => {
+    const val = e.target.value ? parseInt(e.target.value, 10) : null;
+    await window.api.updateConfig({ defaultSlideWidth: val });
+  });
+
+  document.getElementById('defaultHeight').addEventListener('change', async (e) => {
+    const val = e.target.value ? parseInt(e.target.value, 10) : null;
+    await window.api.updateConfig({ defaultSlideHeight: val });
+  });
+
+  // Checkboxes
+  document.getElementById('showWarnings').addEventListener('change', async (e) => {
+    await window.api.updateConfig({ showWarnings: e.target.checked });
+  });
+
+  document.getElementById('rememberLastFolder').addEventListener('change', async (e) => {
+    await window.api.updateConfig({ rememberLastFolder: e.target.checked });
+  });
+
+  // Reset to defaults
+  document.getElementById('resetDefaults').addEventListener('click', async () => {
+    await window.api.resetConfig();
+    await loadSettings();
+  });
 })();

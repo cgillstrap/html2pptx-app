@@ -17,10 +17,21 @@
 // - Defaults are defined once, here, and documented
 // - getConfig() returns a frozen shallow copy so callers can't mutate
 // - updateConfig() validates keys against the known schema
-// - Config is not persisted yet — resets on app restart (Phase 3 will add persistence)
+// - Config persists to a JSON file in the user's app data directory
+// - initConfig() must be called once from main.js after app.whenReady()
+// - Schema versioning: saved config merges with DEFAULTS (forward-compatible)
 // ============================================================================
 
 'use strict';
+
+const fs = require('fs');
+const path = require('path');
+
+const CONFIG_FILENAME = 'config.json';
+const CONFIG_VERSION = 1;
+
+/** Path to the persisted config file — set by initConfig() */
+let configFilePath = null;
 
 /**
  * Default configuration values with documentation.
@@ -71,11 +82,97 @@ const DEFAULTS = {
   /**
    * Placeholder fill transparency (0 = opaque, 100 = fully transparent).
    */
-  placeholderFillTransparency: 50
+  placeholderFillTransparency: 50,
+
+  /**
+   * Default slide width in pixels. Used when the extractor cannot
+   * determine dimensions from the HTML. Null = always infer from HTML.
+   * @type {number|null}
+   */
+  defaultSlideWidth: null,
+
+  /**
+   * Default slide height in pixels. Null = always infer from HTML.
+   * @type {number|null}
+   */
+  defaultSlideHeight: null,
+
+  /**
+   * Whether to display extraction/generation warnings in the UI status panel.
+   * When false, warnings are still logged to console but not shown to the user.
+   */
+  showWarnings: true,
+
+  /**
+   * Remember the last folder used in a save dialog or folder picker.
+   * When true, the next save dialog opens at lastUsedFolder.
+   * @type {boolean}
+   */
+  rememberLastFolder: true,
+
+  /**
+   * Last folder path used (auto-populated, not directly user-editable).
+   * @type {string|null}
+   */
+  lastUsedFolder: null
 };
 
 /** Current runtime configuration (starts as copy of defaults) */
 let currentConfig = { ...DEFAULTS };
+
+/**
+ * Initialises the config module with the persistence directory.
+ * Must be called once from main.js after app.whenReady().
+ *
+ * Reads existing config from disk if present. Missing fields are
+ * filled from DEFAULTS (forward-compatible schema migration).
+ * Corrupt or unreadable files fall back to full defaults.
+ *
+ * @param {string} userDataPath - Result of app.getPath('userData')
+ */
+function initConfig(userDataPath) {
+  configFilePath = path.join(userDataPath, CONFIG_FILENAME);
+
+  try {
+    if (fs.existsSync(configFilePath)) {
+      const raw = fs.readFileSync(configFilePath, 'utf-8');
+      const saved = JSON.parse(raw);
+
+      // Merge: saved values override defaults; new default keys are added
+      currentConfig = { ...DEFAULTS, ...saved };
+
+      // Strip any keys that no longer exist in DEFAULTS
+      for (const key of Object.keys(currentConfig)) {
+        if (!(key in DEFAULTS) && key !== '_version') {
+          delete currentConfig[key];
+        }
+      }
+
+      console.log(`[Config] Loaded from ${configFilePath}`);
+    } else {
+      console.log('[Config] No saved config found — using defaults');
+    }
+  } catch (err) {
+    console.warn(`[Config] Failed to load saved config — using defaults. ${err.message}`);
+    currentConfig = { ...DEFAULTS };
+  }
+}
+
+/**
+ * Persists the current config to disk.
+ * Called automatically by updateConfig(). Fire-and-forget —
+ * a write failure is logged but does not throw.
+ */
+function saveConfig() {
+  if (!configFilePath) return;
+
+  try {
+    const data = { _version: CONFIG_VERSION, ...currentConfig };
+    fs.writeFileSync(configFilePath, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn(`[Config] Failed to save config: ${err.message}`);
+  }
+}
 
 /**
  * Returns the current configuration as a frozen object.
@@ -90,7 +187,7 @@ function getConfig() {
 /**
  * Updates one or more configuration values.
  * Only keys that exist in DEFAULTS are accepted — unknown keys are ignored
- * and logged as warnings.
+ * and logged as warnings. Persists to disk after applying.
  *
  * @param {object} overrides - Key-value pairs to update
  * @returns {Readonly<typeof DEFAULTS>} The updated configuration
@@ -106,18 +203,20 @@ function updateConfig(overrides) {
     }
   }
 
+  saveConfig();
   return getConfig();
 }
 
 /**
- * Resets all configuration to defaults.
- * Useful for testing or a "Reset to Defaults" UI action.
+ * Resets all configuration to defaults and persists.
+ * Used by the "Reset to Defaults" UI action.
  *
  * @returns {Readonly<typeof DEFAULTS>}
  */
 function resetConfig() {
   currentConfig = { ...DEFAULTS };
+  saveConfig();
   return getConfig();
 }
 
-module.exports = { getConfig, updateConfig, resetConfig };
+module.exports = { getConfig, updateConfig, resetConfig, initConfig };

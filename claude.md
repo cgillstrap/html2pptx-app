@@ -8,8 +8,9 @@ A standalone Electron desktop app that converts AI-generated HTML files to Power
 
 ```bash
 npm install
-npm start          # Launch the Electron app (drag-and-drop HTML files to convert)
-npm test           # Run tests via electron-mocha (not yet fully implemented)
+npm start                # Launch the Electron app
+npm run test:regression  # Run fixture-driven regression tests (16 pass, 6 skip)
+npm test                 # Run renderer-side unit tests (electron-mocha --renderer)
 ```
 
 ## Project Structure

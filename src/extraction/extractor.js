@@ -63,6 +63,8 @@
 
 const { BrowserWindow } = require('electron');
 const path = require('path');
+const os = require('os');
+const fs = require('fs');
 const { getSecureWebPreferences, installNavigationGuards } = require('../main/security');
 
 /**
@@ -1836,6 +1838,49 @@ async function captureElementImages(result, hiddenWindow) {
     `);
   }
 
+  // Helper: move slide container to viewport origin (0,0) before capture.
+  // Only used when the slide is far from the viewport origin, where
+  // capturePage() serves stale compositor frames (Learning #28).
+  // Saves the entire inline style via cssText to avoid the inset
+  // shorthand ordering problem (Learning #49).
+  async function repositionSlideToOrigin(slideIndex) {
+    await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        var containers = ${RESOLVE_CONTAINERS_JS};
+        var target = containers[${slideIndex}];
+        if (!target) return;
+        // Save entire inline style — avoids inset/top/left restore ordering issues
+        target.dataset._capPrevStyle = target.style.cssText;
+        // Apply reposition: inset first, then top/left (Learning #49)
+        target.style.position = 'absolute';
+        target.style.inset = 'auto';
+        target.style.top = '0px';
+        target.style.left = '0px';
+        // Remove overflow clipping so below-fold content is capturable (Learning #51)
+        target.style.overflow = 'visible';
+        target.style.maxHeight = 'none';
+      })()
+    `);
+    // Compositor frame flush: a dummy capture forces Chromium to render
+    // a fresh frame after the DOM reposition (Learning #50)
+    await hiddenWindow.webContents.capturePage({ x: 0, y: 0, width: 1, height: 1 });
+    await new Promise(resolve => setTimeout(resolve, 30));
+  }
+
+  // Helper: restore slide container to its original position after capture.
+  // Restores the entire inline style via cssText (saved by repositionSlideToOrigin).
+  async function restoreSlidePosition(slideIndex) {
+    await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        var containers = ${RESOLVE_CONTAINERS_JS};
+        var target = containers[${slideIndex}];
+        if (!target) return;
+        target.style.cssText = target.dataset._capPrevStyle || '';
+        delete target.dataset._capPrevStyle;
+      })()
+    `);
+  }
+
   for (const slide of result.slides) {
     // Check if this slide has any elements needing capture
     const hasSvgs = slide.elements.some(el => el.type === 'svg-capture');
@@ -1846,18 +1891,182 @@ async function captureElementImages(result, hiddenWindow) {
     await isolateSlide(slide.index);
     await new Promise(resolve => setTimeout(resolve, 30));
 
+    // Lift ALL overflow clipping on the slide container and its descendants
+    // so below-fold SVGs are visible to the compositor (Learning #51).
+    // Two sources of clipping: fixViewportUnitHeights() sets overflow:hidden
+    // + maxHeight on the container, and fixture CSS may set overflow-y:auto
+    // on nested elements (e.g. .slide-body). Both must be lifted.
+    const overflowLifted = await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        var containers = ${RESOLVE_CONTAINERS_JS};
+        var target = containers[${slide.index}];
+        if (!target) return 0;
+        var count = 0;
+        // Lift overflow on the container itself
+        var cs = window.getComputedStyle(target);
+        if (cs.overflow === 'hidden' || cs.overflow === 'auto' ||
+            cs.overflowY === 'hidden' || cs.overflowY === 'auto') {
+          target.dataset._capPrevOverflow = target.style.overflow || '';
+          target.dataset._capPrevOverflowY = target.style.overflowY || '';
+          target.dataset._capPrevMaxHeight = target.style.maxHeight || '';
+          target.dataset._capPrevHeight = target.style.height || '';
+          target.style.overflow = 'visible';
+          target.style.overflowY = 'visible';
+          target.style.maxHeight = 'none';
+          target.style.height = 'auto';
+          count++;
+        }
+        // Lift overflow on ALL descendants with computed overflow clipping
+        var all = target.querySelectorAll('*');
+        for (var i = 0; i < all.length; i++) {
+          var dcs = window.getComputedStyle(all[i]);
+          if (dcs.overflow === 'hidden' || dcs.overflow === 'auto' ||
+              dcs.overflowY === 'hidden' || dcs.overflowY === 'auto') {
+            all[i].dataset._capPrevOverflow = all[i].style.overflow || '';
+            all[i].dataset._capPrevOverflowY = all[i].style.overflowY || '';
+            all[i].dataset._capPrevMaxHeight = all[i].style.maxHeight || '';
+            all[i].dataset._capPrevHeight = all[i].style.height || '';
+            all[i].style.overflow = 'visible';
+            all[i].style.overflowY = 'visible';
+            all[i].style.maxHeight = 'none';
+            all[i].style.height = 'auto';
+            count++;
+          }
+        }
+        return count;
+      })()
+    `);
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    // After overflow lift, batch re-query ALL SVG positions in one pass.
+    // The lift may shift flex layout, making stored captureRects stale.
+    // SVGs are queried in DOM order within the slide container, which
+    // matches extraction order (both use querySelectorAll traversal).
+    const freshSvgRects = await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        var containers = ${RESOLVE_CONTAINERS_JS};
+        var target = containers[${slide.index}];
+        if (!target) return [];
+        var svgs = target.querySelectorAll('svg');
+        var rects = [];
+        for (var i = 0; i < svgs.length; i++) {
+          var r = svgs[i].getBoundingClientRect();
+          rects.push({ x: r.left, y: r.top, w: r.width, h: r.height });
+        }
+        return rects;
+      })()
+    `);
+
+    // Batch re-query gradient element positions (elements with CSS gradient
+    // backgrounds that have captureRects). Matched in DOM order.
+    const freshGradientRects = await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        var containers = ${RESOLVE_CONTAINERS_JS};
+        var target = containers[${slide.index}];
+        if (!target) return [];
+        var results = [];
+        var all = target.querySelectorAll('*');
+        for (var i = 0; i < all.length; i++) {
+          var cs = window.getComputedStyle(all[i]);
+          if (cs.backgroundImage && cs.backgroundImage !== 'none' &&
+              cs.backgroundImage.includes('gradient')) {
+            var r = all[i].getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) {
+              results.push({ x: r.left, y: r.top, w: r.width, h: r.height });
+            }
+          }
+        }
+        return results;
+      })()
+    `);
+
+    // Assign fresh rects to elements by DOM order
+    let svgIdx = 0;
+    let gradIdx = 0;
+    for (let j = 0; j < slide.elements.length; j++) {
+      if (slide.elements[j].type === 'svg-capture') {
+        if (svgIdx < freshSvgRects.length) {
+          slide.elements[j]._freshRect = freshSvgRects[svgIdx];
+          svgIdx++;
+        }
+      } else if (slide.elements[j].type === 'shape' && slide.elements[j].captureRect) {
+        if (gradIdx < freshGradientRects.length) {
+          slide.elements[j]._freshRect = freshGradientRects[gradIdx];
+          gradIdx++;
+        }
+      }
+    }
+
+    // Track whether we've repositioned this slide (done lazily on first
+    // empty capture, not pre-decided via a threshold).
+    let slideRepositioned = false;
+    const isDiag = process.env.CAPTURE_DIAGNOSTIC === '1';
+
     for (let i = 0; i < slide.elements.length; i++) {
       const el = slide.elements[i];
 
       // ── SVG Capture ──────────────────────────────────────
       if (el.type === 'svg-capture') {
         try {
-          const nativeImage = await hiddenWindow.webContents.capturePage({
-            x: Math.round(el.captureRect.x),
-            y: Math.round(el.captureRect.y),
-            width: Math.round(el.captureRect.w),
-            height: Math.round(el.captureRect.h)
+          // Use batch-queried fresh rect (DOM order), fall back to stored
+          const useRect = el._freshRect || el.captureRect;
+
+          // First attempt: capture at absolute coordinates (works for
+          // most fixtures — the compositor renders content within the
+          // window's content area regardless of Y offset).
+          let nativeImage = await hiddenWindow.webContents.capturePage({
+            x: Math.round(useRect.x),
+            y: Math.round(useRect.y),
+            width: Math.round(useRect.w),
+            height: Math.round(useRect.h)
           });
+
+          if (isDiag) {
+            const debugPath = path.join(os.tmpdir(), `capture-debug-s${slide.index}-el${i}-svg-direct.png`);
+            fs.writeFileSync(debugPath, nativeImage.toPNG());
+            const sz = nativeImage.getSize();
+            console.log(`[DIAG] Slide ${slide.index + 1} el${i} SVG direct: (${Math.round(useRect.x)},${Math.round(useRect.y)}) ${sz.width}x${sz.height}, empty=${nativeImage.isEmpty()}${el._freshRect ? ' [fresh]' : ' [stored]'}`);
+          }
+
+          // If direct capture returned empty, reposition the slide to
+          // the viewport origin and retry (Learning #28: compositor may
+          // serve stale frames for regions beyond the rendered area).
+          if (nativeImage.isEmpty() && !slideRepositioned) {
+            console.log(
+              `[Extractor] Slide ${slide.index + 1}: direct SVG capture empty, ` +
+              `repositioning slide to origin and retrying`
+            );
+            await repositionSlideToOrigin(slide.index);
+            slideRepositioned = true;
+
+            const reposX = el.position ? el.position.x * 96 : 0;
+            const reposY = el.position ? el.position.y * 96 : 0;
+
+            nativeImage = await hiddenWindow.webContents.capturePage({
+              x: Math.round(reposX),
+              y: Math.round(reposY),
+              width: Math.round(useRect.w),
+              height: Math.round(useRect.h)
+            });
+
+            if (isDiag) {
+              const debugPath = path.join(os.tmpdir(), `capture-debug-s${slide.index}-el${i}-svg-repos.png`);
+              fs.writeFileSync(debugPath, nativeImage.toPNG());
+              const sz = nativeImage.getSize();
+              console.log(`[DIAG] Slide ${slide.index + 1} el${i} SVG repos: (${Math.round(reposX)},${Math.round(reposY)}) ${sz.width}x${sz.height}, empty=${nativeImage.isEmpty()}`);
+            }
+          } else if (nativeImage.isEmpty() && slideRepositioned) {
+            // Already repositioned from a prior element — use repositioned coords
+            const reposX = el.position ? el.position.x * 96 : 0;
+            const reposY = el.position ? el.position.y * 96 : 0;
+
+            nativeImage = await hiddenWindow.webContents.capturePage({
+              x: Math.round(reposX),
+              y: Math.round(reposY),
+              width: Math.round(useRect.w),
+              height: Math.round(useRect.h)
+            });
+          }
 
           if (nativeImage.isEmpty()) {
             throw new Error('capturePage returned empty image for SVG');
@@ -1894,16 +2103,61 @@ async function captureElementImages(result, hiddenWindow) {
         const captureW = el.captureRect.w;
         const captureH = el.captureRect.h;
         try {
+          // Use batch-queried fresh rect (DOM order), fall back to stored
+          const gradRect = el._freshRect || el.captureRect;
+          let capX = slideRepositioned ? (el.position ? el.position.x * 96 : 0) : gradRect.x;
+          let capY = slideRepositioned ? (el.position ? el.position.y * 96 : 0) : gradRect.y;
+          const targetRect = { x: capX, y: capY, w: gradRect.w, h: gradRect.h };
+
           // Hide the element's children so we capture only the background
-          await hideTargetContent(el.captureRect);
+          await hideTargetContent(targetRect);
           await new Promise(resolve => setTimeout(resolve, 30));
 
-          const nativeImage = await hiddenWindow.webContents.capturePage({
-            x: Math.round(el.captureRect.x),
-            y: Math.round(el.captureRect.y),
-            width: Math.round(el.captureRect.w),
-            height: Math.round(el.captureRect.h)
+          let nativeImage = await hiddenWindow.webContents.capturePage({
+            x: Math.round(capX),
+            y: Math.round(capY),
+            width: Math.round(gradRect.w),
+            height: Math.round(gradRect.h)
           });
+
+          if (isDiag) {
+            const debugPath = path.join(os.tmpdir(), `capture-debug-s${slide.index}-el${i}-gradient-direct.png`);
+            fs.writeFileSync(debugPath, nativeImage.toPNG());
+            const sz = nativeImage.getSize();
+            console.log(`[DIAG] Slide ${slide.index + 1} el${i} gradient direct: (${Math.round(capX)},${Math.round(capY)}) ${sz.width}x${sz.height}, empty=${nativeImage.isEmpty()}${el._freshRect ? ' [fresh]' : ' [stored]'}`);
+          }
+
+          // If direct capture returned empty, reposition and retry
+          if (nativeImage.isEmpty() && !slideRepositioned) {
+            await restoreTargetContent();
+            console.log(
+              `[Extractor] Slide ${slide.index + 1}: direct gradient capture empty, ` +
+              `repositioning slide to origin and retrying`
+            );
+            await repositionSlideToOrigin(slide.index);
+            slideRepositioned = true;
+
+            capX = el.position ? el.position.x * 96 : 0;
+            capY = el.position ? el.position.y * 96 : 0;
+            const reposRect = { x: capX, y: capY, w: gradRect.w, h: gradRect.h };
+
+            await hideTargetContent(reposRect);
+            await new Promise(resolve => setTimeout(resolve, 30));
+
+            nativeImage = await hiddenWindow.webContents.capturePage({
+              x: Math.round(capX),
+              y: Math.round(capY),
+              width: Math.round(gradRect.w),
+              height: Math.round(gradRect.h)
+            });
+
+            if (isDiag) {
+              const debugPath = path.join(os.tmpdir(), `capture-debug-s${slide.index}-el${i}-gradient-repos.png`);
+              fs.writeFileSync(debugPath, nativeImage.toPNG());
+              const sz = nativeImage.getSize();
+              console.log(`[DIAG] Slide ${slide.index + 1} el${i} gradient repos: (${Math.round(capX)},${Math.round(capY)}) ${sz.width}x${sz.height}, empty=${nativeImage.isEmpty()}`);
+            }
+          }
 
           await restoreTargetContent();
 
@@ -1934,7 +2188,44 @@ async function captureElementImages(result, hiddenWindow) {
       }
     }
 
-    // Restore all containers after processing this slide's elements
+    // Restore overflow clipping on container and all descendants
+    await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        var containers = ${RESOLVE_CONTAINERS_JS};
+        var target = containers[${slide.index}];
+        if (!target) return;
+        // Restore container
+        if (target.dataset._capPrevOverflow !== undefined) {
+          target.style.overflow = target.dataset._capPrevOverflow;
+          target.style.overflowY = target.dataset._capPrevOverflowY || '';
+          target.style.maxHeight = target.dataset._capPrevMaxHeight;
+          target.style.height = target.dataset._capPrevHeight;
+          delete target.dataset._capPrevOverflow;
+          delete target.dataset._capPrevOverflowY;
+          delete target.dataset._capPrevMaxHeight;
+          delete target.dataset._capPrevHeight;
+        }
+        // Restore all descendants
+        var all = target.querySelectorAll('*');
+        for (var i = 0; i < all.length; i++) {
+          if (all[i].dataset._capPrevOverflow !== undefined) {
+            all[i].style.overflow = all[i].dataset._capPrevOverflow;
+            all[i].style.overflowY = all[i].dataset._capPrevOverflowY || '';
+            all[i].style.maxHeight = all[i].dataset._capPrevMaxHeight;
+            all[i].style.height = all[i].dataset._capPrevHeight;
+            delete all[i].dataset._capPrevOverflow;
+            delete all[i].dataset._capPrevOverflowY;
+            delete all[i].dataset._capPrevMaxHeight;
+            delete all[i].dataset._capPrevHeight;
+          }
+        }
+      })()
+    `);
+
+    // Restore slide position (if repositioned), then restore all containers
+    if (slideRepositioned) {
+      await restoreSlidePosition(slide.index);
+    }
     await restoreContainers();
   }
 

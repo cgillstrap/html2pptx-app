@@ -22,7 +22,7 @@
 
 'use strict';
 
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const {
   applyCSPHeaders,
@@ -30,6 +30,7 @@ const {
   installNavigationGuards,
   validateFilePath
 } = require('./security');
+const { getConfig, updateConfig, resetConfig, initConfig } = require('./config');
 const { extractFromHTML } = require('../extraction/extractor');
 const { generatePPTX } = require('../generation/generator');
 
@@ -37,20 +38,45 @@ const { generatePPTX } = require('../generation/generator');
 let mainWindow = null;
 
 /**
- * Computes the output .pptx path from the source HTML path.
- *
- * Current strategy: same directory, same base name, .pptx extension.
- * This is the first of several planned strategies — keeping it as a
- * function makes it easy to swap in Save As dialog or fixed output
- * folder later (see config.outputStrategy).
+ * Determines the output .pptx path based on the configured output strategy.
  *
  * @param {string} htmlPath - Absolute path to the source HTML file
- * @returns {string} Absolute path for the output .pptx
+ * @param {BrowserWindow} parentWindow - For dialog attachment
+ * @returns {Promise<string|null>} Output path, or null if user cancelled
  */
-function computeOutputPath(htmlPath) {
-  const dir = path.dirname(htmlPath);
+async function resolveOutputPath(htmlPath, parentWindow) {
+  const config = getConfig();
   const base = path.basename(htmlPath, path.extname(htmlPath));
-  return path.join(dir, `${base}.pptx`);
+  const defaultName = `${base}.pptx`;
+
+  switch (config.outputStrategy) {
+    case 'save-dialog': {
+      const initialDir = (config.rememberLastFolder && config.lastUsedFolder)
+        ? config.lastUsedFolder
+        : path.dirname(htmlPath);
+      const result = await dialog.showSaveDialog(parentWindow, {
+        title: 'Save PowerPoint file',
+        defaultPath: path.join(initialDir, defaultName),
+        filters: [{ name: 'PowerPoint', extensions: ['pptx'] }]
+      });
+      if (result.canceled || !result.filePath) return null;
+      if (config.rememberLastFolder) {
+        updateConfig({ lastUsedFolder: path.dirname(result.filePath) });
+      }
+      return result.filePath;
+    }
+
+    case 'fixed-folder': {
+      if (!config.outputFixedPath) {
+        throw new Error('Fixed output folder not configured. Please set a folder in Settings.');
+      }
+      return path.join(config.outputFixedPath, defaultName);
+    }
+
+    case 'same-directory':
+    default:
+      return path.join(path.dirname(htmlPath), defaultName);
+  }
 }
 
 /**
@@ -62,6 +88,7 @@ function createMainWindow() {
     height: 520,
     resizable: true,
     title: 'HTML → PPTX Converter',
+    icon: path.join(__dirname, '..', '..', 'build', 'icon.ico'),
     webPreferences: getSecureWebPreferences(
       path.join(__dirname, 'preload.js')
     )
@@ -148,15 +175,39 @@ async function handleFileProcessing(event, filePaths) {
       continue;
     }
 
-    // ── Stage 2: Generation ────────────────────────────────────
+    // ── Stage 2: Resolve output path ─────────────────────────────
+    let outputPath;
+    try {
+      outputPath = await resolveOutputPath(normalised, mainWindow);
+      if (outputPath === null) {
+        // User cancelled the save dialog — skip this file
+        event.reply('conversion:result', {
+          fileName,
+          outputPath: null,
+          slideCount: 0,
+          elementCount: 0,
+          viewport: null,
+          warnings: ['Save cancelled by user — file skipped.']
+        });
+        succeeded++; // Not a failure — user chose to skip
+        continue;
+      }
+    } catch (err) {
+      failed++;
+      event.reply('conversion:error', {
+        message: err.message,
+        fileName
+      });
+      continue;
+    }
+
+    // ── Stage 3: Generation ────────────────────────────────────
     event.reply('conversion:progress', {
       current: i + 1,
       total,
       fileName,
       stage: `Generating ${extractionResult.slideCount} slide(s)...`
     });
-
-    const outputPath = computeOutputPath(normalised);
 
     try {
       const result = await generatePPTX(extractionResult, outputPath, { htmlDir });
@@ -166,9 +217,11 @@ async function handleFileProcessing(event, filePaths) {
         (sum, s) => sum + s.elements.length, 0
       );
 
-      // Track warning count for batch summary
-      const fileWarnings = result.warnings || [];
-      totalWarnings += fileWarnings.length;
+      // Always count warnings for batch summary; only forward to UI if showWarnings is on
+      const config = getConfig();
+      const allWarnings = result.warnings || [];
+      totalWarnings += allWarnings.length;
+      const fileWarnings = config.showWarnings ? allWarnings : [];
 
       succeeded++;
       event.reply('conversion:result', {
@@ -201,6 +254,7 @@ async function handleFileProcessing(event, filePaths) {
 // --- Application Lifecycle ---
 
 app.whenReady().then(() => {
+  initConfig(app.getPath('userData'));
   applyCSPHeaders();
   createMainWindow();
 
@@ -220,3 +274,31 @@ app.on('window-all-closed', () => {
 // --- IPC Registration ---
 
 ipcMain.on('files:process', handleFileProcessing);
+
+// ── Config IPC ──────────────────────────────────────────────
+ipcMain.handle('config:get', () => {
+  return getConfig();
+});
+
+ipcMain.handle('config:update', (_event, overrides) => {
+  return updateConfig(overrides);
+});
+
+ipcMain.handle('config:reset', () => {
+  return resetConfig();
+});
+
+// ── Folder Picker IPC ───────────────────────────────────────
+ipcMain.handle('dialog:select-folder', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select output folder',
+    properties: ['openDirectory', 'createDirectory']
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
+});
+
+// ── Version IPC ─────────────────────────────────────────────
+ipcMain.handle('app:get-version', () => {
+  return app.getVersion();
+});

@@ -1,10 +1,9 @@
 # Dependencies
 node_modules/
 
-# Electron build output
+# Electron build output (build/ is buildResources — tracked in git)
 dist/
 out/
-build/
 
 # Generated PPTX files (conversion output)
 *.pptx

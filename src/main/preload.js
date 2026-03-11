@@ -115,5 +115,16 @@ contextBridge.exposeInMainWorld('api', {
    */
   removeAllListeners: () => {
     CHANNELS.forEach(channel => ipcRenderer.removeAllListeners(channel));
-  }
+  },
+
+  // ── Config ──────────────────────────────────────────────────
+  getConfig: () => ipcRenderer.invoke('config:get'),
+  updateConfig: (overrides) => ipcRenderer.invoke('config:update', overrides),
+  resetConfig: () => ipcRenderer.invoke('config:reset'),
+
+  // ── Folder Picker ───────────────────────────────────────────
+  selectFolder: () => ipcRenderer.invoke('dialog:select-folder'),
+
+  // ── Version ─────────────────────────────────────────────────
+  getVersion: () => ipcRenderer.invoke('app:get-version')
 });

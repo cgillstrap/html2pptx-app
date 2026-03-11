@@ -68,12 +68,12 @@ This app is one piece of a larger initiative that includes:
 |------|-------------|--------|-------------|
 | `src/extraction/extractor.js` | Session 13g | Current | `captureElementImages()`: try-direct-then-fallback capture; lifts ALL overflow clipping (container + descendants) before capture; batch re-queries SVG/gradient positions in DOM order after overflow lift. Diagnostic logging gated behind `CAPTURE_DIAGNOSTIC=1`. |
 | `src/generation/generator.js` | Session 10 | Current | Scale-to-fit with centering already implemented. Viewport normalization safety net removed. Generator trusts intermediate JSON as-is (Principle 2 restored). |
-| `src/main/main.js` | Session 2 | Current | |
-| `src/main/preload.js` | Session 2 | Current | |
+| `src/main/main.js` | Session 15 | Current | Added `dialog` import, `initConfig()` call, `resolveOutputPath()` (replaces `computeOutputPath`), config/folder-picker/version IPC handlers, `showWarnings` gating, window icon |
+| `src/main/preload.js` | Session 15 | Current | Added `getConfig`, `updateConfig`, `resetConfig`, `selectFolder`, `getVersion` via `invoke`/`handle` |
 | `src/main/security.js` | Session 1 | Current | |
-| `src/main/config.js` | Session 1 | Current | |
-| `src/renderer/index.html` | Session 2 | Current | |
-| `src/renderer/renderer.js` | Session 2 | Current | |
+| `src/main/config.js` | Session 15 | Current | Added persistence (`initConfig`/`saveConfig`), 5 new fields (`defaultSlideWidth/Height`, `showWarnings`, `rememberLastFolder`, `lastUsedFolder`), schema versioning |
+| `src/renderer/index.html` | Session 15 | Current | Added settings panel (output strategy, dimensions, checkboxes), version label, gear toggle |
+| `src/renderer/renderer.js` | Session 15 | Current | Added version display, settings panel toggle, `loadSettings()`, change handlers for all controls |
 | `PRINCIPLES.md` | Session 2 | Current | |
 | `LEARNINGS.md` | Session 14 | Current | Cherry-picked from session-12b branch. Added learning #52. |
 | `docs/doc0-prompting-methodology.md` | Session 14 | Current | v1.2: Engine characterisations refined, task-engine table updated, filenames added |
@@ -83,7 +83,12 @@ This app is one piece of a larger initiative that includes:
 | `docs/converter-capability-profile.md` | Session 14 | Current | v2.0: Tables Tier 1, JS charts Tier 3, SVG expanded, fixtures updated |
 | `test/fixtures/manifest.json` | Session 14 | NEW | Machine-readable fixture manifest with status and capability tags |
 | `test/fixtures/manifest.md` | Session 14 | NEW | Human-readable fixture manifest |
-| `package.json` | Session 1 | Current | |
+| `test/regression/pipeline.test.js` | Session 15 | NEW | Manifest-driven regression test harness — 16 pass, 6 skip |
+| `CLAUDE.md` | Session 15 | Current | Updated "How to Run" with `test:regression` command |
+| `package.json` | Session 15 | Current | v1.0.0, added `build`/`build:win`/`dist` scripts, electron-builder config, `test:regression` script |
+| `.gitignore` | Session 15 | Current | Removed `build/` from ignore (needed for buildResources/icon.ico) |
+| `build/icon.ico` | Session 15 | NEW | App icon for installer and exe (renamed from noun-file-convert-7880640-FFFFFF.ico) |
+| `GETTING_STARTED.md` | Session 15 | NEW | End-user getting started guide, also copied to dist/win-unpacked/ for portable distribution |
 
 ## Build Phases
 
@@ -103,16 +108,18 @@ This app is one piece of a larger initiative that includes:
 - [x] **Cleanup: remove generator viewport safety net** — removed entirely. Generator trusts intermediate JSON as-is. (Session 10)
 - [ ] **Overflow detection warnings (original port)**: Port getBodyDimensions() overflow check from original repo. May be redundant — needs review.
 
-#### 3c: Configuration & Settings
-- [ ] Config persistence (JSON file in user's app data directory)
-- [ ] Settings UI panel in renderer
-- [ ] Output strategy: implement 'save-dialog' and 'fixed-folder' options
+#### 3c: Configuration & Settings ✅ COMPLETE
+- [x] Config persistence (JSON file in user's app data directory) — Session 15
+- [x] Settings UI panel in renderer — Session 15
+- [x] Output strategy: implement 'save-dialog' and 'fixed-folder' options — Session 15
 
-#### 3d: Packaging & Distribution
-- [ ] Package with electron-builder → Windows .exe installer
+#### 3d: Packaging & Distribution — PARTIALLY COMPLETE
+- [x] Package with electron-builder → Windows unpacked app + portable zip — Session 15
+- [x] Application icon and branding (`build/icon.ico`) — Session 15
+- [ ] NSIS installer — blocked on managed Windows estate (7zip-bin binary execution denied by security policy). Works on unmanaged machines. See Session 15 decision log.
 - [ ] Test on clean Windows 11 machine
-- [ ] Application icon and branding
-- [ ] Minimal end-user README or in-app guidance
+- [x] Minimal end-user README or in-app guidance — GETTING_STARTED.md (Session 15)
+- [ ] SmartScreen documentation for pilot users
 
 #### 3e: Future Considerations (not blocking MVP)
 - [ ] Visual preview of generated PPTX
@@ -121,6 +128,16 @@ This app is one piece of a larger initiative that includes:
 - [ ] Template-based creation
 
 ## Key Decisions Log
+
+### Session 15 Decisions
+
+1. **`signAndEditExecutable: false`** — Managed Windows estate blocks `7zip-bin`'s `7za.exe` via `AssignProcessToJobObject` security policy. Adding `signAndEditExecutable: false` to the win config skips the winCodeSign download entirely (we have no code-signing certificate anyway). The unpacked app and portable zip build successfully. NSIS installer creation also requires 7za.exe, so it's blocked by the same policy — will work on unmanaged machines.
+
+2. **Portable zip as primary distribution for managed estates** — Since the NSIS installer is blocked on managed machines, the portable zip (`dist/HTML to PPTX Converter-1.0.0-win.zip`) is the primary distribution format. Extract and run — no installation needed. Settings persist to userData, not the app folder.
+
+3. **`.gitignore` adjusted: `build/` no longer ignored** — electron-builder's `buildResources` directory (`build/`) contains `icon.ico` which must be tracked in git. Removed the blanket `build/` ignore. `dist/` and `out/` remain ignored.
+
+4. **Icon renamed to `build/icon.ico`** — Renamed from `noun-file-convert-7880640-FFFFFF.ico` to match the electron-builder convention.
 
 ### Session 14 Decisions
 
@@ -296,9 +313,11 @@ All 22 fixtures consolidated to `test/fixtures/` with consistent naming. See `te
 
 15. **Session 14 (Chat)** — Strategic convergence session. Assessed top-down design system (docs 0–3) against bottom-up converter capability. Produced updated converter-capability-profile.md (v2.0) and new technical output profile (doc1 v2.0) replacing restrictive guardrails. Validated document stack across three engines with real analytical content. Three new fixtures added. Session 13 branch assessed — docs cherry-picked, code discarded. Fixture rename and manifest completed. Doc 0 updated to v1.2 with empirical engine guidance. Copilot depth limitation established.
 
+16. **Session 15 (Claude Code)** — Regression test harness + config persistence + settings UI + packaging. Manifest-driven `pipeline.test.js` (16 pass, 6 skip). Config persistence to `config.json` in userData with schema versioning and forward-compatible migration. Inline settings panel with output strategy (same-directory / save-dialog / fixed-folder), default dimensions, showWarnings toggle, rememberLastFolder. Version label in header. All IPC via invoke/handle pattern. electron-builder configured for NSIS + zip; unpacked app and portable zip build successfully. NSIS installer blocked on managed Windows (7zip-bin security policy) — works on unmanaged machines. Version bumped to 1.0.0. CLAUDE.md updated. No regressions.
+
 ### Next Session Priorities
 
-1. **Regression test harness** — Fixture-driven pipeline tests against `test/fixtures/manifest.json`. Use manifest status field to determine assertions per fixture. 22 fixtures, 16 expected to pass.
+1. ~~**Regression test harness**~~ ✅ COMPLETE (Session 15) — `test/regression/pipeline.test.js`. 16 pass, 6 skip. Run via `npm run test:regression`.
 
 2. **Config persistence and versioning** — JSON file in user's app data directory. Settings UI panel.
 
