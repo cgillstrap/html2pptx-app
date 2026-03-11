@@ -129,7 +129,17 @@ This app is one piece of a larger initiative that includes:
 
 ## Key Decisions Log
 
-### Session 16 Decisions
+### Session 16 Chat Decisions
+
+1. **Priorities shift from development to beta feedback** — With regression harness, config persistence, settings UI, packaging, and end-user documentation all complete, development priorities are now driven by real usage from the 12-user pilot. Expected first feedback areas: font availability, output location, SmartScreen.
+
+2. **macOS build deferred** — Codebase is fully portable (Electron, no Windows-specific code). The work is all in build/distribution: icns icon, Apple Developer cert ($99/yr), notarization, macOS CI runner. Not justified while macOS users (~20%) are power users who can run the CJS converter directly. Revisit when non-technical macOS users need the tool.
+
+3. **v1.0.1 released to beta** — Includes clone-based element gradient capture fix and SVG guard in shape-text processed-set. Both fixes targeted at `visual-transform-svg-1s.html` but improve robustness across all fixtures.
+
+4. **Fourth SVG grey capture accepted as known limitation** — One of four column header SVGs in `visual-transform-svg-1s.html` captures as grey. Same compositor edge case as Learning #52. Not worth the complexity to chase — 3 of 4 SVGs and clean gradient is a significant improvement over the prior 0 SVGs and broken gradient.
+
+### Session 16 Decisions (Claude Code)
 
 1. **Clone-based element gradient capture replaces coordinate-matching `hideTargetContent()`** — The old approach used 2px position tolerance to find gradient elements and hide their content before capture. After transform stripping and overflow lifting, coordinates shift enough that matches fail, leaving text burned into the captured gradient. The new approach queries gradient styles by size matching (5px tolerance — size is stable across DOM manipulations), creates a clean clone at viewport origin with only the gradient CSS, captures it, and removes the clone. This follows Learning #30 and the same pattern used by `captureGradients()` for slide-level gradients.
 
@@ -325,17 +335,25 @@ All 22 fixtures consolidated to `test/fixtures/` with consistent naming. See `te
 
 17. **Session 16 (Claude Code)** — Two targeted fixes in extractor.js. (1) Replaced fragile coordinate-matching `hideTargetContent()` with clone-based element gradient capture — queries gradient styles by size, creates clean clone at viewport origin, captures, removes. (2) Added SVG guard to shape-text processed-set so SVG elements are no longer suppressed. All 16 regression tests pass, no regressions. Learnings #53–#54 added.
 
+18. **Session 16 Chat** — Bug diagnosis and fix cycle. Identified two issues on `visual-transform-svg-1s.html`: (1) element gradient capture burning text into gradient image due to `hideTargetContent()` coordinate matching failing after transform stripping, (2) SVGs suppressed by shape-text processed-set. Diagnosed via CAPTURE_DIAGNOSTIC, produced task for Claude Code. Session 16 (Claude Code) implemented both fixes — clone-based gradient capture and SVG guard. Also designed and produced task documents for: regression test harness (Session 15), config persistence + settings UI + version display (Session 15), electron-builder packaging (Session 15), GETTING_STARTED.md (Session 15). Version bumped to 1.0.1. Beta released to 12 users. Discussed macOS portability — deferred, codebase is ready but packaging requires Apple Developer cert and Mac build environment. Priorities now shift to beta feedback.
+
 ### Next Session Priorities
 
 1. ~~**Regression test harness**~~ ✅ COMPLETE (Session 15) — `test/regression/pipeline.test.js`. 16 pass, 6 skip. Run via `npm run test:regression`.
 
-2. ~~**Config persistence and versioning**~~ ✅ COMPLETE (Session 15) — JSON file in userData with schema versioning. Settings UI panel.
+2. ~~**Config persistence and versioning**~~ ✅ COMPLETE (Session 15) — JSON file in userData with schema versioning. Settings UI panel with output strategy, dimensions, warnings toggle, folder memory.
 
-3. ~~**Packaging with electron-builder**~~ ✅ COMPLETE (Session 15) — Unpacked app + portable zip. NSIS installer blocked on managed estates.
+3. ~~**Packaging with electron-builder**~~ ✅ COMPLETE (Session 15) — NSIS installer + portable zip. v1.0.1. Portable zip is primary distribution for managed estate.
 
-4. ~~**Beta documentation**~~ ✅ COMPLETE (Session 15) — GETTING_STARTED.md produced and bundled with distribution.
+4. ~~**Beta documentation**~~ ✅ COMPLETE (Session 15) — GETTING_STARTED.md for end users. CLAUDE.md updated for developers.
 
-Priorities are now driven by beta feedback. No outstanding pre-planned work items.
+5. **Beta feedback triage** — 12 users in pilot. Priorities now driven by real usage feedback. Expected areas: font warnings, output location confusion, SmartScreen friction.
+
+6. **Overflow detection review** (Phase 3b) — Port `getBodyDimensions()` overflow check from original repo. Flagged as possibly redundant — no user has reported an issue. Defer unless feedback surfaces it.
+
+7. **macOS build** (deferred) — Codebase is portable, packaging is the work (icns icon, Apple Developer cert, notarization). Not justified until non-technical macOS users need it. Power users can run the CJS converter directly.
+
+8. **Code signing** (deferred) — Required for clean SmartScreen/Gatekeeper experience. Investigate when moving from beta to broader deployment.
 
 ## Checkpoint Discipline
 
