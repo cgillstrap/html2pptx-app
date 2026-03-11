@@ -29,8 +29,8 @@ src/
     index.html       # Drag-and-drop UI
     renderer.js      # UI logic, IPC callbacks, status display
 test/
-  extraction/
-    fixtures/        # Test HTML files (sample-slide, multi-slide-test, agile-slides, lpm-slides-v1)
+  fixtures/          # Renamed test fixtures — see manifest.md for full listing
+  diagnostic/        # Diagnostic scripts and output
 ```
 
 ## Critical Architecture Rules

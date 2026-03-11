@@ -67,6 +67,8 @@ Updated by: Chat sessions, when new learnings are captured.
 
 ## HTML Patterns Encountered
 
+> **Note:** Fixture names below are historical — see `test/fixtures/manifest.md` for current names.
+
 | Pattern | Example Fixture | Detection Method | Layout Strategy | Key Challenges |
 |---------|----------------|-----------------|----------------|----------------|
 | **Guardrails-compliant** | `multi-slide-test.html` | `data-slide-number` | Vertically stacked sections, 960×540px each | Clean case. Gradient on slide 1 tested. |
