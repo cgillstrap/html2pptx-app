@@ -55,7 +55,7 @@ This app is one piece of a larger initiative that includes:
 | `src/main/main.js` | Electron entry point, orchestration, IPC routing, app lifecycle | Conversion logic, DOM access |
 | `src/main/preload.js` | Secure IPC bridge (contextBridge, webUtils.getPathForFile) | Business logic, file I/O |
 | `src/main/security.js` | CSP headers, navigation guards, path validation | Conversion, UI rendering |
-| `src/main/config.js` | Centralised settings, defaults, schema validation | File I/O (yet), UI rendering |
+| `src/main/config.js` | Centralised settings, defaults, schema validation, persistence | UI rendering |
 | `src/extraction/extractor.js` | HTML → intermediate JSON via hidden BrowserWindow | File writing, PPTX generation |
 | `src/generation/generator.js` | Intermediate JSON → PPTX via pptxgenjs | DOM access, HTML parsing |
 | `src/renderer/index.html` + `renderer.js` | Drag-and-drop UI, status display | File system access, conversion logic |
@@ -66,16 +66,16 @@ This app is one piece of a larger initiative that includes:
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 13g | Current | `captureElementImages()`: try-direct-then-fallback capture; lifts ALL overflow clipping (container + descendants) before capture; batch re-queries SVG/gradient positions in DOM order after overflow lift. Diagnostic logging gated behind `CAPTURE_DIAGNOSTIC=1`. |
+| `src/extraction/extractor.js` | Session 16 | Current | `captureElementImages()`: clone-based element gradient capture (replaces coordinate-matching `hideTargetContent`); SVG guard in shape-text processed-set; try-direct-then-fallback SVG capture; lifts ALL overflow clipping before capture; batch re-queries positions after overflow lift. Diagnostic logging gated behind `CAPTURE_DIAGNOSTIC=1`. |
 | `src/generation/generator.js` | Session 10 | Current | Scale-to-fit with centering already implemented. Viewport normalization safety net removed. Generator trusts intermediate JSON as-is (Principle 2 restored). |
 | `src/main/main.js` | Session 15 | Current | Added `dialog` import, `initConfig()` call, `resolveOutputPath()` (replaces `computeOutputPath`), config/folder-picker/version IPC handlers, `showWarnings` gating, window icon |
 | `src/main/preload.js` | Session 15 | Current | Added `getConfig`, `updateConfig`, `resetConfig`, `selectFolder`, `getVersion` via `invoke`/`handle` |
 | `src/main/security.js` | Session 1 | Current | |
-| `src/main/config.js` | Session 15 | Current | Added persistence (`initConfig`/`saveConfig`), 5 new fields (`defaultSlideWidth/Height`, `showWarnings`, `rememberLastFolder`, `lastUsedFolder`), schema versioning |
+| `src/main/config.js` | Session 15 | Current | Persistence (`initConfig`/`saveConfig`), 5 new fields (`defaultSlideWidth/Height`, `showWarnings`, `rememberLastFolder`, `lastUsedFolder`), schema versioning |
 | `src/renderer/index.html` | Session 15 | Current | Added settings panel (output strategy, dimensions, checkboxes), version label, gear toggle |
 | `src/renderer/renderer.js` | Session 15 | Current | Added version display, settings panel toggle, `loadSettings()`, change handlers for all controls |
 | `PRINCIPLES.md` | Session 2 | Current | |
-| `LEARNINGS.md` | Session 14 | Current | Cherry-picked from session-12b branch. Added learning #52. |
+| `LEARNINGS.md` | Session 16 | Current | Added learnings #53 (clone-based element gradient capture) and #54 (SVG protection in shape-text path). |
 | `docs/doc0-prompting-methodology.md` | Session 14 | Current | v1.2: Engine characterisations refined, task-engine table updated, filenames added |
 | `docs/doc1-technical-output-profile.md` | Session 14 | NEW | v2.0: Replaces uc1-guardrails. Capability-tier structure. Expanded creative range. |
 | `docs/doc2-design-principles.md` | Stable | Current | v1.0: No changes |
@@ -85,7 +85,7 @@ This app is one piece of a larger initiative that includes:
 | `test/fixtures/manifest.md` | Session 14 | NEW | Human-readable fixture manifest |
 | `test/regression/pipeline.test.js` | Session 15 | NEW | Manifest-driven regression test harness — 16 pass, 6 skip |
 | `CLAUDE.md` | Session 15 | Current | Updated "How to Run" with `test:regression` command |
-| `package.json` | Session 15 | Current | v1.0.0, added `build`/`build:win`/`dist` scripts, electron-builder config, `test:regression` script |
+| `package.json` | Session 16 | Current | v1.0.1, `build`/`build:win`/`dist` scripts, electron-builder config, `test:regression` script |
 | `.gitignore` | Session 15 | Current | Removed `build/` from ignore (needed for buildResources/icon.ico) |
 | `build/icon.ico` | Session 15 | NEW | App icon for installer and exe (renamed from noun-file-convert-7880640-FFFFFF.ico) |
 | `GETTING_STARTED.md` | Session 15 | NEW | End-user getting started guide, also copied to dist/win-unpacked/ for portable distribution |
@@ -128,6 +128,14 @@ This app is one piece of a larger initiative that includes:
 - [ ] Template-based creation
 
 ## Key Decisions Log
+
+### Session 16 Decisions
+
+1. **Clone-based element gradient capture replaces coordinate-matching `hideTargetContent()`** — The old approach used 2px position tolerance to find gradient elements and hide their content before capture. After transform stripping and overflow lifting, coordinates shift enough that matches fail, leaving text burned into the captured gradient. The new approach queries gradient styles by size matching (5px tolerance — size is stable across DOM manipulations), creates a clean clone at viewport origin with only the gradient CSS, captures it, and removes the clone. This follows Learning #30 and the same pattern used by `captureGradients()` for slide-level gradients.
+
+2. **SVG guard added to shape-text processed-set** — The shape-text extraction path marked ALL descendants as processed, including SVG elements, preventing SVG capture. Added the same `instanceof SVGElement` guard already present in the div-text fallback. Result: `visual-transform-svg-1s.html` now extracts 4 SVGs (previously 0).
+
+3. **`hideTargetContent()` and `restoreTargetContent()` removed** — No longer needed. Replaced by `queryGradientStyles()`, `createGradientClone()`, and `removeGradientClone()`.
 
 ### Session 15 Decisions
 
@@ -315,15 +323,19 @@ All 22 fixtures consolidated to `test/fixtures/` with consistent naming. See `te
 
 16. **Session 15 (Claude Code)** — Regression test harness + config persistence + settings UI + packaging. Manifest-driven `pipeline.test.js` (16 pass, 6 skip). Config persistence to `config.json` in userData with schema versioning and forward-compatible migration. Inline settings panel with output strategy (same-directory / save-dialog / fixed-folder), default dimensions, showWarnings toggle, rememberLastFolder. Version label in header. All IPC via invoke/handle pattern. electron-builder configured for NSIS + zip; unpacked app and portable zip build successfully. NSIS installer blocked on managed Windows (7zip-bin security policy) — works on unmanaged machines. Version bumped to 1.0.0. CLAUDE.md updated. No regressions.
 
+17. **Session 16 (Claude Code)** — Two targeted fixes in extractor.js. (1) Replaced fragile coordinate-matching `hideTargetContent()` with clone-based element gradient capture — queries gradient styles by size, creates clean clone at viewport origin, captures, removes. (2) Added SVG guard to shape-text processed-set so SVG elements are no longer suppressed. All 16 regression tests pass, no regressions. Learnings #53–#54 added.
+
 ### Next Session Priorities
 
 1. ~~**Regression test harness**~~ ✅ COMPLETE (Session 15) — `test/regression/pipeline.test.js`. 16 pass, 6 skip. Run via `npm run test:regression`.
 
-2. **Config persistence and versioning** — JSON file in user's app data directory. Settings UI panel.
+2. ~~**Config persistence and versioning**~~ ✅ COMPLETE (Session 15) — JSON file in userData with schema versioning. Settings UI panel.
 
-3. **Packaging with electron-builder** — .exe installer for Windows 11.
+3. ~~**Packaging with electron-builder**~~ ✅ COMPLETE (Session 15) — Unpacked app + portable zip. NSIS installer blocked on managed estates.
 
-4. **Beta documentation** — How consultants receive the document stack (docs 0–3) and the tool together. In-app guidance or companion README.
+4. ~~**Beta documentation**~~ ✅ COMPLETE (Session 15) — GETTING_STARTED.md produced and bundled with distribution.
+
+Priorities are now driven by beta feedback. No outstanding pre-planned work items.
 
 ## Checkpoint Discipline
 

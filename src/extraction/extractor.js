@@ -753,7 +753,13 @@ const EXTRACTION_SCRIPT = `
                 ]
               };
               // Mark descendants as processed to prevent re-extraction.
-              el.querySelectorAll('*').forEach(function(child) { processed.add(child); });
+              // Don't mark SVG elements — let SVG capture handle them (Learning #33).
+              el.querySelectorAll('*').forEach(function(child) {
+                if (child.tagName === 'svg' || child.tagName === 'SVG' || child instanceof SVGElement) {
+                  return;
+                }
+                processed.add(child);
+              });
             }
 
             if (hasVisualFill || hasUniformBorder) {
@@ -1786,54 +1792,70 @@ async function captureElementImages(result, hiddenWindow) {
     `);
   }
 
-  // Helper: hide text content of the target element (for gradient capture).
-  // Hides both direct text (via color: transparent) and child elements
-  // (via visibility: hidden) so only the background gradient is captured.
-  async function hideTargetContent(captureRect) {
-    await hiddenWindow.webContents.executeJavaScript(`
+  // Helper: query gradient styles from a target element by size matching.
+  // Returns { bgImage, bgColor, borderRadius, w, h } or null.
+  // Matches on size (5px tolerance) rather than position, which is stable
+  // across transform stripping and overflow lifting (Learning #30).
+  async function queryGradientStyles(slideIndex, targetW, targetH) {
+    return await hiddenWindow.webContents.executeJavaScript(`
       (function() {
-        var targetRect = { x: ${captureRect.x}, y: ${captureRect.y},
-                           w: ${captureRect.w}, h: ${captureRect.h} };
-        var all = document.querySelectorAll('*');
+        var containers = ${RESOLVE_CONTAINERS_JS};
+        var target = containers[${slideIndex}];
+        if (!target) return null;
+        var all = target.querySelectorAll('*');
         for (var i = 0; i < all.length; i++) {
-          var r = all[i].getBoundingClientRect();
-          if (Math.abs(r.left - targetRect.x) < 2 &&
-              Math.abs(r.top - targetRect.y) < 2 &&
-              Math.abs(r.width - targetRect.w) < 2 &&
-              Math.abs(r.height - targetRect.h) < 2) {
-            // Hide direct text nodes by making text transparent
-            all[i].dataset._gcPrevColor = all[i].style.color || '';
-            all[i].style.color = 'transparent';
-            // Hide child elements
-            var children = all[i].children;
-            for (var c = 0; c < children.length; c++) {
-              children[c].dataset._gcPrevVis = children[c].style.visibility || '';
-              children[c].style.visibility = 'hidden';
+          var cs = window.getComputedStyle(all[i]);
+          if (cs.backgroundImage && cs.backgroundImage !== 'none' &&
+              cs.backgroundImage.indexOf('gradient') !== -1) {
+            var r = all[i].getBoundingClientRect();
+            if (Math.abs(r.width - ${targetW}) < 5 &&
+                Math.abs(r.height - ${targetH}) < 5) {
+              return {
+                bgImage: cs.backgroundImage,
+                bgColor: cs.backgroundColor,
+                borderRadius: cs.borderRadius,
+                w: r.width,
+                h: r.height
+              };
             }
-            break;
           }
         }
+        return null;
       })()
     `);
   }
 
-  // Helper: restore text and children visibility after gradient capture
-  async function restoreTargetContent() {
+  // Helper: create a gradient clone at viewport origin for clean capture.
+  async function createGradientClone(gradInfo) {
     await hiddenWindow.webContents.executeJavaScript(`
       (function() {
-        document.querySelectorAll('*').forEach(function(el) {
-          if (el.dataset._gcPrevColor !== undefined) {
-            el.style.color = el.dataset._gcPrevColor || '';
-            delete el.dataset._gcPrevColor;
-          }
-          var children = el.children;
-          for (var c = 0; c < children.length; c++) {
-            if (children[c].dataset._gcPrevVis !== undefined) {
-              children[c].style.visibility = children[c].dataset._gcPrevVis || '';
-              delete children[c].dataset._gcPrevVis;
-            }
-          }
-        });
+        var clone = document.createElement('div');
+        clone.id = '__el_gradient_capture_clone__';
+        clone.style.position = 'absolute';
+        clone.style.left = '0px';
+        clone.style.top = '0px';
+        clone.style.width = '${gradInfo.w}px';
+        clone.style.height = '${gradInfo.h}px';
+        clone.style.zIndex = '2147483647';
+        clone.style.pointerEvents = 'none';
+        clone.style.margin = '0';
+        clone.style.padding = '0';
+        clone.style.border = 'none';
+        clone.style.overflow = 'hidden';
+        clone.style.backgroundImage = '${gradInfo.bgImage.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}';
+        clone.style.backgroundColor = '${gradInfo.bgColor}';
+        clone.style.borderRadius = '${gradInfo.borderRadius}';
+        document.body.appendChild(clone);
+      })()
+    `);
+  }
+
+  // Helper: remove the gradient capture clone.
+  async function removeGradientClone() {
+    await hiddenWindow.webContents.executeJavaScript(`
+      (function() {
+        var clone = document.getElementById('__el_gradient_capture_clone__');
+        if (clone) clone.remove();
       })()
     `);
   }
@@ -2098,71 +2120,44 @@ async function captureElementImages(result, hiddenWindow) {
         continue;
       }
 
-      // ── Element Gradient Capture ─────────────────────────
+      // ── Element Gradient Capture (clone-based, Learning #30) ──────
       if (el.type === 'shape' && el.captureRect) {
         const captureW = el.captureRect.w;
         const captureH = el.captureRect.h;
         try {
-          // Use batch-queried fresh rect (DOM order), fall back to stored
-          const gradRect = el._freshRect || el.captureRect;
-          let capX = slideRepositioned ? (el.position ? el.position.x * 96 : 0) : gradRect.x;
-          let capY = slideRepositioned ? (el.position ? el.position.y * 96 : 0) : gradRect.y;
-          const targetRect = { x: capX, y: capY, w: gradRect.w, h: gradRect.h };
+          // Query the gradient element's computed styles by size matching.
+          // Size is stable across transform stripping and overflow lifting,
+          // unlike position which shifts with DOM manipulations.
+          const gradInfo = await queryGradientStyles(slide.index, captureW, captureH);
 
-          // Hide the element's children so we capture only the background
-          await hideTargetContent(targetRect);
+          if (!gradInfo) {
+            throw new Error('Could not find gradient element by size match');
+          }
+
+          // Create a clean clone at viewport origin with only the gradient styles.
+          // This eliminates both coordinate-matching fragility and the CSS
+          // specificity problem (child elements overriding color: transparent).
+          await createGradientClone(gradInfo);
           await new Promise(resolve => setTimeout(resolve, 30));
 
-          let nativeImage = await hiddenWindow.webContents.capturePage({
-            x: Math.round(capX),
-            y: Math.round(capY),
-            width: Math.round(gradRect.w),
-            height: Math.round(gradRect.h)
+          const nativeImage = await hiddenWindow.webContents.capturePage({
+            x: 0,
+            y: 0,
+            width: Math.round(gradInfo.w),
+            height: Math.round(gradInfo.h)
           });
 
           if (isDiag) {
-            const debugPath = path.join(os.tmpdir(), `capture-debug-s${slide.index}-el${i}-gradient-direct.png`);
+            const debugPath = path.join(os.tmpdir(), `capture-debug-s${slide.index}-el${i}-gradient-clone.png`);
             fs.writeFileSync(debugPath, nativeImage.toPNG());
             const sz = nativeImage.getSize();
-            console.log(`[DIAG] Slide ${slide.index + 1} el${i} gradient direct: (${Math.round(capX)},${Math.round(capY)}) ${sz.width}x${sz.height}, empty=${nativeImage.isEmpty()}${el._freshRect ? ' [fresh]' : ' [stored]'}`);
+            console.log(`[DIAG] Slide ${slide.index + 1} el${i} gradient clone: (0,0) ${sz.width}x${sz.height}, empty=${nativeImage.isEmpty()}`);
           }
 
-          // If direct capture returned empty, reposition and retry
-          if (nativeImage.isEmpty() && !slideRepositioned) {
-            await restoreTargetContent();
-            console.log(
-              `[Extractor] Slide ${slide.index + 1}: direct gradient capture empty, ` +
-              `repositioning slide to origin and retrying`
-            );
-            await repositionSlideToOrigin(slide.index);
-            slideRepositioned = true;
-
-            capX = el.position ? el.position.x * 96 : 0;
-            capY = el.position ? el.position.y * 96 : 0;
-            const reposRect = { x: capX, y: capY, w: gradRect.w, h: gradRect.h };
-
-            await hideTargetContent(reposRect);
-            await new Promise(resolve => setTimeout(resolve, 30));
-
-            nativeImage = await hiddenWindow.webContents.capturePage({
-              x: Math.round(capX),
-              y: Math.round(capY),
-              width: Math.round(gradRect.w),
-              height: Math.round(gradRect.h)
-            });
-
-            if (isDiag) {
-              const debugPath = path.join(os.tmpdir(), `capture-debug-s${slide.index}-el${i}-gradient-repos.png`);
-              fs.writeFileSync(debugPath, nativeImage.toPNG());
-              const sz = nativeImage.getSize();
-              console.log(`[DIAG] Slide ${slide.index + 1} el${i} gradient repos: (${Math.round(capX)},${Math.round(capY)}) ${sz.width}x${sz.height}, empty=${nativeImage.isEmpty()}`);
-            }
-          }
-
-          await restoreTargetContent();
+          await removeGradientClone();
 
           if (nativeImage.isEmpty()) {
-            throw new Error('capturePage returned empty image for gradient element');
+            throw new Error('capturePage returned empty image for gradient clone');
           }
 
           const dataUri = nativeImage.toDataURL();
@@ -2176,7 +2171,7 @@ async function captureElementImages(result, hiddenWindow) {
           );
 
         } catch (err) {
-          try { await restoreTargetContent(); } catch (_) { /* best effort */ }
+          try { await removeGradientClone(); } catch (_) { /* best effort */ }
 
           console.warn(
             `[Extractor] Slide ${slide.index + 1}: element gradient capture failed — ` +

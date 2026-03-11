@@ -1,6 +1,6 @@
 {
   "name": "html2pptx-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Drag-and-drop HTML to PowerPoint converter for consultants",
   "main": "src/main/main.js",
   "scripts": {

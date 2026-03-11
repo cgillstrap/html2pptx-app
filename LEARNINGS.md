@@ -62,6 +62,8 @@ Updated by: Chat sessions, when new learnings are captured.
 50. **capturePage() needs a compositor frame flush after DOM changes** — After repositioning a slide container, the first `capturePage()` call may return a stale frame. A dummy 1×1 capture forces the compositor to render a fresh frame.
 51. **`overflow: hidden` clips capturePage() output** — Content clipped by CSS overflow is not rendered by the compositor. Must temporarily remove overflow clipping to capture chart content that extends beyond the slide viewport boundary.
 52. **SVG elements near scroll boundaries may capture incompletely after overflow lift** — Flex layout recalculation during overflow lift can shift elements. A partially-visible SVG at the scroll boundary may capture only the portion that was originally in view. Accepted as Tier 2 graceful degradation for content-dense slides exceeding the viewport.
+53. **Element gradient capture should use clones, not in-place hiding** — `hideTargetContent()` used coordinate matching (2px tolerance) to find gradient elements and hide their content. After transform stripping and overflow lifting, coordinates shift enough that matches fail. Clone-based capture (create empty div with gradient styles at viewport origin) is robust to all DOM manipulations and avoids CSS specificity issues with child elements.
+54. **Shape-text processed-set must exclude SVG elements** — The shape-text extraction path marks all descendants as processed via `querySelectorAll('*')`, which suppresses SVGs from the SVG capture path. The same `instanceof SVGElement` guard used in the div-text fallback must also be applied in the shape-text path.
 
 ---
 
