@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barclays PLC — Peer Benchmarking Analysis</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#00395D;--cyan:#00AEEF;--teal:#17B5B0;--amber:#F2A900;--red:#E03C31;--gray:#8C8C8C;--lgray:#D9D9D9;--bg:#FFFFFF;--dbg:#F7F9FB}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#1a1a2e;overflow:hidden;height:100vh;width:100vw}
+.slide{display:none;width:100vw;height:100vh;background:var(--bg);padding:48px 64px 64px;overflow-y:auto;position:relative}
+.slide.active{display:flex;flex-direction:column}
+.slide-header{text-align:center;margin-bottom:8px;flex-shrink:0}
+.slide-header .conf{font-size:10px;color:var(--cyan);font-weight:600;letter-spacing:1.5px;text-transform:uppercase}
+.slide-header .brand{font-size:13px;color:var(--blue);font-weight:600;margin-top:2px}
+.slide-content{flex:1;overflow-y:auto;padding-bottom:40px}
+.s-title{font-size:28px;font-weight:700;color:var(--blue);margin-bottom:4px}
+.s-sub{font-size:14px;color:var(--gray);font-style:italic;margin-bottom:24px}
+.s-insight{font-size:15px;color:#333;line-height:1.7;margin-bottom:24px;max-width:900px}
+.s-question{background:#EEF6FF;border-left:4px solid var(--cyan);padding:18px 24px;border-radius:4px;margin-top:24px;font-size:14px;color:var(--blue);font-weight:500;line-height:1.6}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px}
+.chart-grid.three{grid-template-columns:1fr 1fr 1fr}
+.chart-box{background:var(--dbg);border-radius:8px;padding:20px}
+.chart-label{font-size:13px;font-weight:600;color:var(--blue);margin-bottom:12px}
+.bar-row{display:flex;align-items:center;margin-bottom:6px}
+.bar-name{width:110px;font-size:11px;color:#555;text-align:right;padding-right:10px;flex-shrink:0;white-space:nowrap}
+.bar-name.hl{color:var(--blue);font-weight:700}
+.bar-track{flex:1;height:20px;background:#EAEAEA;border-radius:3px;position:relative;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width 0.3s}
+.bar-fill.peer{background:var(--lgray)}
+.bar-fill.hl{background:var(--cyan)}
+.bar-fill.red{background:var(--red)}
+.bar-val{width:55px;font-size:11px;color:#555;padding-left:8px;flex-shrink:0;text-align:left}
+.bar-val.hl{color:var(--blue);font-weight:700}
+
+.stack-row{display:flex;align-items:center;margin-bottom:8px}
+.stack-name{width:90px;font-size:11px;color:#555;text-align:right;padding-right:10px;flex-shrink:0}
+.stack-track{flex:1;height:22px;display:flex;border-radius:3px;overflow:hidden}
+.stack-seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:600}
+
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--blue);color:var(--blue);font-weight:600;font-size:11px;white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid #eee;font-size:11px}
+tr.hl td{background:#EEF6FF;font-weight:600}
+.tbl-wrap{overflow-x:auto;margin-top:12px}
+
+.line-chart-wrap{position:relative;height:200px;margin-top:10px;border-left:2px solid #ddd;border-bottom:2px solid #ddd;padding:10px 10px 24px 40px}
+.line-y-label{position:absolute;left:0;font-size:9px;color:#999;transform:translateY(-50%)}
+.line-x-label{position:absolute;bottom:0;font-size:10px;color:#999;transform:translateX(-50%)}
+
+.legend{display:flex;gap:16px;margin-top:8px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#555}
+.legend-dot{width:12px;height:4px;border-radius:2px}
+
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--blue);padding:12px 32px;display:flex;justify-content:space-between;align-items:center;z-index:100}
+.nav-btn{padding:8px 24px;font-size:13px;border:1px solid rgba(255,255,255,0.3);border-radius:4px;background:transparent;color:#fff;cursor:pointer;font-family:inherit}
+.nav-btn:hover{background:rgba(255,255,255,0.1)}
+.nav-btn:disabled{opacity:0.3;cursor:not-allowed}
+.nav-btn.primary{background:var(--cyan);border-color:var(--cyan)}
+.nav-counter{color:rgba(255,255,255,0.6);font-size:12px}
+.nav-hint{color:rgba(255,255,255,0.4);font-size:10px}
+
+.section-label{display:inline-block;font-size:10px;font-weight:600;color:var(--cyan);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;background:#EEF6FF;padding:3px 10px;border-radius:3px}
+
+.metric-card{background:var(--dbg);border-radius:8px;padding:16px 20px;text-align:center}
+.metric-val{font-size:32px;font-weight:700;color:var(--blue)}
+.metric-label{font-size:11px;color:var(--gray);margin-top:4px}
+.metric-rank{font-size:11px;color:var(--cyan);font-weight:600;margin-top:2px}
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+
+@media(max-width:800px){
+  .slide{padding:24px 20px 80px}
+  .chart-grid{grid-template-columns:1fr}
+  .metric-grid{grid-template-columns:1fr 1fr}
+  .bar-name{width:80px;font-size:10px}
+  .s-title{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<!-- SLIDE 0: TITLE -->
+<div class="slide" id="s0">
+<div class="slide-content" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;height:100%">
+  <div style="font-size:11px;color:var(--cyan);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px">Confidential</div>
+  <div style="font-size:42px;font-weight:700;color:var(--blue);line-height:1.2;max-width:700px">Barclays PLC<br>Peer Benchmarking Analysis</div>
+  <div style="width:60px;height:4px;background:var(--cyan);border-radius:2px;margin:24px 0"></div>
+  <div style="font-size:16px;color:var(--gray);margin-top:8px">Data as of FY-12/2025 &nbsp;|&nbsp; Market data as of February 2026</div>
+  <div style="font-size:13px;color:var(--lgray);margin-top:32px">Peer group: JPMorgan, Bank of America, Citigroup, Wells Fargo, Goldman Sachs,<br>HSBC, BNP Paribas, Deutsche Bank, Crédit Agricole, Lloyds, American Express</div>
+</div>
+</div>
+
+<!-- SLIDE 1: PEER SNAPSHOT -->
+<div class="slide" id="s1">
+<div class="slide-header"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-content">
+  <div class="section-label">Overview</div>
+  <div class="s-title">Barclays in Context: A Peer Snapshot</div>
+  <div class="s-sub">FY2025 — Barclays PLC vs. 11 global banking peers</div>
+  <div class="s-insight">Barclays ranks in the middle of the peer group across most key metrics, but the direction of travel is consistently upward. Operating income growth of 10.9% was near the top of the group. Pre-tax ROE has improved to 12.5%, and the cost/income ratio has dropped below 60% for the first time in the observed period.</div>
+  <div class="metric-grid">
+    <div class="metric-card"><div class="metric-val">12.5%</div><div class="metric-label">Pre-Tax ROE</div><div class="metric-rank">Rank: 9th of 12</div></div>
+    <div class="metric-card"><div class="metric-val">59.9%</div><div class="metric-label">Cost / Income</div><div class="metric-rank">Rank: 5th of 11</div></div>
+    <div class="metric-card"><div class="metric-val">10.9%</div><div class="metric-label">OI Growth YoY</div><div class="metric-rank">Rank: 2nd of 12</div></div>
+    <div class="metric-card"><div class="metric-val">48.4%</div><div class="metric-label">1-Year TRS</div><div class="metric-rank">Rank: 3rd of 12</div></div>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box"><div class="chart-label">Pre-Tax ROE (FY2025)</div><div id="roe-chart"></div></div>
+    <div class="chart-box"><div class="chart-label">Operating Income Growth (FY2025 YoY)</div><div id="oig-chart"></div></div>
+    <div class="chart-box"><div class="chart-label">Cost / Income Ratio (FY2025) — lower is better</div><div id="ci-chart"></div></div>
+    <div class="chart-box"><div class="chart-label">1-Year Total Return to Shareholders</div><div id="trs-chart"></div></div>
+  </div>
+  <div class="s-question">Barclays is improving faster than most peers across multiple dimensions. The question is whether this momentum is structural or cyclical — and what it would take to move from mid-table to top quartile.</div>
+</div>
+</div>
+
+<!-- SLIDE 2: INCOME STORY -->
+<div class="slide" id="s2">
+<div class="slide-header"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-content">
+  <div class="section-label">Revenue</div>
+  <div class="s-title">The Income Story: What's Driving Performance</div>
+  <div class="s-sub">Revenue composition and business segment contribution</div>
+  <div class="s-insight">Barclays operates with a near-even split between net interest income (49.8%) and non-interest income (50.2%) — a relatively unusual position among peers. Most banks lean heavily toward one or the other. Total operating income grew from £25.4bn to £29.1bn over the period, a 7.1% CAGR, driven by balanced growth across both revenue lines.</div>
+  <div class="chart-grid">
+    <div class="chart-box">
+      <div class="chart-label">Operating Income Composition (GBP mn)</div>
+      <div style="display:flex;gap:24px;justify-content:center;margin:16px 0">
+        <div style="text-align:center"><div style="display:flex;align-items:flex-end;gap:4px;height:140px;justify-content:center">
+          <div style="display:flex;flex-direction:column;align-items:center"><div style="background:var(--cyan);width:48px;border-radius:3px 3px 0 0" id="bar23non"></div><div style="background:var(--blue);width:48px" id="bar23nii"></div><div style="font-size:10px;color:#999;margin-top:4px">FY23</div><div style="font-size:10px;font-weight:600;color:var(--blue)">£25.4bn</div></div>
+          <div style="display:flex;flex-direction:column;align-items:center"><div style="background:var(--cyan);width:48px;border-radius:3px 3px 0 0" id="bar24non"></div><div style="background:var(--blue);width:48px" id="bar24nii"></div><div style="font-size:10px;color:#999;margin-top:4px">FY24</div><div style="font-size:10px;font-weight:600;color:var(--blue)">£26.2bn</div></div>
+          <div style="display:flex;flex-direction:column;align-items:center"><div style="background:var(--cyan);width:48px;border-radius:3px 3px 0 0" id="bar25non"></div><div style="background:var(--blue);width:48px" id="bar25nii"></div><div style="font-size:10px;color:#999;margin-top:4px">FY25</div><div style="font-size:10px;font-weight:600;color:var(--blue)">£29.1bn</div></div>
+        </div></div>
+      </div>
+      <div class="legend" style="justify-content:center"><div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Net Interest Income</div><div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>Non-interest Income</div></div>
+    </div>
+    <div class="chart-box"><div class="chart-label">NII as % of Operating Income (FY2025)</div><div id="nii-chart"></div></div>
+  </div>
+  <div style="margin-top:8px">
+    <div class="chart-label" style="font-size:13px;color:var(--blue);font-weight:600;margin-bottom:8px">Business Segment Performance (FY2025)</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Segment</th><th>% of Op. Income</th><th>EBT Margin FY23</th><th>EBT Margin FY25</th><th>Cost/Income FY23</th><th>Cost/Income FY25</th><th>Loan Loss Ratio FY25</th></tr></thead>
+      <tbody>
+        <tr><td>Investment Bank</td><td>45.2%</td><td>29.0%</td><td>35.3%</td><td>70.1%</td><td>62.3%</td><td>2.3%</td></tr>
+        <tr><td>Barclays UK</td><td>30.1%</td><td>37.8%</td><td>39.2%</td><td>58.2%</td><td>56.1%</td><td>4.7%</td></tr>
+        <tr><td>US Consumer Bank</td><td>12.7%</td><td>5.3%</td><td>14.0%</td><td>50.7%</td><td>44.7%</td><td>41.3%</td></tr>
+        <tr><td>UK Corporate Bank</td><td>7.1%</td><td>49.8%</td><td>47.0%</td><td>51.5%</td><td>51.2%</td><td>1.8%</td></tr>
+        <tr><td>Private Bank & WM</td><td>4.8%</td><td>33.7%</td><td>27.2%</td><td>66.0%</td><td>73.4%</td><td>-0.6%</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="s-question">The Investment Bank — 45% of income — has driven significant margin expansion. How sustainable is this, and what does the segment mix tell us about where future growth comes from?</div>
+</div>
+</div>
+
+<!-- SLIDE 3: EFFICIENCY -->
+<div class="slide" id="s3">
+<div class="slide-header"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-content">
+  <div class="section-label">Efficiency</div>
+  <div class="s-title">The Efficiency Picture: Progress and Composition</div>
+  <div class="s-sub">Cost/income ratio trend and decomposition</div>
+  <div class="s-insight">Barclays' cost/income ratio dropped from 61.6% to 59.9% — breaking below 60% for the first time in the period. However, the composition tells an interesting story. Staff costs have fallen steadily from 39.5% to 36.5% of income, suggesting genuine workforce productivity gains. The non-staff cost line moved from 22.2% to 25.0% before partially correcting to 23.5% — it remains above where it started.</div>
+  <div class="chart-grid">
+    <div class="chart-box">
+      <div class="chart-label">Barclays Cost Decomposition (% of Income)</div>
+      <div style="margin:16px 0">
+        <div style="display:flex;gap:24px;justify-content:center;align-items:flex-end;height:160px">
+          <div style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
+            <div style="font-size:10px;color:var(--amber);font-weight:600;margin-bottom:2px">22.2%</div>
+            <div style="background:var(--amber);width:56px;height:55px;border-radius:3px 3px 0 0"></div>
+            <div style="font-size:10px;color:var(--blue);font-weight:600">39.5%</div>
+            <div style="background:var(--blue);width:56px;height:99px"></div>
+            <div style="font-size:10px;color:#999;margin-top:4px">FY23</div>
+            <div style="font-size:10px;font-weight:700;color:var(--blue)">61.6%</div>
+          </div>
+          <div style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
+            <div style="font-size:10px;color:var(--amber);font-weight:600;margin-bottom:2px">25.0%</div>
+            <div style="background:var(--amber);width:56px;height:63px;border-radius:3px 3px 0 0"></div>
+            <div style="font-size:10px;color:var(--blue);font-weight:600">37.6%</div>
+            <div style="background:var(--blue);width:56px;height:94px"></div>
+            <div style="font-size:10px;color:#999;margin-top:4px">FY24</div>
+            <div style="font-size:10px;font-weight:700;color:var(--blue)">62.6%</div>
+          </div>
+          <div style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
+            <div style="font-size:10px;color:var(--amber);font-weight:600;margin-bottom:2px">23.5%</div>
+            <div style="background:var(--amber);width:56px;height:59px;border-radius:3px 3px 0 0"></div>
+            <div style="font-size:10px;color:var(--blue);font-weight:600">36.5%</div>
+            <div style="background:var(--blue);width:56px;height:91px"></div>
+            <div style="font-size:10px;color:#999;margin-top:4px">FY25</div>
+            <div style="font-size:10px;font-weight:700;color:var(--blue)">59.9%</div>
+          </div>
+        </div>
+        <div class="legend" style="justify-content:center;margin-top:12px"><div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Staff Cost</div><div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Non-Staff Cost</div></div>
+      </div>
+    </div>
+    <div class="chart-box"><div class="chart-label">Staff Cost / Income — Peer Comparison (FY2025)</div><div id="staff-chart"></div></div>
+  </div>
+  <div class="chart-box" style="margin-top:8px">
+    <div class="chart-label">Cost / Income Ratio — Full Peer Ranking (FY2025, lower is better)</div>
+    <div id="ci2-chart"></div>
+  </div>
+  <div class="s-question">The bank has made visible progress on workforce efficiency. The question the data raises is what's happening beneath the non-staff cost line — is this investment spend, structural cost, or something else?</div>
+</div>
+</div>
+
+<!-- SLIDE 4: CREDIT -->
+<div class="slide" id="s4">
+<div class="slide-header"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-content">
+  <div class="section-label">Credit Quality</div>
+  <div class="s-title">Credit Quality: A Diverging Trend</div>
+  <div class="s-sub">Loan loss ratios and provision trends</div>
+  <div class="s-insight">Barclays' loan loss ratio has risen steadily from 7.4% to 7.8%, while several peers have seen improving credit trends — notably Wells Fargo (6.5% → 4.4%). Loan loss provisions as a share of net interest income are at 15.7%, placing Barclays in the upper end of the peer group. The business segment data points to the US Consumer Bank as the primary driver with a 41.3% loan loss ratio.</div>
+  <div class="chart-grid">
+    <div class="chart-box">
+      <div class="chart-label">Loan Loss Ratio Trend</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Bank</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>Direction</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td>Barclays</td><td>7.4%</td><td>7.5%</td><td>7.8%</td><td style="color:var(--red)">↑ Rising</td></tr>
+          <tr><td>Wells Fargo</td><td>6.5%</td><td>5.3%</td><td>4.4%</td><td style="color:var(--teal)">↓ Improving</td></tr>
+          <tr><td>BofA</td><td>4.7%</td><td>5.8%</td><td>4.9%</td><td style="color:var(--gray)">→ Stable</td></tr>
+          <tr><td>HSBC</td><td>5.0%</td><td>4.7%</td><td>5.3%</td><td style="color:var(--gray)">→ Stable</td></tr>
+          <tr><td>JPMorgan</td><td>6.1%</td><td>6.2%</td><td>6.2%</td><td style="color:var(--gray)">→ Stable</td></tr>
+          <tr><td>Citi</td><td>10.1%</td><td>12.1%</td><td>11.0%</td><td style="color:var(--red)">↑ Elevated</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="chart-box"><div class="chart-label">Loan Losses / Net Interest Income (FY2025)</div><div id="llnii-chart"></div></div>
+  </div>
+  <div class="chart-box" style="margin-top:8px">
+    <div class="chart-label">US Consumer Bank — Segment Detail</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Metric</th><th>FY2023</th><th>FY2024</th><th>FY2025</th></tr></thead>
+      <tbody>
+        <tr><td>Operating Income Growth</td><td>23.8%</td><td>1.8%</td><td>10.7%</td></tr>
+        <tr><td>EBT Margin</td><td>5.3%</td><td>12.2%</td><td>14.0%</td></tr>
+        <tr><td>Cost / Income Ratio</td><td>50.7%</td><td>48.9%</td><td>44.7%</td></tr>
+        <tr class="hl"><td>Loan Loss Ratio</td><td>44.0%</td><td>38.9%</td><td>41.3%</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="s-question">Barclays is absorbing a growing share of its net interest income into provisions at a time when several peers are seeing improving credit trends. The US consumer book appears to be the primary driver. This is worth understanding more deeply.</div>
+</div>
+</div>
+
+<!-- SLIDE 5: VALUATION -->
+<div class="slide" id="s5">
+<div class="slide-header"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-content">
+  <div class="section-label">Valuation</div>
+  <div class="s-title">The Market's View: Valuation and Sentiment</div>
+  <div class="s-sub">Price multiples, analyst consensus, and shareholder returns</div>
+  <div class="s-insight">There is a visible tension in the data. Barclays delivered 48.4% total shareholder return over the past year — third best in the group — and 75% of analysts rate it a buy. Yet it trades at just 0.97x book value and 8.1x earnings, both significantly below the peer average. The market recognises the improvement but hasn't fully re-rated the franchise.</div>
+  <div class="chart-grid">
+    <div class="chart-box"><div class="chart-label">Price / Book Value (Feb 2026)</div><div id="pbv-chart"></div></div>
+    <div class="chart-box"><div class="chart-label">Price / Earnings (Feb 2026)</div><div id="pe-chart"></div></div>
+  </div>
+  <div class="chart-box" style="margin-top:8px">
+    <div class="chart-label">Analyst Consensus Recommendations</div>
+    <div id="analyst-chart"></div>
+  </div>
+  <div class="s-question">What would it take for the market to re-rate Barclays more in line with peers showing similar operational trajectories? The gap between operational improvement and market recognition is where the strategic conversation sits.</div>
+</div>
+</div>
+
+<!-- SLIDE 6: FORWARD -->
+<div class="slide" id="s6">
+<div class="slide-header"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-content">
+  <div class="section-label">Forward Look</div>
+  <div class="s-title">Forward Outlook: What Analysts Expect</div>
+  <div class="s-sub">Consensus estimates 2026E — 2028E</div>
+  <div class="s-insight">Analyst consensus projects Barclays to deliver a 4.0% operating income CAGR through 2028 — broadly in line with the peer median. However, the expected EBT margin improvement of +3.5 percentage points is the highest in the peer group, indicating that analysts believe the efficiency story has further to run.</div>
+  <div class="chart-grid">
+    <div class="chart-box"><div class="chart-label">2026E–2028E Operating Income CAGR</div><div id="fwd-oi-chart"></div></div>
+    <div class="chart-box"><div class="chart-label">2026E–2028E EBT Margin Change (ppts)</div><div id="fwd-ebt-chart"></div></div>
+  </div>
+  <div class="chart-box" style="margin-top:8px">
+    <div class="chart-label">Forward Estimates — Barclays vs Peer Median</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Metric</th><th>Barclays 2026E</th><th>Peer Median 2026E</th><th>Barclays 2027E</th><th>Peer Median 2027E</th><th>Barclays 2028E</th><th>Peer Median 2028E</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td>OI YoY Growth</td><td>6.3%</td><td>6.5%</td><td>4.3%</td><td>4.0%</td><td>3.8%</td><td>4.4%</td></tr>
+        <tr class="hl"><td>EBT Margin</td><td>34.3%</td><td>35.3%</td><td>36.5%</td><td>37.1%</td><td>37.8%</td><td>37.2%</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="s-question">The consensus view is that margin expansion has further to run. The question for this room is: what are the levers that make that happen, and where does the data suggest the biggest gaps still exist?</div>
+</div>
+</div>
+
+<!-- APPENDIX 1 -->
+<div class="slide" id="s7">
+<div class="slide-header"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-content">
+  <div class="section-label">Appendix</div>
+  <div class="s-title">Income Statement & Revenue Detail</div>
+  <div class="s-sub">Barclays PLC (GBP mn) and selected peers in local currency</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Barclays (GBP mn)</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>CAGR</th></tr></thead>
+    <tbody>
+      <tr><td>Total Interest Income</td><td>35,075</td><td>38,326</td><td>36,189</td><td>1.6%</td></tr>
+      <tr><td>(-) Total Interest Expense</td><td>22,366</td><td>25,390</td><td>21,688</td><td>-1.5%</td></tr>
+      <tr class="hl"><td>Net Interest Income</td><td>12,709</td><td>12,936</td><td>14,501</td><td>6.8%</td></tr>
+      <tr class="hl"><td>(+) Non-interest Income</td><td>12,670</td><td>13,303</td><td>14,598</td><td>7.3%</td></tr>
+      <tr style="font-weight:700"><td>= Operating Income</td><td>25,379</td><td>26,239</td><td>29,099</td><td>7.1%</td></tr>
+      <tr><td>(-) Loan Loss Provisions</td><td>1,883</td><td>1,975</td><td>2,273</td><td>9.9%</td></tr>
+      <tr><td>(-) Staff Costs</td><td>10,017</td><td>9,876</td><td>10,607</td><td>2.9%</td></tr>
+      <tr><td>(-) Non-staff Costs</td><td>5,624</td><td>6,552</td><td>6,833</td><td>10.2%</td></tr>
+      <tr style="font-weight:700"><td>= EBT</td><td>7,855</td><td>7,836</td><td>9,386</td><td>9.3%</td></tr>
+    </tbody>
+  </table></div>
+  <div style="margin-top:20px"><div class="chart-label" style="font-size:13px;color:var(--blue)">Geographic Revenue Mix (FY2025)</div></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Region</th><th>% of Operating Income</th><th>FY2023 Growth</th><th>FY2024 Growth</th><th>FY2025 Growth</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td>United Kingdom</td><td>54.3%</td><td>-10.8%</td><td>4.8%</td><td>13.5%</td></tr>
+      <tr><td>Americas</td><td>32.7%</td><td>27.6%</td><td>8.2%</td><td>8.8%</td></tr>
+      <tr><td>Europe</td><td>7.8%</td><td>8.4%</td><td>8.6%</td><td>-17.0%</td></tr>
+      <tr><td>Asia</td><td>4.9%</td><td>4.5%</td><td>-7.1%</td><td>12.6%</td></tr>
+      <tr><td>Africa & Middle East</td><td>0.3%</td><td>38.1%</td><td>-5.7%</td><td>4.9%</td></tr>
+    </tbody>
+  </table></div>
+</div>
+</div>
+
+<!-- APPENDIX 2 -->
+<div class="slide" id="s8">
+<div class="slide-header"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-content">
+  <div class="section-label">Appendix</div>
+  <div class="s-title">Key Operating Metrics — Peer Comparison</div>
+  <div class="s-sub">FY2025 values with Barclays trend and peer ranking</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Metric</th><th>Barclays FY23</th><th>Barclays FY24</th><th>Barclays FY25</th><th>Peer Median FY25</th><th>Rank</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td>Pre-Tax ROE</td><td>11.1%</td><td>10.9%</td><td>12.5%</td><td>~13.1%</td><td>9th</td></tr>
+      <tr><td>Cost / Income</td><td>61.6%</td><td>62.6%</td><td>59.9%</td><td>~62.4%</td><td>5th</td></tr>
+      <tr><td>EBT Margin</td><td>31.0%</td><td>29.9%</td><td>32.3%</td><td>~30.3%</td><td>6th</td></tr>
+      <tr><td>Staff Cost / Income</td><td>39.5%</td><td>37.6%</td><td>36.5%</td><td>~36.3%</td><td>9th</td></tr>
+      <tr><td>Non-staff Cost / Income</td><td>22.2%</td><td>25.0%</td><td>23.5%</td><td>~22.5%</td><td>6th</td></tr>
+      <tr class="hl"><td>Loan Loss Ratio</td><td>7.4%</td><td>7.5%</td><td>7.8%</td><td>~5.3%</td><td>11th</td></tr>
+      <tr><td>Loan Loss / NII</td><td>14.8%</td><td>15.3%</td><td>15.7%</td><td>~11.0%</td><td>10th</td></tr>
+      <tr><td>Asset Turnover</td><td>1.7%</td><td>1.8%</td><td>1.9%</td><td>~2.3%</td><td>10th</td></tr>
+      <tr><td>Net Interest Margin</td><td>0.8%</td><td>0.9%</td><td>0.9%</td><td>~1.1%</td><td>9th</td></tr>
+      <tr><td>Leverage</td><td>21.2x</td><td>20.8x</td><td>20.3x</td><td>~14.1x</td><td>3rd highest</td></tr>
+      <tr class="hl"><td>CET1 Ratio</td><td>13.8%</td><td>13.6%</td><td>14.3%</td><td>~14.1%</td><td>3rd</td></tr>
+    </tbody>
+  </table></div>
+  <div style="margin-top:20px"><div class="chart-label" style="font-size:13px;color:var(--blue)">Employee Productivity (FY2025)</div></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Company</th><th>Avg Employees</th><th>OI/Employee (GBP k)</th><th>EBT/Employee (GBP k)</th></tr></thead>
+    <tbody>
+      <tr><td>Goldman Sachs</td><td>46,950</td><td>£921k</td><td>£346k</td></tr>
+      <tr><td>AmEx</td><td>75,950</td><td>£705k</td><td>£135k</td></tr>
+      <tr><td>JPMorgan</td><td>317,873</td><td>£424k</td><td>£173k</td></tr>
+      <tr><td>BofA</td><td>213,200</td><td>£394k</td><td>£131k</td></tr>
+      <tr><td>Lloyds</td><td>60,645</td><td>£327k</td><td>£110k</td></tr>
+      <tr class="hl"><td>Barclays</td><td>93,000</td><td>£313k</td><td>£101k</td></tr>
+      <tr><td>Deutsche Bank</td><td>89,816</td><td>£311k</td><td>£94k</td></tr>
+      <tr><td>Wells Fargo</td><td>211,350</td><td>£292k</td><td>£86k</td></tr>
+      <tr><td>Citi</td><td>227,500</td><td>£282k</td><td>£73k</td></tr>
+      <tr><td>HSBC</td><td>210,012</td><td>£257k</td><td>£127k</td></tr>
+      <tr><td>BNP Paribas</td><td>177,952</td><td>£253k</td><td>£85k</td></tr>
+    </tbody>
+  </table></div>
+</div>
+</div>
+
+<!-- APPENDIX 3 -->
+<div class="slide" id="s9">
+<div class="slide-header"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-content">
+  <div class="section-label">Appendix</div>
+  <div class="s-title">Returns, Valuation, Capital & Analyst Sentiment</div>
+  <div class="s-sub">Full peer comparison</div>
+  <div class="chart-label" style="font-size:13px;color:var(--blue)">Total Return to Shareholders</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Company</th><th>5-Year TRS CAGR</th><th>3-Year TRS CAGR</th><th>1-Year TRS</th></tr></thead>
+    <tbody>
+      <tr><td>HSBC</td><td>34.6%</td><td>39.9%</td><td>57.4%</td></tr>
+      <tr><td>Deutsche Bank</td><td>27.0%</td><td>41.0%</td><td>50.2%</td></tr>
+      <tr class="hl"><td>Barclays</td><td>27.6%</td><td>42.1%</td><td>48.4%</td></tr>
+      <tr><td>Lloyds</td><td>27.0%</td><td>31.5%</td><td>47.4%</td></tr>
+      <tr><td>BNP Paribas</td><td>22.4%</td><td>22.0%</td><td>44.3%</td></tr>
+      <tr><td>Citi</td><td>14.8%</td><td>34.1%</td><td>41.4%</td></tr>
+      <tr><td>Goldman Sachs</td><td>24.8%</td><td>38.1%</td><td>40.3%</td></tr>
+      <tr><td>Crédit Agricole</td><td>18.9%</td><td>26.8%</td><td>25.3%</td></tr>
+      <tr><td>JPMorgan</td><td>18.3%</td><td>31.0%</td><td>15.8%</td></tr>
+      <tr><td>BofA</td><td>10.1%</td><td>16.3%</td><td>10.6%</td></tr>
+      <tr><td>Wells Fargo</td><td>20.4%</td><td>23.4%</td><td>6.3%</td></tr>
+      <tr><td>AmEx</td><td>19.4%</td><td>22.6%</td><td>3.7%</td></tr>
+    </tbody>
+  </table></div>
+  <div style="margin-top:20px"><div class="chart-label" style="font-size:13px;color:var(--blue)">Analyst Recommendations & Valuation Multiples</div></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Company</th><th>Buy</th><th>Hold</th><th>Sell</th><th>P/BV</th><th>P/E</th><th>Share Price Growth</th></tr></thead>
+    <tbody>
+      <tr><td>BofA</td><td>85%</td><td>15%</td><td>—</td><td>1.33x</td><td>10.7x</td><td>25.1%</td></tr>
+      <tr><td>BNP Paribas</td><td>79%</td><td>16%</td><td>5%</td><td>0.93x</td><td>7.0x</td><td>7.9%</td></tr>
+      <tr><td>Citi</td><td>78%</td><td>22%</td><td>—</td><td>1.05x</td><td>10.0x</td><td>22.5%</td></tr>
+      <tr class="hl"><td>Barclays</td><td>75%</td><td>25%</td><td>—</td><td>0.97x</td><td>8.1x</td><td>19.8%</td></tr>
+      <tr><td>Lloyds</td><td>61%</td><td>28%</td><td>11%</td><td>1.39x</td><td>10.0x</td><td>15.7%</td></tr>
+      <tr><td>Wells Fargo</td><td>59%</td><td>41%</td><td>—</td><td>1.56x</td><td>11.7x</td><td>22.8%</td></tr>
+      <tr><td>JPMorgan</td><td>54%</td><td>46%</td><td>—</td><td>2.33x</td><td>11.4x</td><td>14.9%</td></tr>
+      <tr><td>HSBC</td><td>47%</td><td>47%</td><td>7%</td><td>—</td><td>—</td><td>-12.3%</td></tr>
+      <tr><td>AmEx</td><td>39%</td><td>57%</td><td>4%</td><td>6.92x</td><td>16.8x</td><td>21.4%</td></tr>
+      <tr><td>Crédit Agricole</td><td>38%</td><td>44%</td><td>19%</td><td>0.85x</td><td>7.0x</td><td>6.5%</td></tr>
+      <tr><td>Deutsche Bank</td><td>35%</td><td>53%</td><td>12%</td><td>0.88x</td><td>7.3x</td><td>15.5%</td></tr>
+      <tr><td>Goldman Sachs</td><td>31%</td><td>62%</td><td>8%</td><td>2.32x</td><td>13.3x</td><td>14.9%</td></tr>
+    </tbody>
+  </table></div>
+</div>
+</div>
+
+<!-- NAVIGATION -->
+<div class="nav">
+  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)">← Previous</button>
+  <div style="text-align:center"><div class="nav-counter" id="counter">1 / 10</div><div class="nav-hint">Use ← → arrow keys to navigate</div></div>
+  <button class="nav-btn primary" id="nextBtn" onclick="navigate(1)">Next →</button>
+</div>
+
+<script>
+let current = 0;
+const total = 10;
+
+function navigate(dir) {
+  const next = current + dir;
+  if (next < 0 || next >= total) return;
+  document.getElementById('s' + current).classList.remove('active');
+  current = next;
+  document.getElementById('s' + current).classList.add('active');
+  document.getElementById('counter').textContent = (current + 1) + ' / ' + total;
+  document.getElementById('prevBtn').disabled = current === 0;
+  document.getElementById('nextBtn').disabled = current === total - 1;
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') navigate(-1);
+});
+
+document.getElementById('s0').classList.add('active');
+
+function makeBarChart(containerId, data, maxVal, suffix, invert) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  let html = '';
+  data.forEach(function(d) {
+    const isHL = d.hl;
+    const pct = Math.abs(d.v) / maxVal * 100;
+    const fillClass = isHL ? 'hl' : (d.v < 0 ? 'red' : 'peer');
+    html += '<div class="bar-row">' +
+      '<div class="bar-name' + (isHL ? ' hl' : '') + '">' + d.n + '</div>' +
+      '<div class="bar-track"><div class="bar-fill ' + fillClass + '" style="width:' + Math.min(pct, 100) + '%"></div></div>' +
+      '<div class="bar-val' + (isHL ? ' hl' : '') + '">' + (d.v > 0 && suffix === 'ppts' ? '+' : '') + d.v + (suffix || '%') + '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+function makeStackChart(containerId, data) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  let html = '';
+  data.forEach(function(d) {
+    const isHL = d.n === 'Barclays';
+    html += '<div class="stack-row"><div class="stack-name" style="' + (isHL ? 'font-weight:700;color:var(--blue)' : '') + '">' + d.n + '</div>' +
+      '<div class="stack-track">' +
+      '<div class="stack-seg" style="width:' + d.buy + '%;background:var(--teal)">' + d.buy + '</div>' +
+      '<div class="stack-seg" style="width:' + d.hold + '%;background:var(--amber)">' + d.hold + '</div>' +
+      (d.sell > 0 ? '<div class="stack-seg" style="width:' + d.sell + '%;background:var(--red)">' + (d.sell > 4 ? d.sell : '') + '</div>' : '') +
+      '</div></div>';
+  });
+  html += '<div class="legend" style="margin-top:8px"><div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Buy %</div><div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Hold %</div><div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Sell %</div></div>';
+  el.innerHTML = html;
+}
+
+// Slide 1 charts
+makeBarChart('roe-chart', [
+  {n:'AmEx',v:43.3},{n:'JPMorgan',v:21.0},{n:'HSBC',v:18.1},{n:'Goldman Sachs',v:17.7},{n:'Lloyds',v:14.2},{n:'Wells Fargo',v:13.4},{n:'BNP Paribas',v:13.1},{n:'BofA',v:12.6},{n:'Barclays',v:12.5,hl:true},{n:'Crédit Agricole',v:12.4},{n:'Deutsche Bank',v:12.2},{n:'Citi',v:10.6}
+], 45, '%');
+
+makeBarChart('oig-chart', [
+  {n:'BofA',v:11.0},{n:'Barclays',v:10.9,hl:true},{n:'AmEx',v:9.5},{n:'Goldman Sachs',v:8.9},{n:'Citi',v:7.8},{n:'Lloyds',v:7.7},{n:'JPMorgan',v:7.3},{n:'Deutsche Bank',v:6.7},{n:'BNP Paribas',v:5.0},{n:'HSBC',v:3.9},{n:'Crédit Agricole',v:2.2},{n:'Wells Fargo',v:1.1}
+], 12, '%');
+
+makeBarChart('ci-chart', [
+  {n:'HSBC',v:45.4},{n:'JPMorgan',v:53.0},{n:'Crédit Agricole',v:56.0},{n:'BNP Paribas',v:59.5},{n:'Barclays',v:59.9,hl:true},{n:'BofA',v:61.7},{n:'Goldman Sachs',v:62.4},{n:'Lloyds',v:62.4},{n:'Citi',v:63.1},{n:'Deutsche Bank',v:64.4},{n:'Wells Fargo',v:66.1}
+], 70, '%');
+
+makeBarChart('trs-chart', [
+  {n:'HSBC',v:57.4},{n:'Deutsche Bank',v:50.2},{n:'Barclays',v:48.4,hl:true},{n:'Lloyds',v:47.4},{n:'BNP Paribas',v:44.3},{n:'Citi',v:41.4},{n:'Goldman Sachs',v:40.3},{n:'Crédit Agricole',v:25.3},{n:'JPMorgan',v:15.8},{n:'BofA',v:10.6},{n:'Wells Fargo',v:6.3},{n:'AmEx',v:3.7}
+], 60, '%');
+
+// Slide 2 - NII chart
+makeBarChart('nii-chart', [
+  {n:'Citi',v:69.1},{n:'Lloyds',v:66.7},{n:'Wells Fargo',v:57.1},{n:'BofA',v:53.1},{n:'JPMorgan',v:52.5},{n:'Barclays',v:49.8,hl:true},{n:'Deutsche Bank',v:48.9},{n:'HSBC',v:47.8},{n:'BNP Paribas',v:41.0},{n:'AmEx',v:24.0},{n:'Goldman Sachs',v:23.3}
+], 75, '%');
+
+// Revenue bars
+const maxRev = 29100;
+document.getElementById('bar23nii').style.height = (12709/maxRev*120)+'px';
+document.getElementById('bar23non').style.height = (12670/maxRev*120)+'px';
+document.getElementById('bar24nii').style.height = (12936/maxRev*120)+'px';
+document.getElementById('bar24non').style.height = (13303/maxRev*120)+'px';
+document.getElementById('bar25nii').style.height = (14501/maxRev*120)+'px';
+document.getElementById('bar25non').style.height = (14598/maxRev*120)+'px';
+
+// Slide 3
+makeBarChart('staff-chart', [
+  {n:'AmEx',v:12.5},{n:'Lloyds',v:23.7},{n:'HSBC',v:26.8},{n:'JPMorgan',v:30.0},{n:'Goldman Sachs',v:32.4},{n:'Citi',v:34.2},{n:'Crédit Agricole',v:36.3},{n:'Barclays',v:36.5,hl:true},{n:'Deutsche Bank',v:36.8},{n:'BNP Paribas',v:37.0},{n:'BofA',v:37.4},{n:'Wells Fargo',v:43.6}
+], 46, '%');
+
+makeBarChart('ci2-chart', [
+  {n:'HSBC',v:45.4},{n:'JPMorgan',v:53.0},{n:'Crédit Agricole',v:56.0},{n:'BNP Paribas',v:59.5},{n:'Barclays',v:59.9,hl:true},{n:'BofA',v:61.7},{n:'Goldman Sachs',v:62.4},{n:'Lloyds',v:62.4},{n:'Citi',v:63.1},{n:'Deutsche Bank',v:64.4},{n:'Wells Fargo',v:66.1}
+], 70, '%');
+
+// Slide 4
+makeBarChart('llnii-chart', [
+  {n:'AmEx',v:29.7},{n:'BNP Paribas',v:16.5},{n:'Citi',v:15.9},{n:'Barclays',v:15.7,hl:true},{n:'Crédit Agricole',v:12.0},{n:'JPMorgan',v:11.8},{n:'HSBC',v:11.0},{n:'Deutsche Bank',v:10.9},{n:'BofA',v:9.3},{n:'Wells Fargo',v:7.8},{n:'Lloyds',v:6.0}
+], 32, '%');
+
+// Slide 5
+makeBarChart('pbv-chart', [
+  {n:'AmEx',v:6.92},{n:'JPMorgan',v:2.33},{n:'Goldman Sachs',v:2.32},{n:'Wells Fargo',v:1.56},{n:'Lloyds',v:1.39},{n:'BofA',v:1.33},{n:'Citi',v:1.05},{n:'Barclays',v:0.97,hl:true},{n:'BNP Paribas',v:0.93},{n:'Deutsche Bank',v:0.88},{n:'Crédit Agricole',v:0.85}
+], 7.5, 'x');
+
+makeBarChart('pe-chart', [
+  {n:'AmEx',v:16.8},{n:'Goldman Sachs',v:13.3},{n:'Wells Fargo',v:11.7},{n:'JPMorgan',v:11.4},{n:'BofA',v:10.7},{n:'Citi',v:10.0},{n:'Lloyds',v:10.0},{n:'Barclays',v:8.1,hl:true},{n:'Deutsche Bank',v:7.3},{n:'BNP Paribas',v:7.0},{n:'Crédit Agricole',v:7.0}
+], 18, 'x');
+
+makeStackChart('analyst-chart', [
+  {n:'BofA',buy:85,hold:15,sell:0},{n:'BNP Paribas',buy:79,hold:16,sell:5},{n:'Citi',buy:78,hold:22,sell:0},{n:'Barclays',buy:75,hold:25,sell:0},{n:'Lloyds',buy:61,hold:28,sell:11},{n:'Wells Fargo',buy:59,hold:41,sell:0},{n:'JPMorgan',buy:54,hold:46,sell:0},{n:'HSBC',buy:47,hold:47,sell:7},{n:'AmEx',buy:39,hold:57,sell:4},{n:'Crédit Agricole',buy:38,hold:44,sell:19},{n:'Deutsche Bank',buy:35,hold:53,sell:12},{n:'Goldman Sachs',buy:31,hold:62,sell:8}
+]);
+
+// Slide 6
+makeBarChart('fwd-oi-chart', [
+  {n:'AmEx',v:8.6},{n:'Lloyds',v:5.8},{n:'Wells Fargo',v:4.7},{n:'Deutsche Bank',v:4.5},{n:'BofA',v:4.4},{n:'BNP Paribas',v:4.1},{n:'Barclays',v:4.0,hl:true},{n:'Citi',v:3.8},{n:'HSBC',v:3.8},{n:'JPMorgan',v:3.7},{n:'Crédit Agricole',v:3.6},{n:'Goldman Sachs',v:3.0}
+], 10, '%');
+
+makeBarChart('fwd-ebt-chart', [
+  {n:'Barclays',v:3.5,hl:true},{n:'Deutsche Bank',v:3.1},{n:'Lloyds',v:3.0},{n:'Goldman Sachs',v:2.6},{n:'BofA',v:2.0},{n:'BNP Paribas',v:2.0},{n:'Wells Fargo',v:1.6},{n:'Crédit Agricole',v:1.5},{n:'AmEx',v:0.7},{n:'JPMorgan',v:0.6},{n:'HSBC',v:0.5},{n:'Citi',v:-0.5}
+], 4, 'ppts');
+</script>
+</body>
+</html>

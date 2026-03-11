@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barclays: Data-Driven Opportunities</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    .slide {
+      width: 960px;
+      height: 540px;
+      padding: 48px 56px;
+      background-color: #FFFFFF;
+      font-family: Arial, 'Segoe UI', sans-serif;
+      font-size: 12pt;
+      color: #2D2D2D;
+      overflow: hidden;
+      page-break-after: always;
+      position: relative;
+    }
+
+    /* Colour palette */
+    .bg-dark { background-color: #0A1628; color: #FFFFFF; }
+    .bg-light { background-color: #F4F6F9; }
+    .bg-accent { background-color: #003D6B; color: #FFFFFF; }
+
+    /* Typography */
+    .h1 { font-size: 32pt; font-weight: 700; line-height: 1.15; color: #0A1628; }
+    .h1-light { font-size: 32pt; font-weight: 700; line-height: 1.15; color: #FFFFFF; }
+    .h2 { font-size: 20pt; font-weight: 700; line-height: 1.2; color: #0A1628; }
+    .h3 { font-size: 14pt; font-weight: 700; line-height: 1.3; color: #003D6B; }
+    .body { font-size: 11pt; line-height: 1.5; color: #4A5568; }
+    .body-light { font-size: 11pt; line-height: 1.5; color: #CBD5E0; }
+    .caption { font-size: 8pt; color: #9CA3AF; line-height: 1.4; }
+    .caption-light { font-size: 8pt; color: #6B7FA3; line-height: 1.4; }
+    .label { font-size: 9pt; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #00A3C4; }
+    .label-light { font-size: 9pt; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #00A3C4; }
+
+    /* Metric styling */
+    .metric-value { font-size: 36pt; font-weight: 700; color: #003D6B; line-height: 1.0; }
+    .metric-value-accent { font-size: 36pt; font-weight: 700; color: #00A3C4; line-height: 1.0; }
+    .metric-value-alert { font-size: 36pt; font-weight: 700; color: #D94F00; line-height: 1.0; }
+    .metric-value-sm { font-size: 24pt; font-weight: 700; color: #003D6B; line-height: 1.0; }
+    .metric-value-sm-alert { font-size: 24pt; font-weight: 700; color: #D94F00; line-height: 1.0; }
+    .metric-label { font-size: 9pt; color: #6B7280; line-height: 1.3; margin-top: 4px; }
+
+    /* Layout helpers */
+    .flex { display: flex; }
+    .flex-col { display: flex; flex-direction: column; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .gap-16 { gap: 16px; }
+    .gap-20 { gap: 20px; }
+    .gap-24 { gap: 24px; }
+    .gap-32 { gap: 32px; }
+    .gap-40 { gap: 40px; }
+    .items-center { align-items: center; }
+    .items-start { align-items: flex-start; }
+    .items-end { align-items: flex-end; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .flex-1 { flex: 1; }
+    .w-full { width: 100%; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .grid-23 { display: grid; grid-template-columns: 2fr 3fr; }
+    .grid-32 { display: grid; grid-template-columns: 3fr 2fr; }
+
+    /* Cards and containers */
+    .card { background-color: #F4F6F9; border-radius: 6px; padding: 20px; }
+    .card-outline { border: 1px solid #E2E8F0; border-radius: 6px; padding: 20px; }
+    .card-dark { background-color: #0F1D32; border-radius: 6px; padding: 20px; }
+    .card-accent { background-color: #003D6B; border-radius: 6px; padding: 20px; color: #FFFFFF; }
+    .card-alert { background-color: #FEF3EC; border: 1px solid #FADCC8; border-radius: 6px; padding: 20px; }
+    .card-highlight { background-color: #EBF8FB; border: 1px solid #B2E4EF; border-radius: 6px; padding: 20px; }
+
+    .pill { display: inline-block; background-color: #00A3C4; color: #FFFFFF; font-size: 8pt; font-weight: 600; padding: 3px 10px; border-radius: 12px; }
+    .pill-alert { display: inline-block; background-color: #D94F00; color: #FFFFFF; font-size: 8pt; font-weight: 600; padding: 3px 10px; border-radius: 12px; }
+    .pill-dark { display: inline-block; background-color: #0A1628; color: #FFFFFF; font-size: 8pt; font-weight: 600; padding: 3px 10px; border-radius: 12px; }
+
+    .divider { width: 100%; height: 1px; background-color: #E2E8F0; }
+    .divider-accent { width: 48px; height: 3px; background-color: #00A3C4; border-radius: 2px; }
+    .accent-bar { width: 4px; background-color: #00A3C4; border-radius: 2px; }
+
+    /* Slide-specific bottom positioning */
+    .slide-footer { position: absolute; bottom: 20px; left: 56px; right: 56px; }
+
+    /* Table styling */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    .data-table th { text-align: left; font-weight: 600; padding: 8px 10px; border-bottom: 2px solid #003D6B; color: #003D6B; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; }
+    .data-table td { padding: 7px 10px; border-bottom: 1px solid #EDF2F7; color: #4A5568; }
+    .data-table td:first-child { font-weight: 600; color: #2D2D2D; }
+    .row-highlight { background-color: #EBF8FB; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .font-bold { font-weight: 700; }
+    .text-accent { color: #00A3C4; }
+    .text-alert { color: #D94F00; }
+    .text-dark { color: #003D6B; }
+  </style>
+</head>
+<body>
+
+<!-- SLIDE 1: TITLE -->
+<section class="slide bg-dark" data-slide-number="1" data-title="Title" data-notes="Opening slide. Set context: this is a data-anchored view of where Barclays has gaps vs peers, mapped to their stated Simpler/Better/More Balanced strategy.">
+  <div class="flex-col" style="height: 100%; justify-content: space-between;">
+    <div>
+      <div class="label-light" style="margin-bottom: 24px;">Confidential</div>
+    </div>
+    <div class="flex-col gap-16">
+      <div class="h1-light" style="font-size: 36pt; max-width: 700px;">Barclays: where the data points to opportunity</div>
+      <div class="divider-accent"></div>
+      <div class="body-light" style="max-width: 580px; margin-top: 8px;">Peer benchmarking analysis anchored to the Simpler, Better, More Balanced strategy — identifying where focused action closes measurable gaps and drives bottom-line impact.</div>
+    </div>
+    <div class="flex justify-between items-end">
+      <div class="caption-light">For discussion purposes only</div>
+      <div class="caption-light">March 2026</div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 2: THE PRIZE -->
+<section class="slide" data-slide-number="2" data-title="The valuation gap" data-notes="Barclays trades at 0.97x book value — below even Lloyds at 1.4x. This is the overarching measure. Every initiative rolls up to closing this gap. Each 0.1x of P/BV = £7.8bn market cap.">
+  <div class="flex-col" style="height: 100%; justify-content: space-between;">
+    <div class="flex-col gap-8">
+      <div class="label">The overarching measure</div>
+      <div class="h2">Barclays trades at book value — the market isn't pricing in the improvement</div>
+    </div>
+
+    <div class="flex-col gap-16" style="margin-top: 8px;">
+      <div class="body" style="max-width: 600px;">At 0.97x P/BV, Barclays' equity is valued at roughly what it would return in liquidation — not as a going concern. Meanwhile Lloyds, a simpler bank with lower ROE, commands a 44% premium. The gap represents the market's scepticism that returns are sustainable.</div>
+
+      <svg width="848" height="200" viewBox="0 0 848 200">
+        <!-- Axis -->
+        <line x1="120" y1="10" x2="120" y2="180" stroke="#E2E8F0" stroke-width="1"/>
+        <line x1="120" y1="180" x2="840" y2="180" stroke="#E2E8F0" stroke-width="1"/>
+        <!-- Scale labels -->
+        <text x="120" y="196" font-family="Arial" font-size="8" fill="#9CA3AF" text-anchor="middle">0x</text>
+        <text x="224" y="196" font-family="Arial" font-size="8" fill="#9CA3AF" text-anchor="middle">1x</text>
+        <text x="328" y="196" font-family="Arial" font-size="8" fill="#9CA3AF" text-anchor="middle">2x</text>
+        <text x="432" y="196" font-family="Arial" font-size="8" fill="#9CA3AF" text-anchor="middle">3x</text>
+        <!-- Grid lines -->
+        <line x1="224" y1="10" x2="224" y2="180" stroke="#F4F6F9" stroke-width="1"/>
+        <line x1="328" y1="10" x2="328" y2="180" stroke="#F4F6F9" stroke-width="1"/>
+        <line x1="432" y1="10" x2="432" y2="180" stroke="#F4F6F9" stroke-width="1"/>
+        <!-- Bars — P/BV values scaled: 1x = 104px from origin at x=120 -->
+        <!-- AmEx 6.92 — capped display -->
+        <rect x="120" y="14" width="720" height="18" rx="2" fill="#003D6B"/>
+        <text x="115" y="27" font-family="Arial" font-size="9" fill="#2D2D2D" text-anchor="end" font-weight="600">AmEx</text>
+        <text x="720" y="27" font-family="Arial" font-size="8" fill="#FFFFFF" font-weight="700">6.92x</text>
+        <!-- JPM 2.33 -->
+        <rect x="120" y="38" width="242" height="18" rx="2" fill="#003D6B"/>
+        <text x="115" y="51" font-family="Arial" font-size="9" fill="#2D2D2D" text-anchor="end" font-weight="600">JPMorgan</text>
+        <text x="367" y="51" font-family="Arial" font-size="8" fill="#003D6B" font-weight="700">2.33x</text>
+        <!-- Goldman 2.32 -->
+        <rect x="120" y="62" width="241" height="18" rx="2" fill="#003D6B"/>
+        <text x="115" y="75" font-family="Arial" font-size="9" fill="#2D2D2D" text-anchor="end" font-weight="600">Goldman</text>
+        <text x="366" y="75" font-family="Arial" font-size="8" fill="#003D6B" font-weight="700">2.32x</text>
+        <!-- Wells 1.56 -->
+        <rect x="120" y="86" width="162" height="18" rx="2" fill="#003D6B"/>
+        <text x="115" y="99" font-family="Arial" font-size="9" fill="#2D2D2D" text-anchor="end" font-weight="600">Wells Fargo</text>
+        <text x="287" y="99" font-family="Arial" font-size="8" fill="#003D6B" font-weight="700">1.56x</text>
+        <!-- Lloyds 1.39 -->
+        <rect x="120" y="110" width="144" height="18" rx="2" fill="#00A3C4"/>
+        <text x="115" y="123" font-family="Arial" font-size="9" fill="#2D2D2D" text-anchor="end" font-weight="600">Lloyds</text>
+        <text x="270" y="123" font-family="Arial" font-size="8" fill="#00A3C4" font-weight="700">1.39x</text>
+        <!-- BofA 1.33 -->
+        <rect x="120" y="134" width="138" height="18" rx="2" fill="#003D6B"/>
+        <text x="115" y="147" font-family="Arial" font-size="9" fill="#2D2D2D" text-anchor="end" font-weight="600">BofA</text>
+        <text x="263" y="147" font-family="Arial" font-size="8" fill="#003D6B" font-weight="700">1.33x</text>
+        <!-- Barclays 0.97 — highlighted -->
+        <rect x="120" y="158" width="101" height="18" rx="2" fill="#D94F00"/>
+        <text x="115" y="171" font-family="Arial" font-size="9" fill="#D94F00" text-anchor="end" font-weight="700">Barclays</text>
+        <text x="226" y="171" font-family="Arial" font-size="8" fill="#D94F00" font-weight="700">0.97x</text>
+      </svg>
+    </div>
+
+    <div class="flex gap-32 items-start" style="margin-top: 4px;">
+      <div class="flex-col gap-4">
+        <div class="metric-value-alert" style="font-size: 28pt;">£33.6bn</div>
+        <div class="metric-label">Market cap upside to reach Lloyds' 1.4x P/BV</div>
+      </div>
+      <div class="flex-col gap-4">
+        <div class="metric-value-sm" style="font-size: 28pt;">£7.8bn</div>
+        <div class="metric-label">Value created per 0.1x P/BV improvement</div>
+      </div>
+      <div class="flex-col gap-4">
+        <div class="metric-value-sm" style="font-size: 28pt;">0% sell</div>
+        <div class="metric-label">Analyst consensus: 75% Buy, 25% Hold</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 3: FRAMEWORK -->
+<section class="slide bg-accent" data-slide-number="3" data-title="Framework" data-notes="Transition slide. We've structured findings around Barclays' own framework: Simpler, Better, More Balanced. Each section identifies the peer gap, what the data implies, and the estimated P&L impact.">
+  <div class="flex-col justify-center" style="height: 100%;">
+    <div class="flex-col gap-20">
+      <div class="h1-light" style="max-width: 700px;">What the peer data reveals — mapped to the bank's own strategic framework</div>
+      <div class="divider-accent"></div>
+      <div class="grid-3 gap-32" style="margin-top: 16px;">
+        <div class="flex-col gap-8">
+          <div style="font-size: 14pt; font-weight: 700; color: #00A3C4;">Simpler</div>
+          <div style="font-size: 10pt; color: #CBD5E0; line-height: 1.5;">The cost-to-income gap is quantifiable and the arithmetic to close it is tighter than it appears. Three specific areas where peers outperform.</div>
+        </div>
+        <div class="flex-col gap-8">
+          <div style="font-size: 14pt; font-weight: 700; color: #00A3C4;">Better</div>
+          <div style="font-size: 10pt; color: #CBD5E0; line-height: 1.5;">Capital productivity, segment returns, and the untapped Premier/Wealth opportunity. Where improved performance closes the valuation discount.</div>
+        </div>
+        <div class="flex-col gap-8">
+          <div style="font-size: 14pt; font-weight: 700; color: #00A3C4;">More balanced</div>
+          <div style="font-size: 10pt; color: #CBD5E0; line-height: 1.5;">UK lending growth, fee income diversification, and the structural hedge. Building the earnings quality that sustains a higher multiple.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 4: SIMPLER — C/I OVERVIEW -->
+<section class="slide" data-slide-number="4" data-title="Cost-to-income: the gap" data-notes="The central efficiency metric. Barclays at 59.9% vs HSBC 45.4% and JPM 53.0%. Each 1 point = £290m. The bank's own target of Low 50s% requires c.£2.3bn of net cost action vs £2.0bn planned savings — leaving almost no margin for error when accounting for acquisition costs and investment.">
+  <div class="flex-col" style="height: 100%; justify-content: space-between;">
+    <div class="flex-col gap-8">
+      <div class="flex gap-12 items-center">
+        <div class="pill-dark">Simpler</div>
+        <div class="label" style="color: #6B7280;">Cost-to-income ratio</div>
+      </div>
+      <div class="h2" style="max-width: 680px;">The cost gap is quantifiable — and the plan leaves almost no margin for error</div>
+    </div>
+
+    <div class="grid-32 gap-40" style="margin-top: 4px;">
+      <div class="flex-col gap-12">
+        <svg width="500" height="240" viewBox="0 0 500 240">
+          <!-- Chart: horizontal bars for C/I ratio -->
+          <text x="0" y="12" font-family="Arial" font-size="8" fill="#9CA3AF" font-weight="600" text-transform="uppercase" letter-spacing="1">FY2025 cost-to-income ratio (%)</text>
+          <!-- HSBC -->
+          <rect x="90" y="24" width="218" height="22" rx="2" fill="#003D6B"/>
+          <text x="85" y="39" font-family="Arial" font-size="9" fill="#2D2D2D" text-anchor="end" font-weight="600">HSBC</text>
+          <text x="95" y="39" font-family="Arial" font-size="9" fill="#FFFFFF" font-weight="700">45.4%</text>
+          <!-- JPMorgan -->
+          <rect x="90" y="52" width="254" height="22" rx="2" fill="#003D6B"/>
+          <text x="85" y="67" font-family="Arial" font-size="9" fill="#2D2D2D" text-anchor="end" font-weight="600">JPMorgan</text>
+          <text x="95" y="67" font-family="Arial" font-size="9" fill="#FFFFFF" font-weight="700">53.0%</text>
+          <!-- Credit Ag -->
+          <rect x="90" y="80" width="269" height="22" rx="2" fill="#003D6B"/>
+          <text x="85" y="95" font-family="Arial" font-size="9" fill="#2D2D2D" text-anchor="end" font-weight="600">Crédit Ag.</text>
+          <text x="95" y="95" font-family="Arial" font-size="9" fill="#FFFFFF" font-weight="700">56.0%</text>
+          <!-- Barclays -->
+          <rect x="90" y="108" width="288" height="22" rx="2" fill="#D94F00"/>
+          <text x="85" y="123" font-family="Arial" font-size="9" fill="#D94F00" text-anchor="end" font-weight="700">Barclays</text>
+          <text x="95" y="123" font-family="Arial" font-size="9" fill="#FFFFFF" font-weight="700">59.9%</text>
+          <!-- BofA -->
+          <rect x="90" y="136" width="296" height="22" rx="2" fill="#B0BEC5"/>
+          <text x="85" y="151" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">BofA</text>
+          <text x="95" y="151" font-family="Arial" font-size="9" fill="#FFFFFF" font-weight="600">61.7%</text>
+          <!-- Lloyds -->
+          <rect x="90" y="164" width="300" height="22" rx="2" fill="#B0BEC5"/>
+          <text x="85" y="179" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">Lloyds</text>
+          <text x="95" y="179" font-family="Arial" font-size="9" fill="#FFFFFF" font-weight="600">62.4%</text>
+          <!-- Goldman -->
+          <rect x="90" y="192" width="300" height="22" rx="2" fill="#B0BEC5"/>
+          <text x="85" y="207" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">Goldman</text>
+          <text x="95" y="207" font-family="Arial" font-size="9" fill="#FFFFFF" font-weight="600">62.4%</text>
+          <!-- Target line -->
+          <line x1="254" y1="20" x2="254" y2="218" stroke="#00A3C4" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <text x="254" y="232" font-family="Arial" font-size="8" fill="#00A3C4" text-anchor="middle" font-weight="600">2028 target: Low 50s%</text>
+        </svg>
+      </div>
+
+      <div class="flex-col gap-16">
+        <div class="card-alert">
+          <div class="flex-col gap-6">
+            <div style="font-size: 9pt; font-weight: 700; color: #D94F00;">The arithmetic</div>
+            <div style="font-size: 10pt; color: #4A5568; line-height: 1.5;">Reaching 52% C/I on £29.1bn income requires a cost base of c.£15.1bn — roughly <b>£2.3bn below today</b>.</div>
+          </div>
+        </div>
+        <div class="flex-col gap-12">
+          <div class="flex gap-8 items-start">
+            <div class="accent-bar" style="min-height: 32px;"></div>
+            <div class="flex-col gap-2">
+              <div style="font-size: 10pt; font-weight: 600; color: #2D2D2D;">Planned efficiency savings</div>
+              <div style="font-size: 10pt; color: #4A5568;">c.£2.0bn (2026–28)</div>
+            </div>
+          </div>
+          <div class="flex gap-8 items-start">
+            <div class="accent-bar" style="min-height: 32px; background-color: #D94F00;"></div>
+            <div class="flex-col gap-2">
+              <div style="font-size: 10pt; font-weight: 600; color: #2D2D2D;">Offsetting headwinds</div>
+              <div style="font-size: 10pt; color: #4A5568;">c.£1.5bn acquisition costs + c.£0.8bn investment</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-highlight">
+          <div style="font-size: 10pt; line-height: 1.5; color: #003D6B;"><b>Each 1 point of C/I = c.£290m pre-tax.</b> Any initiative that accelerates savings or reduces the investment-to-run-rate conversion time creates direct upside.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 5: SIMPLER — STAFF PRODUCTIVITY -->
+<section class="slide" data-slide-number="5" data-title="Staff productivity" data-notes="Barclays has 75% of 95k employees in support functions. Employee productivity is £313k — 26% below JPMorgan and 36% below Goldman. The 1m+ Copilot hours saved equates to only c.£55m at average cost per hour — meaningful but a fraction of what's needed. The question is whether AI savings convert to structural cost reduction or just absorb growth.">
+  <div class="flex-col" style="height: 100%; justify-content: space-between;">
+    <div class="flex-col gap-8">
+      <div class="flex gap-12 items-center">
+        <div class="pill-dark">Simpler</div>
+        <div class="label" style="color: #6B7280;">Employee productivity</div>
+      </div>
+      <div class="h2" style="max-width: 720px;">75% of employees sit in support functions — AI savings are real but haven't yet reached scale</div>
+    </div>
+
+    <div class="grid-2 gap-32" style="margin-top: 8px;">
+      <div class="flex-col gap-16">
+        <div style="font-size: 8pt; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px;">Operating income per employee (GBP '000, FY2025)</div>
+        <svg width="380" height="210" viewBox="0 0 380 210">
+          <!-- Bars -->
+          <text x="62" y="18" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">Goldman</text>
+          <rect x="67" y="6" width="274" height="18" rx="2" fill="#003D6B"/>
+          <text x="346" y="18" font-family="Arial" font-size="9" fill="#003D6B" font-weight="700">£921k</text>
+
+          <text x="62" y="46" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">AmEx</text>
+          <rect x="67" y="34" width="210" height="18" rx="2" fill="#003D6B"/>
+          <text x="282" y="46" font-family="Arial" font-size="9" fill="#003D6B" font-weight="700">£705k</text>
+
+          <text x="62" y="74" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">JPM</text>
+          <rect x="67" y="62" width="126" height="18" rx="2" fill="#003D6B"/>
+          <text x="198" y="74" font-family="Arial" font-size="9" fill="#003D6B" font-weight="700">£424k</text>
+
+          <text x="62" y="102" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">BofA</text>
+          <rect x="67" y="90" width="117" height="18" rx="2" fill="#003D6B"/>
+          <text x="189" y="102" font-family="Arial" font-size="9" fill="#003D6B" font-weight="700">£394k</text>
+
+          <text x="62" y="130" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">Lloyds</text>
+          <rect x="67" y="118" width="97" height="18" rx="2" fill="#B0BEC5"/>
+          <text x="169" y="130" font-family="Arial" font-size="9" fill="#6B7280" font-weight="600">£327k</text>
+
+          <text x="62" y="158" font-family="Arial" font-size="9" fill="#D94F00" text-anchor="end" font-weight="700">Barclays</text>
+          <rect x="67" y="146" width="93" height="18" rx="2" fill="#D94F00"/>
+          <text x="165" y="158" font-family="Arial" font-size="9" fill="#D94F00" font-weight="700">£313k</text>
+
+          <text x="62" y="186" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">HSBC</text>
+          <rect x="67" y="174" width="77" height="18" rx="2" fill="#B0BEC5"/>
+          <text x="149" y="186" font-family="Arial" font-size="9" fill="#6B7280" font-weight="600">£257k</text>
+        </svg>
+      </div>
+
+      <div class="flex-col gap-16">
+        <div class="grid-2 gap-12">
+          <div class="card">
+            <div class="metric-value-sm">93k</div>
+            <div class="metric-label">Employees — 75% in support functions (~70k)</div>
+          </div>
+          <div class="card">
+            <div class="metric-value-sm-alert">26%</div>
+            <div class="metric-label">Productivity gap vs. JPMorgan (£313k vs. £424k)</div>
+          </div>
+        </div>
+        <div class="flex-col gap-8">
+          <div class="h3" style="font-size: 11pt;">What Barclays is doing</div>
+          <div class="body" style="font-size: 10pt;">90% Copilot adoption. 1m+ hours saved FY25. 19k developers on GitLab Duo with 15% productivity uplift. >250 AI tools deployed.</div>
+        </div>
+        <div class="flex-col gap-8">
+          <div class="h3" style="font-size: 11pt; color: #D94F00;">The question</div>
+          <div class="body" style="font-size: 10pt;">1m hours saved at c.£55/hr = c.£55m. Meaningful, but a fraction of the c.£580m that a 2-point staff/income ratio improvement would deliver. Are AI savings converting to structural cost reduction — or absorbing growth?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 6: SIMPLER — NON-STAFF COSTS -->
+<section class="slide" data-slide-number="6" data-title="Non-staff costs" data-notes="The non-staff cost line is the overlooked problem. SG&A nearly doubled from £1.9bn to £3.1bn in two years. The non-staff cost ratio is rising (22.2% to 23.5%) even as staff costs improve. The app rationalisation (80+ to <40) and systems consolidation should yield benefits — but they haven't shown up in the numbers yet.">
+  <div class="flex-col" style="height: 100%; justify-content: space-between;">
+    <div class="flex-col gap-8">
+      <div class="flex gap-12 items-center">
+        <div class="pill-dark">Simpler</div>
+        <div class="label" style="color: #6B7280;">Non-staff costs</div>
+      </div>
+      <div class="h2" style="max-width: 700px;">Staff costs are improving, but SG&amp;A has nearly doubled in two years — the simplification dividend hasn't arrived yet</div>
+    </div>
+
+    <div class="grid-2 gap-32" style="margin-top: 8px;">
+      <div class="flex-col gap-16">
+        <div style="font-size: 8pt; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px;">Barclays cost composition (% of income)</div>
+        <svg width="380" height="200" viewBox="0 0 380 200">
+          <!-- Stacked horizontal bars for 2023, 2024, 2025 -->
+          <!-- 2023 -->
+          <text x="35" y="38" font-family="Arial" font-size="10" fill="#2D2D2D" text-anchor="end" font-weight="600">2023</text>
+          <rect x="40" y="22" width="240" height="26" rx="0" fill="#003D6B"/>
+          <text x="160" y="40" font-family="Arial" font-size="9" fill="#FFFFFF" font-weight="600">Staff: 39.5%</text>
+          <rect x="280" y="22" width="90" height="26" rx="0" fill="#00A3C4"/>
+          <text x="310" y="40" font-family="Arial" font-size="8" fill="#FFFFFF" font-weight="600">22.2%</text>
+
+          <!-- 2024 -->
+          <text x="35" y="88" font-family="Arial" font-size="10" fill="#2D2D2D" text-anchor="end" font-weight="600">2024</text>
+          <rect x="40" y="72" width="230" height="26" rx="0" fill="#003D6B"/>
+          <text x="155" y="90" font-family="Arial" font-size="9" fill="#FFFFFF" font-weight="600">Staff: 37.6%</text>
+          <rect x="270" y="72" width="100" height="26" rx="0" fill="#D94F00"/>
+          <text x="306" y="90" font-family="Arial" font-size="8" fill="#FFFFFF" font-weight="600">25.0%</text>
+
+          <!-- 2025 -->
+          <text x="35" y="138" font-family="Arial" font-size="10" fill="#2D2D2D" text-anchor="end" font-weight="600">2025</text>
+          <rect x="40" y="122" width="222" height="26" rx="0" fill="#003D6B"/>
+          <text x="151" y="140" font-family="Arial" font-size="9" fill="#FFFFFF" font-weight="600">Staff: 36.5%</text>
+          <rect x="262" y="122" width="96" height="26" rx="0" fill="#D94F00"/>
+          <text x="296" y="140" font-family="Arial" font-size="8" fill="#FFFFFF" font-weight="600">23.5%</text>
+
+          <!-- Legend -->
+          <rect x="40" y="170" width="12" height="12" fill="#003D6B"/>
+          <text x="57" y="180" font-family="Arial" font-size="8" fill="#6B7280">Staff costs / income</text>
+          <rect x="180" y="170" width="12" height="12" fill="#D94F00"/>
+          <text x="197" y="180" font-family="Arial" font-size="8" fill="#6B7280">Non-staff costs / income</text>
+          <!-- Direction arrows as text -->
+          <text x="336" y="40" font-family="Arial" font-size="9" fill="#6B7280"></text>
+          <text x="375" y="90" font-family="Arial" font-size="9" fill="#D94F00">&#8593;</text>
+          <text x="363" y="140" font-family="Arial" font-size="9" fill="#D94F00">&#8593;</text>
+        </svg>
+      </div>
+
+      <div class="flex-col gap-16">
+        <div class="card-alert">
+          <div class="flex-col gap-6">
+            <div style="font-size: 9pt; font-weight: 700; color: #D94F00;">SG&amp;A trend</div>
+            <div style="font-size: 10pt; color: #4A5568; line-height: 1.5;">SG&amp;A grew from <b>£1.9bn to £3.1bn</b> (29% CAGR) — driven by investment and acquisition integration. This offset the staff cost improvement.</div>
+          </div>
+        </div>
+        <div class="flex-col gap-8">
+          <div class="h3" style="font-size: 11pt;">Peer benchmarks (non-staff / income)</div>
+          <div class="flex-col gap-4">
+            <div class="flex justify-between" style="font-size: 10pt;"><div style="color: #4A5568;">HSBC</div><div style="font-weight: 600; color: #003D6B;">18.5%</div></div>
+            <div class="divider"></div>
+            <div class="flex justify-between" style="font-size: 10pt;"><div style="color: #4A5568;">Crédit Agricole</div><div style="font-weight: 600; color: #003D6B;">19.7%</div></div>
+            <div class="divider"></div>
+            <div class="flex justify-between" style="font-size: 10pt;"><div style="color: #4A5568;">JPMorgan</div><div style="font-weight: 600; color: #003D6B;">23.0%</div></div>
+            <div class="divider"></div>
+            <div class="flex justify-between" style="font-size: 10pt;"><div style="color: #D94F00; font-weight: 600;">Barclays</div><div style="font-weight: 600; color: #D94F00;">23.5%</div></div>
+          </div>
+        </div>
+        <div class="card-highlight">
+          <div style="font-size: 10pt; line-height: 1.5; color: #003D6B;">Converging to 21.5% = <b>c.£580m pre-tax.</b> The 80+ to &lt;40 application rationalisation and systems consolidation are the key levers — but the payoff needs to accelerate.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 7: TRANSITION — BETTER -->
+<section class="slide bg-accent" data-slide-number="7" data-title="Better" data-notes="Transition to Better section. Three areas: IB capital productivity, PBWM as the worst-performing but highest-potential segment, and BUK efficiency vs Lloyds.">
+  <div class="flex-col justify-center" style="height: 100%;">
+    <div class="flex-col gap-20">
+      <div class="label-light">Better</div>
+      <div class="h1-light" style="max-width: 680px;">Segment returns, capital productivity, and the wealth opportunity the data says is hiding in plain sight</div>
+      <div class="divider-accent"></div>
+      <div style="font-size: 11pt; color: #CBD5E0; line-height: 1.6; max-width: 620px; margin-top: 8px;">Barclays' pre-tax ROE of 12.5% ranks 9th of 13 peers. The Investment Bank is improving but mid-table on capital efficiency. The Private Bank and Wealth Management segment runs the highest cost-to-income ratio of any division — yet sits on the largest untapped revenue opportunity.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 8: BETTER — IB CAPITAL PRODUCTIVITY -->
+<section class="slide" data-slide-number="8" data-title="IB capital productivity" data-notes="The IB improved income/RWA from 5.5% to 6.6%, targeting >7%. On £196bn of IB RWAs, each 40bps = c.£780m of income. The risk systems consolidation (11 to 3) and single financing platform are the technology foundations. Electronic trading volumes advancing but room to run. Key question: can they expand wallet share without expanding RWAs?">
+  <div class="flex-col" style="height: 100%; justify-content: space-between;">
+    <div class="flex-col gap-8">
+      <div class="flex gap-12 items-center">
+        <div class="pill-dark">Better</div>
+        <div class="label" style="color: #6B7280;">Investment Bank</div>
+      </div>
+      <div class="h2" style="max-width: 700px;">IB returns are improving — but the path to >13% RoTE depends on extracting more income from the same capital base</div>
+    </div>
+
+    <div class="grid-2 gap-32" style="margin-top: 4px;">
+      <div class="flex-col gap-16">
+        <div class="grid-3 gap-12">
+          <div class="card">
+            <div class="metric-value-sm">6.6%</div>
+            <div class="metric-label">Income / avg. RWAs (2025, up from 5.5%)</div>
+          </div>
+          <div class="card">
+            <div class="metric-value-sm" style="color: #00A3C4;">>7%</div>
+            <div class="metric-label">2028 target</div>
+          </div>
+          <div class="card">
+            <div class="metric-value-sm">£3.5bn</div>
+            <div class="metric-label">Financing income (up from £2.2bn in 2021)</div>
+          </div>
+        </div>
+
+        <div class="flex-col gap-8">
+          <div style="font-size: 8pt; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px;">Return on RWAs (FY2025)</div>
+          <svg width="380" height="130" viewBox="0 0 380 130">
+            <text x="62" y="18" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">AmEx</text>
+            <rect x="67" y="6" width="224" height="16" rx="2" fill="#003D6B"/>
+            <text x="296" y="18" font-family="Arial" font-size="9" fill="#003D6B" font-weight="700">5.6%</text>
+
+            <text x="62" y="40" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">JPM</text>
+            <rect x="67" y="28" width="156" height="16" rx="2" fill="#003D6B"/>
+            <text x="228" y="40" font-family="Arial" font-size="9" fill="#003D6B" font-weight="700">3.9%</text>
+
+            <text x="62" y="62" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">Goldman</text>
+            <rect x="67" y="50" width="124" height="16" rx="2" fill="#003D6B"/>
+            <text x="196" y="62" font-family="Arial" font-size="9" fill="#003D6B" font-weight="700">3.1%</text>
+
+            <text x="62" y="84" font-family="Arial" font-size="9" fill="#D94F00" text-anchor="end" font-weight="700">Barclays</text>
+            <rect x="67" y="72" width="104" height="16" rx="2" fill="#D94F00"/>
+            <text x="176" y="84" font-family="Arial" font-size="9" fill="#D94F00" font-weight="700">2.6%</text>
+
+            <text x="62" y="106" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">BofA</text>
+            <rect x="67" y="94" width="88" height="16" rx="2" fill="#B0BEC5"/>
+            <text x="160" y="106" font-family="Arial" font-size="9" fill="#6B7280" font-weight="600">2.2%</text>
+
+            <text x="62" y="128" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">Citi</text>
+            <rect x="67" y="116" width="68" height="16" rx="2" fill="#B0BEC5"/>
+            <text x="140" y="128" font-family="Arial" font-size="9" fill="#6B7280" font-weight="600">1.7%</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="flex-col gap-12">
+        <div class="h3" style="font-size: 11pt;">Where the capital efficiency gains come from</div>
+        <div class="flex gap-8 items-start">
+          <div class="accent-bar" style="min-height: 36px;"></div>
+          <div class="flex-col gap-2">
+            <div style="font-size: 10pt; font-weight: 600; color: #2D2D2D;">Risk systems: 11 → 3</div>
+            <div style="font-size: 9pt; color: #6B7280;">Single view of risk across Prime, Fixed Income, and Structured Financing enables better netting, more efficient capital use</div>
+          </div>
+        </div>
+        <div class="flex gap-8 items-start">
+          <div class="accent-bar" style="min-height: 36px;"></div>
+          <div class="flex-col gap-2">
+            <div style="font-size: 10pt; font-weight: 600; color: #2D2D2D;">Electronification advancing</div>
+            <div style="font-size: 9pt; color: #6B7280;">US IG credit: 62%→79%. Cash equity: 73%→77%. Each point reduces per-trade cost and improves scalability</div>
+          </div>
+        </div>
+        <div class="flex gap-8 items-start">
+          <div class="accent-bar" style="min-height: 36px;"></div>
+          <div class="flex-col gap-2">
+            <div style="font-size: 10pt; font-weight: 600; color: #2D2D2D;">Top client penetration: 30 → 62 → target 70</div>
+            <div style="font-size: 9pt; color: #6B7280;">Of top 100 Markets clients with Top 5 rank — growing wallet without growing RWAs proportionally</div>
+          </div>
+        </div>
+        <div class="card-highlight" style="margin-top: 4px;">
+          <div style="font-size: 10pt; line-height: 1.5; color: #003D6B;">Improving income/RWA from 6.6% to >7% on c.£196bn of IB RWAs = <b>c.£780m additional income</b> with no additional capital deployed.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 9: BETTER — PBWM -->
+<section class="slide" data-slide-number="9" data-title="PBWM opportunity" data-notes="PBWM runs a 73% C/I — the worst of any segment and worsening. But the revenue opportunity is enormous: 1.1m mass affluent customers, 50% not yet Premier, 400k advice-eligible. Direct Investing clients grew 169% (24k to 65k) with 96% being existing BUK customers. If income grows 20% at flat cost, C/I moves to 61%. The technology and data infrastructure investment needs to be front-loaded.">
+  <div class="flex-col" style="height: 100%; justify-content: space-between;">
+    <div class="flex-col gap-8">
+      <div class="flex gap-12 items-center">
+        <div class="pill-dark">Better</div>
+        <div class="label" style="color: #6B7280;">Private Bank and Wealth Management</div>
+      </div>
+      <div class="h2" style="max-width: 720px;">The worst-performing segment by cost is also the largest untapped revenue opportunity</div>
+    </div>
+
+    <div class="grid-2 gap-32" style="margin-top: 4px;">
+      <div class="flex-col gap-16">
+        <div class="grid-2 gap-12">
+          <div class="card-alert">
+            <div class="metric-value-sm-alert">73.4%</div>
+            <div class="metric-label" style="color: #8B4513;">Cost-to-income ratio — highest of any Barclays segment, worsening from 66.0% in 2023</div>
+          </div>
+          <div class="card">
+            <div class="metric-value-sm">4.8%</div>
+            <div class="metric-label">Share of group operating income</div>
+          </div>
+        </div>
+
+        <div style="font-size: 8pt; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px;">PBWM cost-to-income trend</div>
+        <svg width="380" height="100" viewBox="0 0 380 100">
+          <!-- Simple line chart -->
+          <line x1="40" y1="80" x2="360" y2="80" stroke="#E2E8F0" stroke-width="1"/>
+          <!-- 60% line -->
+          <line x1="40" y1="40" x2="360" y2="40" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="36" y="44" font-family="Arial" font-size="7" fill="#9CA3AF" text-anchor="end">60%</text>
+          <!-- 80% line -->
+          <line x1="40" y1="10" x2="360" y2="10" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="36" y="14" font-family="Arial" font-size="7" fill="#9CA3AF" text-anchor="end">80%</text>
+          <!-- Points: 66.0, 70.3, 73.4 scaled between 10 (80%) and 80 (50%) -->
+          <!-- 66.0% → y = 80 - ((66-50)/30)*70 = 80 - 37.3 = 42.7 -->
+          <!-- 70.3% → y = 80 - ((70.3-50)/30)*70 = 80 - 47.3 = 32.7 -->
+          <!-- 73.4% → y = 80 - ((73.4-50)/30)*70 = 80 - 54.6 = 25.4 -->
+          <polyline points="93,43 200,33 306,25" fill="none" stroke="#D94F00" stroke-width="2.5"/>
+          <circle cx="93" cy="43" r="4" fill="#D94F00"/>
+          <circle cx="200" cy="33" r="4" fill="#D94F00"/>
+          <circle cx="306" cy="25" r="4" fill="#D94F00"/>
+          <text x="93" y="63" font-family="Arial" font-size="9" fill="#D94F00" text-anchor="middle" font-weight="600">66.0%</text>
+          <text x="200" y="63" font-family="Arial" font-size="9" fill="#D94F00" text-anchor="middle" font-weight="600">70.3%</text>
+          <text x="306" y="63" font-family="Arial" font-size="9" fill="#D94F00" text-anchor="middle" font-weight="600">73.4%</text>
+          <text x="93" y="93" font-family="Arial" font-size="8" fill="#9CA3AF" text-anchor="middle">FY2023</text>
+          <text x="200" y="93" font-family="Arial" font-size="8" fill="#9CA3AF" text-anchor="middle">FY2024</text>
+          <text x="306" y="93" font-family="Arial" font-size="8" fill="#9CA3AF" text-anchor="middle">FY2025</text>
+        </svg>
+      </div>
+
+      <div class="flex-col gap-12">
+        <div class="h3" style="font-size: 11pt;">The revenue opportunity hiding in the data</div>
+        <div class="grid-2 gap-12">
+          <div class="card-highlight">
+            <div class="metric-value-sm" style="color: #00A3C4;">1.1m</div>
+            <div class="metric-label">Mass affluent customers in UK</div>
+          </div>
+          <div class="card-highlight">
+            <div class="metric-value-sm" style="color: #00A3C4;">50%</div>
+            <div class="metric-label">Not yet Premier — 1.6x higher deposits when they are</div>
+          </div>
+          <div class="card-highlight">
+            <div class="metric-value-sm" style="color: #00A3C4;">400k</div>
+            <div class="metric-label">Customers identified for new advice proposition</div>
+          </div>
+          <div class="card-highlight">
+            <div class="metric-value-sm" style="color: #00A3C4;">+169%</div>
+            <div class="metric-label">Direct Investing client growth (24k→65k, 96% existing BUK)</div>
+          </div>
+        </div>
+        <div class="card" style="background-color: #003D6B;">
+          <div style="font-size: 10pt; line-height: 1.5; color: #FFFFFF;">The 400k advice opportunity is 6x the current client base. At scale, <b>a 20% income uplift at flat cost moves C/I from 73% to ~61%</b> — but only if the digital advice platform is built for scale from day one.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 10: BETTER — BUK vs LLOYDS -->
+<section class="slide" data-slide-number="10" data-title="BUK efficiency" data-notes="Barclays UK targets Mid 40s% C/I by 2028 from 56.1%. Lloyds — the closest domestic benchmark — achieves a 23.7% staff/income ratio vs Barclays group 36.5%. BUK income is c.£8.8bn. Moving C/I from 56% to 46% implies c.£880m of cost reduction — roughly 40% of the entire group efficiency target from one division. The mobile app relaunch, 73%→80% digital interaction shift, and service model redesign are key.">
+  <div class="flex-col" style="height: 100%; justify-content: space-between;">
+    <div class="flex-col gap-8">
+      <div class="flex gap-12 items-center">
+        <div class="pill-dark">Better</div>
+        <div class="label" style="color: #6B7280;">Barclays UK vs. Lloyds</div>
+      </div>
+      <div class="h2" style="max-width: 700px;">The domestic peer shows what's achievable — and where BUK's £880m efficiency prize sits</div>
+    </div>
+
+    <div class="grid-2 gap-32" style="margin-top: 4px;">
+      <div class="flex-col gap-12">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 45%;">Metric (FY2025)</th>
+              <th class="text-right" style="width: 27.5%;">Barclays</th>
+              <th class="text-right" style="width: 27.5%;">Lloyds</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Staff cost / income</td>
+              <td class="text-right font-bold text-alert">36.5%</td>
+              <td class="text-right font-bold text-dark">23.7%</td>
+            </tr>
+            <tr>
+              <td>Income per employee</td>
+              <td class="text-right">£313k</td>
+              <td class="text-right">£327k</td>
+            </tr>
+            <tr>
+              <td>Pre-tax ROE</td>
+              <td class="text-right">12.5%</td>
+              <td class="text-right font-bold text-dark">14.2%</td>
+            </tr>
+            <tr>
+              <td>Loan loss / NII</td>
+              <td class="text-right text-alert">15.7%</td>
+              <td class="text-right text-dark">6.0%</td>
+            </tr>
+            <tr>
+              <td>P/BV multiple</td>
+              <td class="text-right text-alert">0.97x</td>
+              <td class="text-right text-dark">1.39x</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="body" style="font-size: 10pt;">Lloyds — a simpler, domestic-only bank — achieves lower staff costs relative to income and comparable income per employee despite having no investment bank revenue. This shows BUK's "Mid 40s%" target is achievable.</div>
+      </div>
+
+      <div class="flex-col gap-16">
+        <div class="card-accent">
+          <div class="flex-col gap-8">
+            <div style="font-size: 14pt; font-weight: 700; color: #FFFFFF;">c.£880m</div>
+            <div style="font-size: 10pt; color: #CBD5E0; line-height: 1.5;">Cost reduction implied by moving BUK C/I from 56% to Mid 40s% on c.£8.8bn of income. This is <b>~40% of the entire group efficiency target</b> — concentrated in one division.</div>
+          </div>
+        </div>
+        <div class="flex-col gap-8">
+          <div class="h3" style="font-size: 11pt;">The levers</div>
+          <div class="flex gap-8 items-start">
+            <div class="accent-bar" style="min-height: 28px;"></div>
+            <div style="font-size: 10pt; color: #4A5568;">Digital interaction shift: 73% → 80% target (each point = cost-per-serve reduction)</div>
+          </div>
+          <div class="flex gap-8 items-start">
+            <div class="accent-bar" style="min-height: 28px;"></div>
+            <div style="font-size: 10pt; color: #4A5568;">Mobile app relaunch in 2026 — platform for channel migration</div>
+          </div>
+          <div class="flex gap-8 items-start">
+            <div class="accent-bar" style="min-height: 28px;"></div>
+            <div style="font-size: 10pt; color: #4A5568;">Service model redesign, branch footprint optimisation, tech rationalisation</div>
+          </div>
+          <div class="flex gap-8 items-start">
+            <div class="accent-bar" style="min-height: 28px;"></div>
+            <div style="font-size: 10pt; color: #4A5568;">Tesco Bank integration cost normalisation (c.£0.2bn currently in BUK)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 11: TRANSITION — MORE BALANCED -->
+<section class="slide bg-accent" data-slide-number="11" data-title="More balanced" data-notes="Transition to More Balanced. Two key areas: UK lending growth infrastructure and fee income diversification. The structural hedge provides a tailwind but the real question is whether Barclays can build fee income at a rate that changes the earnings quality story.">
+  <div class="flex-col justify-center" style="height: 100%;">
+    <div class="flex-col gap-20">
+      <div class="label-light">More balanced</div>
+      <div class="h1-light" style="max-width: 680px;">Growth and diversification — the earnings quality that sustains a re-rating</div>
+      <div class="divider-accent"></div>
+      <div style="font-size: 11pt; color: #CBD5E0; line-height: 1.6; max-width: 620px; margin-top: 8px;">UK lending needs to grow faster than GDP. Fee income as a share of the balance sheet lags peers by a factor of two. The structural hedge provides a mechanical tailwind — but sustainable re-rating requires demonstrating that income growth is diversified, capital-efficient, and repeatable.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 12: MORE BALANCED — FEE INCOME GAP -->
+<section class="slide" data-slide-number="12" data-title="Fee income gap" data-notes="Barclays' non-interest income / assets is 1.0% vs JPMorgan 2.0% and Goldman 2.6%. Fee income is £5.8bn growing at 5% CAGR. The drivers are Transaction Banking (#1 GBP clearer), Premier Wealth Management, and USCB origination (Best Egg #2 US ABS). Growing fee income at 5% CAGR to c.£6.7bn by 2028 contributes c.£0.9bn incremental income.">
+  <div class="flex-col" style="height: 100%; justify-content: space-between;">
+    <div class="flex-col gap-8">
+      <div class="flex gap-12 items-center">
+        <div class="pill-dark">More balanced</div>
+        <div class="label" style="color: #6B7280;">Fee income diversification</div>
+      </div>
+      <div class="h2" style="max-width: 720px;">Barclays extracts half the fee income per unit of balance sheet that JPMorgan does</div>
+    </div>
+
+    <div class="grid-2 gap-32" style="margin-top: 4px;">
+      <div class="flex-col gap-16">
+        <div style="font-size: 8pt; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px;">Non-interest income / total assets (FY2025)</div>
+        <svg width="380" height="170" viewBox="0 0 380 170">
+          <text x="62" y="18" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">AmEx</text>
+          <rect x="67" y="6" width="307" height="18" rx="2" fill="#003D6B"/>
+          <text x="67" y="37" font-family="Arial" font-size="8" fill="#003D6B" font-weight="700">19.2%</text>
+
+          <text x="62" y="56" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">Goldman</text>
+          <rect x="67" y="44" width="42" height="18" rx="2" fill="#003D6B"/>
+          <text x="114" y="56" font-family="Arial" font-size="9" fill="#003D6B" font-weight="700">2.6%</text>
+
+          <text x="62" y="80" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">JPM</text>
+          <rect x="67" y="68" width="32" height="18" rx="2" fill="#00A3C4"/>
+          <text x="104" y="80" font-family="Arial" font-size="9" fill="#00A3C4" font-weight="700">2.0%</text>
+
+          <text x="62" y="104" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">Wells</text>
+          <rect x="67" y="92" width="29" height="18" rx="2" fill="#B0BEC5"/>
+          <text x="101" y="104" font-family="Arial" font-size="9" fill="#6B7280" font-weight="600">1.8%</text>
+
+          <text x="62" y="128" font-family="Arial" font-size="9" fill="#6B7280" text-anchor="end">BofA</text>
+          <rect x="67" y="116" width="26" height="18" rx="2" fill="#B0BEC5"/>
+          <text x="98" y="128" font-family="Arial" font-size="9" fill="#6B7280" font-weight="600">1.6%</text>
+
+          <text x="62" y="152" font-family="Arial" font-size="9" fill="#D94F00" text-anchor="end" font-weight="700">Barclays</text>
+          <rect x="67" y="140" width="16" height="18" rx="2" fill="#D94F00"/>
+          <text x="88" y="152" font-family="Arial" font-size="9" fill="#D94F00" font-weight="700">1.0%</text>
+        </svg>
+      </div>
+
+      <div class="flex-col gap-12">
+        <div class="h3" style="font-size: 11pt;">Three fee engines to build on</div>
+        <div class="card-outline">
+          <div class="flex gap-12 items-start">
+            <div style="font-size: 20pt; font-weight: 700; color: #003D6B; min-width: 28px;">#1</div>
+            <div class="flex-col gap-2">
+              <div style="font-size: 10pt; font-weight: 600; color: #2D2D2D;">GBP clearer — Transaction Banking</div>
+              <div style="font-size: 9pt; color: #6B7280;">iPortal consolidation (5→1 channel). Layer FX, liquidity, trade finance onto clearing franchise.</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-outline">
+          <div class="flex gap-12 items-start">
+            <div style="font-size: 20pt; font-weight: 700; color: #003D6B; min-width: 28px;">#2</div>
+            <div class="flex-col gap-2">
+              <div style="font-size: 10pt; font-weight: 600; color: #2D2D2D;">US ABS franchise — Best Egg</div>
+              <div style="font-size: 9pt; color: #6B7280;">Originate → securitise → distribute. Fee income at each stage with limited balance sheet.</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-outline">
+          <div class="flex gap-12 items-start">
+            <div style="font-size: 20pt; font-weight: 700; color: #00A3C4; min-width: 28px;">New</div>
+            <div class="flex-col gap-2">
+              <div style="font-size: 10pt; font-weight: 600; color: #2D2D2D;">Premier Wealth Management</div>
+              <div style="font-size: 9pt; color: #6B7280;">65k Direct Investing clients → advice relationships → AUM-based recurring fee income.</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-highlight">
+          <div style="font-size: 10pt; line-height: 1.5; color: #003D6B;">Fee income at 5% CAGR = <b>c.£0.9bn incremental by 2028</b>, retaining 40–50% post-cost = c.£350–450m incremental EBT.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 13: SUMMARY TABLE -->
+<section class="slide" data-slide-number="13" data-title="Opportunity summary" data-notes="Summary matrix of all opportunities with Barclays position, peer benchmark, action, and estimated impact. This is the reference slide for prioritisation discussions.">
+  <div class="flex-col gap-12" style="height: 100%;">
+    <div class="flex-col gap-8">
+      <div class="label">Summary</div>
+      <div class="h2">Nine data-anchored opportunities with quantified impact</div>
+    </div>
+
+    <table class="data-table" style="font-size: 8pt;">
+      <thead>
+        <tr>
+          <th style="width: 5%;">#</th>
+          <th style="width: 14%;">Pillar</th>
+          <th style="width: 22%;">Barclays today</th>
+          <th style="width: 20%;">Peer benchmark</th>
+          <th style="width: 22%;">Action required</th>
+          <th class="text-right" style="width: 17%;">Est. impact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-highlight">
+          <td>1</td>
+          <td>Simpler</td>
+          <td>C/I: 59.9%</td>
+          <td>JPM 53%, HSBC 45%</td>
+          <td>Accelerate beyond £2bn plan</td>
+          <td class="text-right font-bold">£290m per 1pt</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Simpler</td>
+          <td>£313k / employee</td>
+          <td>JPM £424k (+36%)</td>
+          <td>Support function automation</td>
+          <td class="text-right font-bold">£580m for 2pts</td>
+        </tr>
+        <tr class="row-highlight">
+          <td>3</td>
+          <td>Simpler</td>
+          <td>Non-staff: 23.5% (rising)</td>
+          <td>HSBC 18.5%</td>
+          <td>SG&amp;A discipline; tech payoff</td>
+          <td class="text-right font-bold">£580m for 2pts</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Better</td>
+          <td>IB income/RWA: 6.6%</td>
+          <td>Target &gt;7%</td>
+          <td>Risk consolidation; e-trading</td>
+          <td class="text-right font-bold">£780m income</td>
+        </tr>
+        <tr class="row-highlight">
+          <td>5</td>
+          <td>Better</td>
+          <td>PBWM C/I: 73.4%</td>
+          <td>Target High 60s%</td>
+          <td>Scalable digital advice</td>
+          <td class="text-right font-bold">C/I → ~61%</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td>Better</td>
+          <td>BUK C/I: 56.1%</td>
+          <td>Target Mid 40s%</td>
+          <td>Service model; digital shift</td>
+          <td class="text-right font-bold">c.£880m</td>
+        </tr>
+        <tr class="row-highlight">
+          <td>7</td>
+          <td>Balanced</td>
+          <td>UK lending: 5% growth</td>
+          <td>Target &gt;5% CAGR</td>
+          <td>Multi-brand platform; credit</td>
+          <td class="text-right font-bold">£180–240m NII</td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td>Balanced</td>
+          <td>Fee income/assets: 1.0%</td>
+          <td>JPM 2.0%</td>
+          <td>TxB, Wealth, ABS build</td>
+          <td class="text-right font-bold">c.£0.9bn by '28</td>
+        </tr>
+        <tr class="row-highlight">
+          <td>9</td>
+          <td>All</td>
+          <td>P/BV: 0.97x</td>
+          <td>Lloyds 1.4x</td>
+          <td>Deliver plan credibly</td>
+          <td class="text-right font-bold">£7.8bn per 0.1x</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="body" style="font-size: 9pt; margin-top: auto;">Each opportunity is anchored to peer-observable data and maps directly to Barclays' stated Simpler, Better, More Balanced strategy. Impact estimates are based on FY2025 reported financials.</div>
+  </div>
+</section>
+
+<!-- SLIDE 14: CLOSING -->
+<section class="slide bg-dark" data-slide-number="14" data-title="Close" data-notes="Closing slide. The overall message: Barclays is executing well but the plan leaves minimal margin for error on cost. The market is beginning to reward execution but hasn't resolved the structural discount. Every initiative that accelerates cost reduction, improves capital productivity, or builds fee income creates direct and measurable shareholder value.">
+  <div class="flex-col justify-center" style="height: 100%;">
+    <div class="flex-col gap-24">
+      <div class="h1-light" style="font-size: 30pt; max-width: 700px;">The data says the plan is credible but tight. Acceleration creates disproportionate value.</div>
+      <div class="divider-accent"></div>
+      <div class="grid-3 gap-24" style="margin-top: 8px;">
+        <div class="card-dark">
+          <div class="flex-col gap-8">
+            <div style="font-size: 11pt; font-weight: 700; color: #00A3C4;">Simpler</div>
+            <div style="font-size: 10pt; color: #CBD5E0; line-height: 1.5;">The £2.3bn cost challenge has £2.0bn of planned savings and nearly zero margin for slippage. Any acceleration compounds directly to RoTE.</div>
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="flex-col gap-8">
+            <div style="font-size: 11pt; font-weight: 700; color: #00A3C4;">Better</div>
+            <div style="font-size: 10pt; color: #CBD5E0; line-height: 1.5;">PBWM is the segment where technology investment has the clearest ROI case — 400k customers waiting for a proposition that doesn't yet exist at scale.</div>
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="flex-col gap-8">
+            <div style="font-size: 11pt; font-weight: 700; color: #00A3C4;">More balanced</div>
+            <div style="font-size: 10pt; color: #CBD5E0; line-height: 1.5;">The fee income gap to peers is the clearest signal of where earnings quality needs to improve to sustain a higher valuation multiple.</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size: 12pt; color: #CBD5E0; margin-top: 8px;">The prize: each 0.1x P/BV improvement = <span style="color: #00A3C4; font-weight: 700;">£7.8bn of shareholder value.</span></div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

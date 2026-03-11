@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Barclays – Data‑anchored opportunities mapped to Simpler, Better, More Balanced</title>
+
+<!--
+HTML structured for PPTX conversion per design guidance.
+Each <section class="slide"> represents one slide.
+Canvas size fixed to 1280x720.
+Charts implemented using inline SVG (PPT‑safe).
+-->
+
+<style>
+  body {
+    margin: 0;
+    background: #ffffff;
+  }
+
+  .slide {
+    width: 1280px;
+    height: 720px;
+    padding: 64px 80px;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+    position: relative;
+  }
+
+  .h1 {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 24px;
+  }
+
+  .h2 {
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .body {
+    font-size: 20px;
+    line-height: 1.4;
+    color: #333333;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .card {
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .footer {
+    position: absolute;
+    bottom: 32px;
+    left: 80px;
+    font-size: 14px;
+    color: #777777;
+  }
+
+  svg {
+    width: 100%;
+    height: 220px;
+    margin-bottom: 16px;
+  }
+
+  .bar {
+    fill: #2f6fed;
+  }
+
+  .axis {
+    stroke: #999999;
+    stroke-width: 1;
+  }
+
+  .label {
+    font-size: 14px;
+    fill: #555555;
+  }
+</style>
+</head>
+
+<body>
+
+<section class="slide">
+  <div class="h1">Where the data points to opportunity</div>
+  <div class="body">
+    This pack is designed to drive <strong>brainstorming grounded in evidence</strong>.<br><br>
+    We map Barclays’ own FY25 data and peer signals to the bank’s stated strategy:<br>
+    <strong>Simpler. Better. More balanced.</strong><br><br>
+    The intent is not to prescribe solutions, but to surface <strong>where focus matters most</strong>,
+    what peers appear to be doing differently, and how closing those gaps could translate into
+    <strong>measurable bottom‑line outcomes</strong>.
+  </div>
+  <div class="footer">Source: Barclays FY25 Results & Targets Update; peer benchmark pack</div>
+</section>
+
+<section class="slide">
+  <div class="h1">Barclays’ stated ambition</div>
+  <div class="grid">
+    <div class="card">
+      <div class="h2">Simpler</div>
+      <div class="body">Reduce cost and complexity through standardisation, modernisation and operational resilience.</div>
+    </div>
+    <div class="card">
+      <div class="h2">Better</div>
+      <div class="body">Improve returns via stronger capital productivity, segment performance and customer outcomes.</div>
+    </div>
+    <div class="card">
+      <div class="h2">More balanced</div>
+      <div class="body">Build a more resilient earnings mix across lending, fees and geographies.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="h1">Simpler: cost efficiency trajectory</div>
+  <svg viewBox="0 0 400 220">
+    <line x1="40" y1="20" x2="40" y2="180" class="axis" />
+    <line x1="40" y1="180" x2="360" y2="180" class="axis" />
+    <rect x="80" y="80" width="40" height="100" class="bar" />
+    <rect x="160" y="90" width="40" height="90" class="bar" />
+    <rect x="240" y="110" width="40" height="70" class="bar" />
+    <text x="80" y="200" class="label">FY25<br>61%</text>
+    <text x="160" y="200" class="label">2026<br>~58%</text>
+    <text x="240" y="200" class="label">2028<br>~52%</text>
+  </svg>
+  <div class="body">
+    The plan assumes c.£2bn of efficiency savings by 2028.
+    The glidepath implies diminishing headroom from incremental savings — structural simplification becomes decisive.
+  </div>
+</section>
+
+<section class="slide">
+  <div class="h1">Better: RoTE ambition</div>
+  <svg viewBox="0 0 400 220">
+    <line x1="40" y1="20" x2="40" y2="180" class="axis" />
+    <line x1="40" y1="180" x2="360" y2="180" class="axis" />
+    <rect x="100" y="110" width="40" height="70" class="bar" />
+    <rect x="180" y="95" width="40" height="85" class="bar" />
+    <rect x="260" y="70" width="40" height="110" class="bar" />
+    <text x="95" y="200" class="label">FY25<br>11.3%</text>
+    <text x="175" y="200" class="label">2026<br>&gt;12%</text>
+    <text x="255" y="200" class="label">2028<br>&gt;14%</text>
+  </svg>
+  <div class="body">
+    “Better” is framed less as growth, more as <strong>capital productivity and predictability</strong>.
+  </div>
+</section>
+
+<section class="slide">
+  <div class="h1">Peer lens: valuation signal</div>
+  <svg viewBox="0 0 400 220">
+    <line x1="40" y1="20" x2="40" y2="180" class="axis" />
+    <line x1="40" y1="180" x2="360" y2="180" class="axis" />
+    <rect x="120" y="110" width="40" height="70" class="bar" />
+    <rect x="220" y="70" width="40" height="110" class="bar" />
+    <text x="110" y="200" class="label">Barclays<br>~1.0x</text>
+    <text x="205" y="200" class="label">Peers<br>&gt;1.2x</text>
+  </svg>
+  <div class="body">
+    Peer data shows Barclays trading around book value, while simpler peers trade at a premium —
+    suggesting the market is not yet convinced returns are durable.
+  </div>
+</section>
+
+<section class="slide">
+  <div class="h1">More balanced: income mix focus</div>
+  <svg viewBox="0 0 400 220">
+    <rect x="60" y="80" width="280" height="30" class="bar" />
+    <rect x="60" y="130" width="220" height="30" class="bar" />
+    <text x="60" y="70" class="label">FY25 Group income £29.1bn</text>
+    <text x="60" y="125" class="label">FY26 guidance £31bn</text>
+  </svg>
+  <div class="body">
+    The strategy explicitly shifts toward stable NII, fees and disciplined UK lending growth (&gt;5% CAGR).
+  </div>
+</section>
+
+<section class="slide">
+  <div class="h1">From focus to financial outcome</div>
+  <div class="body">
+    <strong>Do X</strong> (simplify platforms, improve RWA productivity, scale fee engines)<br>
+    → <strong>Move Y</strong> (cost:income, RoTE, volatility, capital efficiency)<br>
+    → <strong>Improve Z</strong> (earnings quality, investor confidence, valuation multiple)
+  </div>
+</section>
+
+<section class="slide">
+  <div class="h1">What this enables</div>
+  <div class="body">
+    This framing allows senior stakeholders to:
+    <ul>
+      <li>Anchor debate in Barclays’ own data</li>
+      <li>Use peers as a reference, not a prescription</li>
+      <li>Brainstorm interventions with a clear line to outcomes</li>
+    </ul>
+    <br>
+    The question becomes:
+    <strong>where will focus most accelerate a Simpler, Better, More balanced Barclays?</strong>
+  </div>
+</section>
+
+</body>
+</html>
+``

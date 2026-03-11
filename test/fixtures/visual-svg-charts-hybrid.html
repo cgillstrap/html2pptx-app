@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Barclays PLC — Peer Benchmarking Analysis</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#1a1a2e;overflow:hidden;height:100vh;width:100vw}
+.slide{display:none;width:100vw;height:100vh;background:#fff;padding:40px 56px 72px;overflow-y:auto;position:relative}
+.slide.active{display:flex;flex-direction:column}
+.slide-hdr{text-align:center;margin-bottom:6px;flex-shrink:0}
+.slide-hdr .conf{font-size:9px;color:#00AEEF;font-weight:600;letter-spacing:1.5px;text-transform:uppercase}
+.slide-hdr .brand{font-size:12px;color:#00395D;font-weight:600;margin-top:1px}
+.slide-body{flex:1;overflow-y:auto;padding-bottom:32px}
+.sec{display:inline-block;font-size:10px;font-weight:600;color:#00AEEF;letter-spacing:1px;text-transform:uppercase;background:#EEF6FF;padding:3px 10px;border-radius:3px;margin-bottom:8px}
+h2{font-size:26px;font-weight:700;color:#00395D;margin-bottom:4px}
+.sub{font-size:13px;color:#8C8C8C;font-style:italic;margin-bottom:20px}
+.ins{font-size:14px;color:#333;line-height:1.7;margin-bottom:20px;max-width:900px}
+.q{background:#EEF6FF;border-left:4px solid #00AEEF;padding:16px 20px;border-radius:4px;margin-top:20px;font-size:13px;color:#00395D;font-weight:500;line-height:1.6}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px}
+.cb{background:#F7F9FB;border-radius:8px;padding:16px}
+.ct{font-size:12px;font-weight:600;color:#00395D;margin-bottom:10px}
+.mg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.mc{background:#F7F9FB;border-radius:8px;padding:14px;text-align:center}
+.mv{font-size:28px;font-weight:700;color:#00395D}
+.ml{font-size:10px;color:#8C8C8C;margin-top:2px}
+.mr{font-size:10px;color:#00AEEF;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+th{text-align:left;padding:8px 10px;border-bottom:2px solid #00395D;color:#00395D;font-weight:600;font-size:10px;white-space:nowrap}
+td{padding:6px 10px;border-bottom:1px solid #eee;font-size:11px}
+tr.hl td{background:#EEF6FF;font-weight:600}
+.leg{display:flex;gap:14px;margin:8px 0;flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:5px;font-size:10px;color:#555}
+.lb{width:12px;height:8px;border-radius:2px}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#00395D;padding:10px 32px;display:flex;justify-content:space-between;align-items:center;z-index:100}
+.nb{padding:8px 24px;font-size:13px;border:1px solid rgba(255,255,255,0.3);border-radius:4px;background:transparent;color:#fff;cursor:pointer;font-family:inherit}
+.nb:hover{background:rgba(255,255,255,0.1)}
+.nb:disabled{opacity:0.3;cursor:not-allowed}
+.nb.pr{background:#00AEEF;border-color:#00AEEF}
+.nc{color:rgba(255,255,255,0.6);font-size:12px;text-align:center}
+.nh{color:rgba(255,255,255,0.4);font-size:10px}
+@media(max-width:800px){.slide{padding:20px 16px 72px}.g2{grid-template-columns:1fr}.mg{grid-template-columns:1fr 1fr}h2{font-size:20px}}
+</style>
+</head>
+<body>
+
+<!-- S0: TITLE -->
+<div class="slide active" id="s0">
+<div class="slide-body" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;height:100%">
+  <div class="conf" style="font-size:11px;margin-bottom:24px">Confidential</div>
+  <h1 style="font-size:42px;font-weight:700;color:#00395D;line-height:1.2;max-width:700px">Barclays PLC<br>Peer Benchmarking Analysis</h1>
+  <div style="width:60px;height:4px;background:#00AEEF;border-radius:2px;margin:24px 0"></div>
+  <div style="font-size:16px;color:#8C8C8C">Data as of FY-12/2025 &nbsp;|&nbsp; Market data as of February 2026</div>
+  <div style="font-size:13px;color:#D9D9D9;margin-top:32px;max-width:600px">Peer group: JPMorgan Chase, Bank of America, Citigroup, Wells Fargo, Goldman Sachs, HSBC, BNP Paribas, Deutsche Bank, Crédit Agricole, Lloyds Banking Group, American Express</div>
+</div>
+</div>
+
+<!-- S1: PEER SNAPSHOT -->
+<div class="slide" id="s1">
+<div class="slide-hdr"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-body">
+  <div class="sec">Overview</div>
+  <h2>Barclays in Context: A Peer Snapshot</h2>
+  <div class="sub">FY2025 — Barclays PLC vs. 11 global banking peers</div>
+  <div class="ins">Barclays ranks in the middle of the peer group across most key metrics, but the direction of travel is consistently upward. Operating income growth of 10.9% was near the top of the group. Pre-tax ROE has improved to 12.5%, and the cost/income ratio has dropped below 60% for the first time in the observed period.</div>
+  <div class="mg">
+    <div class="mc"><div class="mv">12.5%</div><div class="ml">Pre-Tax ROE</div><div class="mr">Rank: 9th of 12</div></div>
+    <div class="mc"><div class="mv">59.9%</div><div class="ml">Cost / Income</div><div class="mr">Rank: 5th of 11</div></div>
+    <div class="mc"><div class="mv">10.9%</div><div class="ml">OI Growth YoY</div><div class="mr">Rank: 2nd of 12</div></div>
+    <div class="mc"><div class="mv">48.4%</div><div class="ml">1-Year TRS</div><div class="mr">Rank: 3rd of 12</div></div>
+  </div>
+  <div class="g2">
+    <div class="cb"><div class="ct">Pre-Tax ROE (FY2025)</div>
+      <svg viewBox="0 0 420 270" xmlns="http://www.w3.org/2000/svg"><g transform="translate(100,8)">
+        <rect x="0" y="0" width="278" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="14" text-anchor="end" font-size="10" fill="#555">AmEx</text><text x="282" y="14" font-size="10" fill="#555">43.3%</text>
+        <rect x="0" y="23" width="135" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="37" text-anchor="end" font-size="10" fill="#555">JPMorgan</text><text x="139" y="37" font-size="10" fill="#555">21.0%</text>
+        <rect x="0" y="46" width="116" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="60" text-anchor="end" font-size="10" fill="#555">HSBC</text><text x="120" y="60" font-size="10" fill="#555">18.1%</text>
+        <rect x="0" y="69" width="114" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="83" text-anchor="end" font-size="10" fill="#555">Goldman Sachs</text><text x="118" y="83" font-size="10" fill="#555">17.7%</text>
+        <rect x="0" y="92" width="91" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="106" text-anchor="end" font-size="10" fill="#555">Lloyds</text><text x="95" y="106" font-size="10" fill="#555">14.2%</text>
+        <rect x="0" y="115" width="86" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="129" text-anchor="end" font-size="10" fill="#555">Wells Fargo</text><text x="90" y="129" font-size="10" fill="#555">13.4%</text>
+        <rect x="0" y="138" width="84" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="152" text-anchor="end" font-size="10" fill="#555">BNP Paribas</text><text x="88" y="152" font-size="10" fill="#555">13.1%</text>
+        <rect x="0" y="161" width="81" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="175" text-anchor="end" font-size="10" fill="#555">BofA</text><text x="85" y="175" font-size="10" fill="#555">12.6%</text>
+        <rect x="0" y="184" width="80" height="21" rx="2" fill="#00AEEF"/><text x="-4" y="198" text-anchor="end" font-size="10" fill="#00395D" font-weight="700">Barclays</text><text x="84" y="198" font-size="10" fill="#00395D" font-weight="700">12.5%</text>
+        <rect x="0" y="207" width="80" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="221" text-anchor="end" font-size="10" fill="#555">Crédit Agricole</text><text x="84" y="221" font-size="10" fill="#555">12.4%</text>
+        <rect x="0" y="230" width="78" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="244" text-anchor="end" font-size="10" fill="#555">Deutsche Bank</text><text x="82" y="244" font-size="10" fill="#555">12.2%</text>
+      </g></svg>
+    </div>
+    <div class="cb"><div class="ct">Operating Income Growth (FY2025 YoY)</div>
+      <svg viewBox="0 0 420 290" xmlns="http://www.w3.org/2000/svg"><g transform="translate(100,8)">
+        <rect x="0" y="0" width="275" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="14" text-anchor="end" font-size="10" fill="#555">BofA</text><text x="279" y="14" font-size="10" fill="#555">11.0%</text>
+        <rect x="0" y="23" width="273" height="21" rx="2" fill="#00AEEF"/><text x="-4" y="37" text-anchor="end" font-size="10" fill="#00395D" font-weight="700">Barclays</text><text x="277" y="37" font-size="10" fill="#00395D" font-weight="700">10.9%</text>
+        <rect x="0" y="46" width="238" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="60" text-anchor="end" font-size="10" fill="#555">AmEx</text><text x="242" y="60" font-size="10" fill="#555">9.5%</text>
+        <rect x="0" y="69" width="223" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="83" text-anchor="end" font-size="10" fill="#555">Goldman Sachs</text><text x="227" y="83" font-size="10" fill="#555">8.9%</text>
+        <rect x="0" y="92" width="195" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="106" text-anchor="end" font-size="10" fill="#555">Citi</text><text x="199" y="106" font-size="10" fill="#555">7.8%</text>
+        <rect x="0" y="115" width="193" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="129" text-anchor="end" font-size="10" fill="#555">Lloyds</text><text x="197" y="129" font-size="10" fill="#555">7.7%</text>
+        <rect x="0" y="138" width="183" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="152" text-anchor="end" font-size="10" fill="#555">JPMorgan</text><text x="187" y="152" font-size="10" fill="#555">7.3%</text>
+        <rect x="0" y="161" width="168" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="175" text-anchor="end" font-size="10" fill="#555">Deutsche Bank</text><text x="172" y="175" font-size="10" fill="#555">6.7%</text>
+        <rect x="0" y="184" width="125" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="198" text-anchor="end" font-size="10" fill="#555">BNP Paribas</text><text x="129" y="198" font-size="10" fill="#555">5.0%</text>
+        <rect x="0" y="207" width="98" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="221" text-anchor="end" font-size="10" fill="#555">HSBC</text><text x="102" y="221" font-size="10" fill="#555">3.9%</text>
+        <rect x="0" y="230" width="55" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="244" text-anchor="end" font-size="10" fill="#555">Crédit Agricole</text><text x="59" y="244" font-size="10" fill="#555">2.2%</text>
+        <rect x="0" y="253" width="28" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="267" text-anchor="end" font-size="10" fill="#555">Wells Fargo</text><text x="32" y="267" font-size="10" fill="#555">1.1%</text>
+      </g></svg>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="cb"><div class="ct">Cost / Income Ratio (FY2025) — lower is better</div>
+      <svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg"><g transform="translate(100,8)">
+        <rect x="0" y="0" width="190" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="14" text-anchor="end" font-size="10" fill="#555">HSBC</text><text x="194" y="14" font-size="10" fill="#555">45.4%</text>
+        <rect x="0" y="23" width="222" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="37" text-anchor="end" font-size="10" fill="#555">JPMorgan</text><text x="226" y="37" font-size="10" fill="#555">53.0%</text>
+        <rect x="0" y="46" width="234" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="60" text-anchor="end" font-size="10" fill="#555">Crédit Agricole</text><text x="238" y="60" font-size="10" fill="#555">56.0%</text>
+        <rect x="0" y="69" width="249" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="83" text-anchor="end" font-size="10" fill="#555">BNP Paribas</text><text x="253" y="83" font-size="10" fill="#555">59.5%</text>
+        <rect x="0" y="92" width="251" height="21" rx="2" fill="#00AEEF"/><text x="-4" y="106" text-anchor="end" font-size="10" fill="#00395D" font-weight="700">Barclays</text><text x="255" y="106" font-size="10" fill="#00395D" font-weight="700">59.9%</text>
+        <rect x="0" y="115" width="258" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="129" text-anchor="end" font-size="10" fill="#555">BofA</text><text x="262" y="129" font-size="10" fill="#555">61.7%</text>
+        <rect x="0" y="138" width="261" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="152" text-anchor="end" font-size="10" fill="#555">Goldman Sachs</text><text x="265" y="152" font-size="10" fill="#555">62.4%</text>
+        <rect x="0" y="161" width="261" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="175" text-anchor="end" font-size="10" fill="#555">Lloyds</text><text x="265" y="175" font-size="10" fill="#555">62.4%</text>
+        <rect x="0" y="184" width="264" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="198" text-anchor="end" font-size="10" fill="#555">Citi</text><text x="268" y="198" font-size="10" fill="#555">63.1%</text>
+        <rect x="0" y="207" width="270" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="221" text-anchor="end" font-size="10" fill="#555">Deutsche Bank</text><text x="274" y="221" font-size="10" fill="#555">64.4%</text>
+        <rect x="0" y="230" width="277" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="244" text-anchor="end" font-size="10" fill="#555">Wells Fargo</text><text x="281" y="244" font-size="10" fill="#555">66.1%</text>
+      </g></svg>
+    </div>
+    <div class="cb"><div class="ct">1-Year Total Return to Shareholders</div>
+      <svg viewBox="0 0 420 290" xmlns="http://www.w3.org/2000/svg"><g transform="translate(100,8)">
+        <rect x="0" y="0" width="265" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="14" text-anchor="end" font-size="10" fill="#555">HSBC</text><text x="269" y="14" font-size="10" fill="#555">57.4%</text>
+        <rect x="0" y="23" width="232" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="37" text-anchor="end" font-size="10" fill="#555">Deutsche Bank</text><text x="236" y="37" font-size="10" fill="#555">50.2%</text>
+        <rect x="0" y="46" width="224" height="21" rx="2" fill="#00AEEF"/><text x="-4" y="60" text-anchor="end" font-size="10" fill="#00395D" font-weight="700">Barclays</text><text x="228" y="60" font-size="10" fill="#00395D" font-weight="700">48.4%</text>
+        <rect x="0" y="69" width="219" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="83" text-anchor="end" font-size="10" fill="#555">Lloyds</text><text x="223" y="83" font-size="10" fill="#555">47.4%</text>
+        <rect x="0" y="92" width="205" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="106" text-anchor="end" font-size="10" fill="#555">BNP Paribas</text><text x="209" y="106" font-size="10" fill="#555">44.3%</text>
+        <rect x="0" y="115" width="191" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="129" text-anchor="end" font-size="10" fill="#555">Citi</text><text x="195" y="129" font-size="10" fill="#555">41.4%</text>
+        <rect x="0" y="138" width="186" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="152" text-anchor="end" font-size="10" fill="#555">Goldman Sachs</text><text x="190" y="152" font-size="10" fill="#555">40.3%</text>
+        <rect x="0" y="161" width="117" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="175" text-anchor="end" font-size="10" fill="#555">Crédit Agricole</text><text x="121" y="175" font-size="10" fill="#555">25.3%</text>
+        <rect x="0" y="184" width="73" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="198" text-anchor="end" font-size="10" fill="#555">JPMorgan</text><text x="77" y="198" font-size="10" fill="#555">15.8%</text>
+        <rect x="0" y="207" width="49" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="221" text-anchor="end" font-size="10" fill="#555">BofA</text><text x="53" y="221" font-size="10" fill="#555">10.6%</text>
+        <rect x="0" y="230" width="29" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="244" text-anchor="end" font-size="10" fill="#555">Wells Fargo</text><text x="33" y="244" font-size="10" fill="#555">6.3%</text>
+        <rect x="0" y="253" width="17" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="267" text-anchor="end" font-size="10" fill="#555">AmEx</text><text x="21" y="267" font-size="10" fill="#555">3.7%</text>
+      </g></svg>
+    </div>
+  </div>
+  <div class="q">Barclays is improving faster than most peers across multiple dimensions. The question is whether this momentum is structural or cyclical — and what it would take to move from mid-table to top quartile.</div>
+</div>
+</div>
+
+<!-- S2: INCOME -->
+<div class="slide" id="s2">
+<div class="slide-hdr"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-body">
+  <div class="sec">Revenue</div>
+  <h2>The Income Story: What's Driving Performance</h2>
+  <div class="sub">Revenue composition and business segment contribution</div>
+  <div class="ins">Barclays operates with a near-even split between net interest income (49.8%) and non-interest income (50.2%). Total operating income grew from £25.4bn to £29.1bn, a 7.1% CAGR, driven by balanced growth across both revenue lines.</div>
+  <div class="g2">
+    <div class="cb"><div class="ct">Operating Income Composition (GBP bn)</div>
+      <svg viewBox="0 0 340 210" xmlns="http://www.w3.org/2000/svg"><g transform="translate(40,15)">
+        <rect x="20" y="67" width="56" height="55" fill="#00395D" rx="2"/><rect x="20" y="12" width="56" height="55" fill="#00AEEF" rx="2"/>
+        <text x="48" y="98" text-anchor="middle" font-size="9" fill="#fff">£12.7bn</text><text x="48" y="43" text-anchor="middle" font-size="9" fill="#fff">£12.7bn</text>
+        <text x="48" y="140" text-anchor="middle" font-size="10" fill="#8C8C8C">FY23</text><text x="48" y="155" text-anchor="middle" font-size="10" font-weight="700" fill="#00395D">£25.4bn</text>
+        <rect x="110" y="62" width="56" height="56" fill="#00395D" rx="2"/><rect x="110" y="4" width="56" height="58" fill="#00AEEF" rx="2"/>
+        <text x="138" y="94" text-anchor="middle" font-size="9" fill="#fff">£12.9bn</text><text x="138" y="37" text-anchor="middle" font-size="9" fill="#fff">£13.3bn</text>
+        <text x="138" y="140" text-anchor="middle" font-size="10" fill="#8C8C8C">FY24</text><text x="138" y="155" text-anchor="middle" font-size="10" font-weight="700" fill="#00395D">£26.2bn</text>
+        <rect x="200" y="42" width="56" height="62" fill="#00395D" rx="2"/><rect x="200" y="-22" width="56" height="64" fill="#00AEEF" rx="2"/>
+        <text x="228" y="77" text-anchor="middle" font-size="9" fill="#fff">£14.5bn</text><text x="228" y="13" text-anchor="middle" font-size="9" fill="#fff">£14.6bn</text>
+        <text x="228" y="140" text-anchor="middle" font-size="10" fill="#8C8C8C">FY25</text><text x="228" y="155" text-anchor="middle" font-size="10" font-weight="700" fill="#00395D">£29.1bn</text>
+      </g></svg>
+      <div class="leg" style="justify-content:center"><div class="li"><div class="lb" style="background:#00395D"></div>Net Interest Income</div><div class="li"><div class="lb" style="background:#00AEEF"></div>Non-interest Income</div></div>
+    </div>
+    <div class="cb"><div class="ct">NII as % of Operating Income (FY2025)</div>
+      <svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg"><g transform="translate(100,8)">
+        <rect x="0" y="0" width="260" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="14" text-anchor="end" font-size="10" fill="#555">Citi</text><text x="264" y="14" font-size="10" fill="#555">69.1%</text>
+        <rect x="0" y="23" width="251" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="37" text-anchor="end" font-size="10" fill="#555">Lloyds</text><text x="255" y="37" font-size="10" fill="#555">66.7%</text>
+        <rect x="0" y="46" width="215" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="60" text-anchor="end" font-size="10" fill="#555">Wells Fargo</text><text x="219" y="60" font-size="10" fill="#555">57.1%</text>
+        <rect x="0" y="69" width="200" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="83" text-anchor="end" font-size="10" fill="#555">BofA</text><text x="204" y="83" font-size="10" fill="#555">53.1%</text>
+        <rect x="0" y="92" width="197" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="106" text-anchor="end" font-size="10" fill="#555">JPMorgan</text><text x="201" y="106" font-size="10" fill="#555">52.5%</text>
+        <rect x="0" y="115" width="187" height="21" rx="2" fill="#00AEEF"/><text x="-4" y="129" text-anchor="end" font-size="10" fill="#00395D" font-weight="700">Barclays</text><text x="191" y="129" font-size="10" fill="#00395D" font-weight="700">49.8%</text>
+        <rect x="0" y="138" width="184" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="152" text-anchor="end" font-size="10" fill="#555">Deutsche Bank</text><text x="188" y="152" font-size="10" fill="#555">48.9%</text>
+        <rect x="0" y="161" width="180" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="175" text-anchor="end" font-size="10" fill="#555">HSBC</text><text x="184" y="175" font-size="10" fill="#555">47.8%</text>
+        <rect x="0" y="184" width="154" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="198" text-anchor="end" font-size="10" fill="#555">BNP Paribas</text><text x="158" y="198" font-size="10" fill="#555">41.0%</text>
+        <rect x="0" y="207" width="90" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="221" text-anchor="end" font-size="10" fill="#555">AmEx</text><text x="94" y="221" font-size="10" fill="#555">24.0%</text>
+        <rect x="0" y="230" width="88" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="244" text-anchor="end" font-size="10" fill="#555">Goldman Sachs</text><text x="92" y="244" font-size="10" fill="#555">23.3%</text>
+      </g></svg>
+    </div>
+  </div>
+  <div class="ct">Business Segment Performance (FY2025)</div>
+  <table><thead><tr><th>Segment</th><th>% of Op. Income</th><th>EBT Margin FY23</th><th>EBT Margin FY25</th><th>Cost/Income FY23</th><th>Cost/Income FY25</th><th>Loan Loss FY25</th></tr></thead>
+  <tbody>
+    <tr><td>Investment Bank</td><td>45.2%</td><td>29.0%</td><td>35.3%</td><td>70.1%</td><td>62.3%</td><td>2.3%</td></tr>
+    <tr><td>Barclays UK</td><td>30.1%</td><td>37.8%</td><td>39.2%</td><td>58.2%</td><td>56.1%</td><td>4.7%</td></tr>
+    <tr><td>US Consumer Bank</td><td>12.7%</td><td>5.3%</td><td>14.0%</td><td>50.7%</td><td>44.7%</td><td>41.3%</td></tr>
+    <tr><td>UK Corporate Bank</td><td>7.1%</td><td>49.8%</td><td>47.0%</td><td>51.5%</td><td>51.2%</td><td>1.8%</td></tr>
+    <tr><td>Private Bank & WM</td><td>4.8%</td><td>33.7%</td><td>27.2%</td><td>66.0%</td><td>73.4%</td><td>-0.6%</td></tr>
+  </tbody></table>
+  <div class="q">The Investment Bank — 45% of income — has driven significant margin expansion. How sustainable is this, and what does the segment mix tell us about where future growth comes from?</div>
+</div>
+</div>
+
+<!-- S3: EFFICIENCY -->
+<div class="slide" id="s3">
+<div class="slide-hdr"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-body">
+  <div class="sec">Efficiency</div>
+  <h2>The Efficiency Picture: Progress and Composition</h2>
+  <div class="sub">Cost/income ratio trend and decomposition</div>
+  <div class="ins">Barclays' cost/income ratio dropped from 61.6% to 59.9%. Staff costs have fallen from 39.5% to 36.5% — genuine workforce productivity gains. However, the non-staff cost line moved from 22.2% to 25.0% before partially correcting to 23.5% — it remains above where it started.</div>
+  <div class="g2">
+    <div class="cb"><div class="ct">Barclays Cost Decomposition (% of Income)</div>
+      <svg viewBox="0 0 340 230" xmlns="http://www.w3.org/2000/svg"><g transform="translate(30,15)">
+        <rect x="20" y="60" width="64" height="99" fill="#00395D" rx="2"/><rect x="20" y="5" width="64" height="55" fill="#F2A900" rx="2"/>
+        <text x="52" y="114" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">39.5%</text><text x="52" y="36" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">22.2%</text>
+        <text x="52" y="178" text-anchor="middle" font-size="10" fill="#8C8C8C">FY23</text><text x="52" y="194" text-anchor="middle" font-size="11" fill="#00395D" font-weight="700">61.6%</text>
+        <rect x="120" y="55" width="64" height="94" fill="#00395D" rx="2"/><rect x="120" y="-8" width="64" height="63" fill="#F2A900" rx="2"/>
+        <text x="152" y="106" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">37.6%</text><text x="152" y="28" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">25.0%</text>
+        <text x="152" y="178" text-anchor="middle" font-size="10" fill="#8C8C8C">FY24</text><text x="152" y="194" text-anchor="middle" font-size="11" fill="#00395D" font-weight="700">62.6%</text>
+        <rect x="220" y="70" width="64" height="91" fill="#00395D" rx="2"/><rect x="220" y="11" width="64" height="59" fill="#F2A900" rx="2"/>
+        <text x="252" y="120" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">36.5%</text><text x="252" y="44" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">23.5%</text>
+        <text x="252" y="178" text-anchor="middle" font-size="10" fill="#8C8C8C">FY25</text><text x="252" y="194" text-anchor="middle" font-size="11" fill="#00395D" font-weight="700">59.9%</text>
+      </g></svg>
+      <div class="leg" style="justify-content:center"><div class="li"><div class="lb" style="background:#00395D"></div>Staff Cost</div><div class="li"><div class="lb" style="background:#F2A900"></div>Non-Staff Cost</div></div>
+    </div>
+    <div class="cb"><div class="ct">Staff Cost / Income — Peers (FY2025)</div>
+      <svg viewBox="0 0 420 290" xmlns="http://www.w3.org/2000/svg"><g transform="translate(100,8)">
+        <rect x="0" y="0" width="78" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="14" text-anchor="end" font-size="10" fill="#555">AmEx</text><text x="82" y="14" font-size="10" fill="#555">12.5%</text>
+        <rect x="0" y="23" width="148" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="37" text-anchor="end" font-size="10" fill="#555">Lloyds</text><text x="152" y="37" font-size="10" fill="#555">23.7%</text>
+        <rect x="0" y="46" width="168" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="60" text-anchor="end" font-size="10" fill="#555">HSBC</text><text x="172" y="60" font-size="10" fill="#555">26.8%</text>
+        <rect x="0" y="69" width="188" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="83" text-anchor="end" font-size="10" fill="#555">JPMorgan</text><text x="192" y="83" font-size="10" fill="#555">30.0%</text>
+        <rect x="0" y="92" width="203" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="106" text-anchor="end" font-size="10" fill="#555">Goldman Sachs</text><text x="207" y="106" font-size="10" fill="#555">32.4%</text>
+        <rect x="0" y="115" width="214" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="129" text-anchor="end" font-size="10" fill="#555">Citi</text><text x="218" y="129" font-size="10" fill="#555">34.2%</text>
+        <rect x="0" y="138" width="227" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="152" text-anchor="end" font-size="10" fill="#555">Crédit Agricole</text><text x="231" y="152" font-size="10" fill="#555">36.3%</text>
+        <rect x="0" y="161" width="228" height="21" rx="2" fill="#00AEEF"/><text x="-4" y="175" text-anchor="end" font-size="10" fill="#00395D" font-weight="700">Barclays</text><text x="232" y="175" font-size="10" fill="#00395D" font-weight="700">36.5%</text>
+        <rect x="0" y="184" width="230" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="198" text-anchor="end" font-size="10" fill="#555">Deutsche Bank</text><text x="234" y="198" font-size="10" fill="#555">36.8%</text>
+        <rect x="0" y="207" width="231" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="221" text-anchor="end" font-size="10" fill="#555">BNP Paribas</text><text x="235" y="221" font-size="10" fill="#555">37.0%</text>
+        <rect x="0" y="230" width="234" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="244" text-anchor="end" font-size="10" fill="#555">BofA</text><text x="238" y="244" font-size="10" fill="#555">37.4%</text>
+        <rect x="0" y="253" width="273" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="267" text-anchor="end" font-size="10" fill="#555">Wells Fargo</text><text x="277" y="267" font-size="10" fill="#555">43.6%</text>
+      </g></svg>
+    </div>
+  </div>
+  <div class="q">The bank has made visible progress on workforce efficiency. The question the data raises is what's happening beneath the non-staff cost line — is this investment spend, structural cost, or something else?</div>
+</div>
+</div>
+
+<!-- S4: CREDIT -->
+<div class="slide" id="s4">
+<div class="slide-hdr"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-body">
+  <div class="sec">Credit Quality</div>
+  <h2>Credit Quality: A Diverging Trend</h2>
+  <div class="sub">Loan loss ratios and provision trends</div>
+  <div class="ins">Barclays' loan loss ratio has risen from 7.4% to 7.8%, while several peers have improved — notably Wells Fargo (6.5% → 4.4%). The US Consumer Bank segment is the primary driver with a 41.3% loan loss ratio.</div>
+  <div class="g2">
+    <div class="cb"><div class="ct">Loan Loss Ratio Trend — Select Peers</div>
+      <table><thead><tr><th>Bank</th><th>FY23</th><th>FY24</th><th>FY25</th><th>Trend</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td>Barclays</td><td>7.4%</td><td>7.5%</td><td>7.8%</td><td style="color:#E03C31;font-weight:700">↑ Rising</td></tr>
+        <tr><td>Wells Fargo</td><td>6.5%</td><td>5.3%</td><td>4.4%</td><td style="color:#17B5B0;font-weight:600">↓ Improving</td></tr>
+        <tr><td>BofA</td><td>4.7%</td><td>5.8%</td><td>4.9%</td><td style="color:#8C8C8C">→ Stable</td></tr>
+        <tr><td>HSBC</td><td>5.0%</td><td>4.7%</td><td>5.3%</td><td style="color:#8C8C8C">→ Stable</td></tr>
+        <tr><td>JPMorgan</td><td>6.1%</td><td>6.2%</td><td>6.2%</td><td style="color:#8C8C8C">→ Stable</td></tr>
+        <tr><td>Citi</td><td>10.1%</td><td>12.1%</td><td>11.0%</td><td style="color:#E03C31">↑ Elevated</td></tr>
+      </tbody></table>
+    </div>
+    <div class="cb"><div class="ct">Loan Losses / NII (FY2025)</div>
+      <svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg"><g transform="translate(100,8)">
+        <rect x="0" y="0" width="260" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="14" text-anchor="end" font-size="10" fill="#555">AmEx</text><text x="264" y="14" font-size="10" fill="#555">29.7%</text>
+        <rect x="0" y="23" width="144" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="37" text-anchor="end" font-size="10" fill="#555">BNP Paribas</text><text x="148" y="37" font-size="10" fill="#555">16.5%</text>
+        <rect x="0" y="46" width="139" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="60" text-anchor="end" font-size="10" fill="#555">Citi</text><text x="143" y="60" font-size="10" fill="#555">15.9%</text>
+        <rect x="0" y="69" width="137" height="21" rx="2" fill="#00AEEF"/><text x="-4" y="83" text-anchor="end" font-size="10" fill="#00395D" font-weight="700">Barclays</text><text x="141" y="83" font-size="10" fill="#00395D" font-weight="700">15.7%</text>
+        <rect x="0" y="92" width="105" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="106" text-anchor="end" font-size="10" fill="#555">Crédit Agricole</text><text x="109" y="106" font-size="10" fill="#555">12.0%</text>
+        <rect x="0" y="115" width="103" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="129" text-anchor="end" font-size="10" fill="#555">JPMorgan</text><text x="107" y="129" font-size="10" fill="#555">11.8%</text>
+        <rect x="0" y="138" width="96" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="152" text-anchor="end" font-size="10" fill="#555">HSBC</text><text x="100" y="152" font-size="10" fill="#555">11.0%</text>
+        <rect x="0" y="161" width="95" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="175" text-anchor="end" font-size="10" fill="#555">Deutsche Bank</text><text x="99" y="175" font-size="10" fill="#555">10.9%</text>
+        <rect x="0" y="184" width="81" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="198" text-anchor="end" font-size="10" fill="#555">BofA</text><text x="85" y="198" font-size="10" fill="#555">9.3%</text>
+        <rect x="0" y="207" width="68" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="221" text-anchor="end" font-size="10" fill="#555">Wells Fargo</text><text x="72" y="221" font-size="10" fill="#555">7.8%</text>
+        <rect x="0" y="230" width="52" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="244" text-anchor="end" font-size="10" fill="#555">Lloyds</text><text x="56" y="244" font-size="10" fill="#555">6.0%</text>
+      </g></svg>
+    </div>
+  </div>
+  <div class="ct">US Consumer Bank — Segment Detail</div>
+  <table><thead><tr><th>Metric</th><th>FY2023</th><th>FY2024</th><th>FY2025</th></tr></thead>
+  <tbody>
+    <tr><td>Operating Income Growth</td><td>23.8%</td><td>1.8%</td><td>10.7%</td></tr>
+    <tr><td>EBT Margin</td><td>5.3%</td><td>12.2%</td><td>14.0%</td></tr>
+    <tr><td>Cost / Income Ratio</td><td>50.7%</td><td>48.9%</td><td>44.7%</td></tr>
+    <tr class="hl"><td>Loan Loss Ratio</td><td>44.0%</td><td>38.9%</td><td>41.3%</td></tr>
+  </tbody></table>
+  <div class="q">Barclays is absorbing a growing share of its net interest income into provisions at a time when several peers are seeing improving credit trends. The US consumer book appears to be the primary driver. This is worth understanding more deeply.</div>
+</div>
+</div>
+
+<!-- S5: VALUATION -->
+<div class="slide" id="s5">
+<div class="slide-hdr"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-body">
+  <div class="sec">Valuation</div>
+  <h2>The Market's View: Valuation and Sentiment</h2>
+  <div class="sub">Price multiples, analyst consensus, and shareholder returns</div>
+  <div class="ins">Barclays delivered 48.4% TRS — third best — and 75% of analysts rate it a buy. Yet it trades at just 0.97x book and 8.1x earnings, both significantly below the peer average. The market recognises improvement but hasn't fully re-rated the franchise.</div>
+  <div class="g2">
+    <div class="cb"><div class="ct">Price / Book Value (Feb 2026)</div>
+      <svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg"><g transform="translate(100,8)">
+        <rect x="0" y="0" width="270" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="14" text-anchor="end" font-size="10" fill="#555">AmEx</text><text x="274" y="14" font-size="10" fill="#555">6.92x</text>
+        <rect x="0" y="23" width="91" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="37" text-anchor="end" font-size="10" fill="#555">JPMorgan</text><text x="95" y="37" font-size="10" fill="#555">2.33x</text>
+        <rect x="0" y="46" width="90" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="60" text-anchor="end" font-size="10" fill="#555">Goldman Sachs</text><text x="94" y="60" font-size="10" fill="#555">2.32x</text>
+        <rect x="0" y="69" width="61" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="83" text-anchor="end" font-size="10" fill="#555">Wells Fargo</text><text x="65" y="83" font-size="10" fill="#555">1.56x</text>
+        <rect x="0" y="92" width="54" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="106" text-anchor="end" font-size="10" fill="#555">Lloyds</text><text x="58" y="106" font-size="10" fill="#555">1.39x</text>
+        <rect x="0" y="115" width="52" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="129" text-anchor="end" font-size="10" fill="#555">BofA</text><text x="56" y="129" font-size="10" fill="#555">1.33x</text>
+        <rect x="0" y="138" width="41" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="152" text-anchor="end" font-size="10" fill="#555">Citi</text><text x="45" y="152" font-size="10" fill="#555">1.05x</text>
+        <rect x="0" y="161" width="38" height="21" rx="2" fill="#00AEEF"/><text x="-4" y="175" text-anchor="end" font-size="10" fill="#00395D" font-weight="700">Barclays</text><text x="42" y="175" font-size="10" fill="#00395D" font-weight="700">0.97x</text>
+        <rect x="0" y="184" width="36" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="198" text-anchor="end" font-size="10" fill="#555">BNP Paribas</text><text x="40" y="198" font-size="10" fill="#555">0.93x</text>
+        <rect x="0" y="207" width="34" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="221" text-anchor="end" font-size="10" fill="#555">Deutsche Bank</text><text x="38" y="221" font-size="10" fill="#555">0.88x</text>
+        <rect x="0" y="230" width="33" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="244" text-anchor="end" font-size="10" fill="#555">Crédit Agricole</text><text x="37" y="244" font-size="10" fill="#555">0.85x</text>
+      </g></svg>
+    </div>
+    <div class="cb"><div class="ct">Analyst Consensus</div>
+      <svg viewBox="0 0 500 310" xmlns="http://www.w3.org/2000/svg"><g transform="translate(90,8)">
+        <rect x="0" y="0" width="323" height="20" fill="#17B5B0" rx="2"/><rect x="323" y="0" width="57" height="20" fill="#F2A900"/><text x="-4" y="14" text-anchor="end" font-size="10" fill="#555">BofA</text><text x="160" y="14" font-size="9" fill="#fff" font-weight="600">85%</text>
+        <rect x="0" y="24" width="300" height="20" fill="#17B5B0" rx="2"/><rect x="300" y="24" width="61" height="20" fill="#F2A900"/><rect x="361" y="24" width="19" height="20" fill="#E03C31"/><text x="-4" y="38" text-anchor="end" font-size="10" fill="#555">BNP Paribas</text><text x="148" y="38" font-size="9" fill="#fff" font-weight="600">79%</text>
+        <rect x="0" y="48" width="296" height="20" fill="#17B5B0" rx="2"/><rect x="296" y="48" width="84" height="20" fill="#F2A900"/><text x="-4" y="62" text-anchor="end" font-size="10" fill="#555">Citi</text><text x="146" y="62" font-size="9" fill="#fff" font-weight="600">78%</text>
+        <rect x="0" y="72" width="285" height="20" fill="#17B5B0" rx="2"/><rect x="285" y="72" width="95" height="20" fill="#F2A900"/><text x="-4" y="86" text-anchor="end" font-size="10" fill="#00395D" font-weight="700">Barclays</text><text x="140" y="86" font-size="9" fill="#fff" font-weight="600">75%</text>
+        <rect x="0" y="96" width="232" height="20" fill="#17B5B0" rx="2"/><rect x="232" y="96" width="106" height="20" fill="#F2A900"/><rect x="338" y="96" width="42" height="20" fill="#E03C31"/><text x="-4" y="110" text-anchor="end" font-size="10" fill="#555">Lloyds</text><text x="114" y="110" font-size="9" fill="#fff" font-weight="600">61%</text>
+        <rect x="0" y="120" width="224" height="20" fill="#17B5B0" rx="2"/><rect x="224" y="120" width="156" height="20" fill="#F2A900"/><text x="-4" y="134" text-anchor="end" font-size="10" fill="#555">Wells Fargo</text><text x="110" y="134" font-size="9" fill="#fff" font-weight="600">59%</text>
+        <rect x="0" y="144" width="205" height="20" fill="#17B5B0" rx="2"/><rect x="205" y="144" width="175" height="20" fill="#F2A900"/><text x="-4" y="158" text-anchor="end" font-size="10" fill="#555">JPMorgan</text><text x="100" y="158" font-size="9" fill="#fff" font-weight="600">54%</text>
+        <rect x="0" y="168" width="179" height="20" fill="#17B5B0" rx="2"/><rect x="179" y="168" width="179" height="20" fill="#F2A900"/><rect x="354" y="168" width="26" height="20" fill="#E03C31"/><text x="-4" y="182" text-anchor="end" font-size="10" fill="#555">HSBC</text><text x="88" y="182" font-size="9" fill="#fff" font-weight="600">47%</text>
+        <rect x="0" y="192" width="148" height="20" fill="#17B5B0" rx="2"/><rect x="148" y="192" width="217" height="20" fill="#F2A900"/><rect x="365" y="192" width="15" height="20" fill="#E03C31"/><text x="-4" y="206" text-anchor="end" font-size="10" fill="#555">AmEx</text><text x="72" y="206" font-size="9" fill="#fff" font-weight="600">39%</text>
+        <rect x="0" y="216" width="144" height="20" fill="#17B5B0" rx="2"/><rect x="144" y="216" width="167" height="20" fill="#F2A900"/><rect x="311" y="216" width="69" height="20" fill="#E03C31"/><text x="-4" y="230" text-anchor="end" font-size="10" fill="#555">Crédit Agricole</text><text x="70" y="230" font-size="9" fill="#fff" font-weight="600">38%</text>
+        <rect x="0" y="240" width="133" height="20" fill="#17B5B0" rx="2"/><rect x="133" y="240" width="201" height="20" fill="#F2A900"/><rect x="334" y="240" width="46" height="20" fill="#E03C31"/><text x="-4" y="254" text-anchor="end" font-size="10" fill="#555">Deutsche Bank</text><text x="64" y="254" font-size="9" fill="#fff" font-weight="600">35%</text>
+        <rect x="0" y="264" width="118" height="20" fill="#17B5B0" rx="2"/><rect x="118" y="264" width="236" height="20" fill="#F2A900"/><rect x="354" y="264" width="26" height="20" fill="#E03C31"/><text x="-4" y="278" text-anchor="end" font-size="10" fill="#555">Goldman Sachs</text><text x="57" y="278" font-size="9" fill="#fff" font-weight="600">31%</text>
+      </g></svg>
+      <div class="leg"><div class="li"><div class="lb" style="background:#17B5B0"></div>Buy</div><div class="li"><div class="lb" style="background:#F2A900"></div>Hold</div><div class="li"><div class="lb" style="background:#E03C31"></div>Sell</div></div>
+    </div>
+  </div>
+  <div class="q">What would it take for the market to re-rate Barclays more in line with peers showing similar operational trajectories?</div>
+</div>
+</div>
+
+<!-- S6: FORWARD -->
+<div class="slide" id="s6">
+<div class="slide-hdr"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-body">
+  <div class="sec">Forward Look</div>
+  <h2>Forward Outlook: What Analysts Expect</h2>
+  <div class="sub">Consensus estimates 2026E — 2028E</div>
+  <div class="ins">Barclays is projected to deliver 4.0% OI CAGR through 2028 — in line with peers. But the expected EBT margin improvement of +3.5 ppts is the highest in the group, indicating analysts believe the efficiency story has further to run.</div>
+  <div class="g2">
+    <div class="cb"><div class="ct">2026E–2028E Operating Income CAGR</div>
+      <svg viewBox="0 0 420 290" xmlns="http://www.w3.org/2000/svg"><g transform="translate(100,8)">
+        <rect x="0" y="0" width="275" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="14" text-anchor="end" font-size="10" fill="#555">AmEx</text><text x="279" y="14" font-size="10" fill="#555">8.6%</text>
+        <rect x="0" y="23" width="185" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="37" text-anchor="end" font-size="10" fill="#555">Lloyds</text><text x="189" y="37" font-size="10" fill="#555">5.8%</text>
+        <rect x="0" y="46" width="150" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="60" text-anchor="end" font-size="10" fill="#555">Wells Fargo</text><text x="154" y="60" font-size="10" fill="#555">4.7%</text>
+        <rect x="0" y="69" width="144" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="83" text-anchor="end" font-size="10" fill="#555">Deutsche Bank</text><text x="148" y="83" font-size="10" fill="#555">4.5%</text>
+        <rect x="0" y="92" width="141" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="106" text-anchor="end" font-size="10" fill="#555">BofA</text><text x="145" y="106" font-size="10" fill="#555">4.4%</text>
+        <rect x="0" y="115" width="131" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="129" text-anchor="end" font-size="10" fill="#555">BNP Paribas</text><text x="135" y="129" font-size="10" fill="#555">4.1%</text>
+        <rect x="0" y="138" width="128" height="21" rx="2" fill="#00AEEF"/><text x="-4" y="152" text-anchor="end" font-size="10" fill="#00395D" font-weight="700">Barclays</text><text x="132" y="152" font-size="10" fill="#00395D" font-weight="700">4.0%</text>
+        <rect x="0" y="161" width="122" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="175" text-anchor="end" font-size="10" fill="#555">Citi</text><text x="126" y="175" font-size="10" fill="#555">3.8%</text>
+        <rect x="0" y="184" width="122" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="198" text-anchor="end" font-size="10" fill="#555">HSBC</text><text x="126" y="198" font-size="10" fill="#555">3.8%</text>
+        <rect x="0" y="207" width="118" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="221" text-anchor="end" font-size="10" fill="#555">JPMorgan</text><text x="122" y="221" font-size="10" fill="#555">3.7%</text>
+        <rect x="0" y="230" width="115" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="244" text-anchor="end" font-size="10" fill="#555">Crédit Agricole</text><text x="119" y="244" font-size="10" fill="#555">3.6%</text>
+        <rect x="0" y="253" width="96" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="267" text-anchor="end" font-size="10" fill="#555">Goldman Sachs</text><text x="100" y="267" font-size="10" fill="#555">3.0%</text>
+      </g></svg>
+    </div>
+    <div class="cb"><div class="ct">2026E–2028E EBT Margin Change (ppts)</div>
+      <svg viewBox="0 0 420 290" xmlns="http://www.w3.org/2000/svg"><g transform="translate(100,8)">
+        <rect x="0" y="0" width="262" height="21" rx="2" fill="#00AEEF"/><text x="-4" y="14" text-anchor="end" font-size="10" fill="#00395D" font-weight="700">Barclays</text><text x="266" y="14" font-size="10" fill="#00395D" font-weight="700">+3.5</text>
+        <rect x="0" y="23" width="233" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="37" text-anchor="end" font-size="10" fill="#555">Deutsche Bank</text><text x="237" y="37" font-size="10" fill="#555">+3.1</text>
+        <rect x="0" y="46" width="225" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="60" text-anchor="end" font-size="10" fill="#555">Lloyds</text><text x="229" y="60" font-size="10" fill="#555">+3.0</text>
+        <rect x="0" y="69" width="195" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="83" text-anchor="end" font-size="10" fill="#555">Goldman Sachs</text><text x="199" y="83" font-size="10" fill="#555">+2.6</text>
+        <rect x="0" y="92" width="150" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="106" text-anchor="end" font-size="10" fill="#555">BofA</text><text x="154" y="106" font-size="10" fill="#555">+2.0</text>
+        <rect x="0" y="115" width="150" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="129" text-anchor="end" font-size="10" fill="#555">BNP Paribas</text><text x="154" y="129" font-size="10" fill="#555">+2.0</text>
+        <rect x="0" y="138" width="120" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="152" text-anchor="end" font-size="10" fill="#555">Wells Fargo</text><text x="124" y="152" font-size="10" fill="#555">+1.6</text>
+        <rect x="0" y="161" width="113" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="175" text-anchor="end" font-size="10" fill="#555">Crédit Agricole</text><text x="117" y="175" font-size="10" fill="#555">+1.5</text>
+        <rect x="0" y="184" width="53" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="198" text-anchor="end" font-size="10" fill="#555">AmEx</text><text x="57" y="198" font-size="10" fill="#555">+0.7</text>
+        <rect x="0" y="207" width="45" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="221" text-anchor="end" font-size="10" fill="#555">JPMorgan</text><text x="49" y="221" font-size="10" fill="#555">+0.6</text>
+        <rect x="0" y="230" width="38" height="21" rx="2" fill="#D9D9D9"/><text x="-4" y="244" text-anchor="end" font-size="10" fill="#555">HSBC</text><text x="42" y="244" font-size="10" fill="#555">+0.5</text>
+        <rect x="0" y="253" width="38" height="21" rx="2" fill="#E03C31"/><text x="-4" y="267" text-anchor="end" font-size="10" fill="#555">Citi</text><text x="42" y="267" font-size="10" fill="#555">-0.5</text>
+      </g></svg>
+    </div>
+  </div>
+  <div class="cb" style="margin-top:8px"><div class="ct">Forward Estimates — Barclays vs Peer Median</div>
+    <table><thead><tr><th>Metric</th><th>Barclays 2026E</th><th>Peer Med 2026E</th><th>Barclays 2027E</th><th>Peer Med 2027E</th><th>Barclays 2028E</th><th>Peer Med 2028E</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td>OI YoY Growth</td><td>6.3%</td><td>6.5%</td><td>4.3%</td><td>4.0%</td><td>3.8%</td><td>4.4%</td></tr>
+      <tr class="hl"><td>EBT Margin</td><td>34.3%</td><td>35.3%</td><td>36.5%</td><td>37.1%</td><td>37.8%</td><td>37.2%</td></tr>
+    </tbody></table>
+  </div>
+  <div class="q">The consensus view is that margin expansion has further to run. The question for this room is: what are the levers that make that happen, and where does the data suggest the biggest gaps still exist?</div>
+</div>
+</div>
+
+<!-- S7: APPENDIX 1 -->
+<div class="slide" id="s7">
+<div class="slide-hdr"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-body">
+  <div class="sec">Appendix</div>
+  <h2>Income Statement & Key Metrics</h2>
+  <div class="sub">Barclays PLC (GBP mn)</div>
+  <table><thead><tr><th>Barclays (GBP mn)</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>CAGR</th></tr></thead>
+  <tbody>
+    <tr><td>Total Interest Income</td><td>35,075</td><td>38,326</td><td>36,189</td><td>1.6%</td></tr>
+    <tr><td>(-) Interest Expense</td><td>22,366</td><td>25,390</td><td>21,688</td><td>-1.5%</td></tr>
+    <tr class="hl"><td>Net Interest Income</td><td>12,709</td><td>12,936</td><td>14,501</td><td>6.8%</td></tr>
+    <tr class="hl"><td>(+) Non-interest Income</td><td>12,670</td><td>13,303</td><td>14,598</td><td>7.3%</td></tr>
+    <tr style="font-weight:700"><td>= Operating Income</td><td>25,379</td><td>26,239</td><td>29,099</td><td>7.1%</td></tr>
+    <tr><td>(-) Loan Loss Provisions</td><td>1,883</td><td>1,975</td><td>2,273</td><td>9.9%</td></tr>
+    <tr><td>(-) Staff Costs</td><td>10,017</td><td>9,876</td><td>10,607</td><td>2.9%</td></tr>
+    <tr><td>(-) Non-staff Costs</td><td>5,624</td><td>6,552</td><td>6,833</td><td>10.2%</td></tr>
+    <tr style="font-weight:700"><td>= EBT</td><td>7,855</td><td>7,836</td><td>9,386</td><td>9.3%</td></tr>
+  </tbody></table>
+  <div style="margin-top:20px"><div class="ct">Operating Metrics — Barclays Trend & Peer Rank</div></div>
+  <table><thead><tr><th>Metric</th><th>FY23</th><th>FY24</th><th>FY25</th><th>Peer Med</th><th>Rank</th></tr></thead>
+  <tbody>
+    <tr class="hl"><td>Pre-Tax ROE</td><td>11.1%</td><td>10.9%</td><td>12.5%</td><td>~13.1%</td><td>9th</td></tr>
+    <tr><td>Cost / Income</td><td>61.6%</td><td>62.6%</td><td>59.9%</td><td>~62.4%</td><td>5th</td></tr>
+    <tr><td>EBT Margin</td><td>31.0%</td><td>29.9%</td><td>32.3%</td><td>~30.3%</td><td>6th</td></tr>
+    <tr class="hl"><td>Loan Loss Ratio</td><td>7.4%</td><td>7.5%</td><td>7.8%</td><td>~5.3%</td><td>11th</td></tr>
+    <tr><td>Asset Turnover</td><td>1.7%</td><td>1.8%</td><td>1.9%</td><td>~2.3%</td><td>10th</td></tr>
+    <tr><td>Leverage</td><td>21.2x</td><td>20.8x</td><td>20.3x</td><td>~14.1x</td><td>3rd highest</td></tr>
+    <tr class="hl"><td>CET1 Ratio</td><td>13.8%</td><td>13.6%</td><td>14.3%</td><td>~14.1%</td><td>3rd</td></tr>
+  </tbody></table>
+</div>
+</div>
+
+<!-- S8: APPENDIX 2 -->
+<div class="slide" id="s8">
+<div class="slide-hdr"><div class="conf">Confidential</div><div class="brand">Barclays PLC — Peer Benchmarking Analysis</div></div>
+<div class="slide-body">
+  <div class="sec">Appendix</div>
+  <h2>Returns, Valuation & Analyst Sentiment</h2>
+  <div class="sub">Full peer comparison</div>
+  <div class="ct">Total Return to Shareholders</div>
+  <table><thead><tr><th>Company</th><th>5-Yr CAGR</th><th>3-Yr CAGR</th><th>1-Yr TRS</th></tr></thead>
+  <tbody>
+    <tr><td>HSBC</td><td>34.6%</td><td>39.9%</td><td>57.4%</td></tr>
+    <tr><td>Deutsche Bank</td><td>27.0%</td><td>41.0%</td><td>50.2%</td></tr>
+    <tr class="hl"><td>Barclays</td><td>27.6%</td><td>42.1%</td><td>48.4%</td></tr>
+    <tr><td>Lloyds</td><td>27.0%</td><td>31.5%</td><td>47.4%</td></tr>
+    <tr><td>BNP Paribas</td><td>22.4%</td><td>22.0%</td><td>44.3%</td></tr>
+    <tr><td>Citi</td><td>14.8%</td><td>34.1%</td><td>41.4%</td></tr>
+    <tr><td>Goldman Sachs</td><td>24.8%</td><td>38.1%</td><td>40.3%</td></tr>
+    <tr><td>JPMorgan</td><td>18.3%</td><td>31.0%</td><td>15.8%</td></tr>
+    <tr><td>BofA</td><td>10.1%</td><td>16.3%</td><td>10.6%</td></tr>
+    <tr><td>Wells Fargo</td><td>20.4%</td><td>23.4%</td><td>6.3%</td></tr>
+    <tr><td>AmEx</td><td>19.4%</td><td>22.6%</td><td>3.7%</td></tr>
+  </tbody></table>
+  <div style="margin-top:16px"><div class="ct">Analyst Recommendations & Valuation</div></div>
+  <table><thead><tr><th>Company</th><th>Buy</th><th>Hold</th><th>Sell</th><th>P/BV</th><th>P/E</th><th>SP Growth</th></tr></thead>
+  <tbody>
+    <tr><td>BofA</td><td>85%</td><td>15%</td><td>—</td><td>1.33x</td><td>10.7x</td><td>25.1%</td></tr>
+    <tr><td>BNP Paribas</td><td>79%</td><td>16%</td><td>5%</td><td>0.93x</td><td>7.0x</td><td>7.9%</td></tr>
+    <tr><td>Citi</td><td>78%</td><td>22%</td><td>—</td><td>1.05x</td><td>10.0x</td><td>22.5%</td></tr>
+    <tr class="hl"><td>Barclays</td><td>75%</td><td>25%</td><td>—</td><td>0.97x</td><td>8.1x</td><td>19.8%</td></tr>
+    <tr><td>Lloyds</td><td>61%</td><td>28%</td><td>11%</td><td>1.39x</td><td>10.0x</td><td>15.7%</td></tr>
+    <tr><td>Wells Fargo</td><td>59%</td><td>41%</td><td>—</td><td>1.56x</td><td>11.7x</td><td>22.8%</td></tr>
+    <tr><td>JPMorgan</td><td>54%</td><td>46%</td><td>—</td><td>2.33x</td><td>11.4x</td><td>14.9%</td></tr>
+    <tr><td>AmEx</td><td>39%</td><td>57%</td><td>4%</td><td>6.92x</td><td>16.8x</td><td>21.4%</td></tr>
+    <tr><td>Deutsche Bank</td><td>35%</td><td>53%</td><td>12%</td><td>0.88x</td><td>7.3x</td><td>15.5%</td></tr>
+    <tr><td>Goldman Sachs</td><td>31%</td><td>62%</td><td>8%</td><td>2.32x</td><td>13.3x</td><td>14.9%</td></tr>
+  </tbody></table>
+  <div style="margin-top:16px"><div class="ct">Employee Productivity (FY2025)</div></div>
+  <table><thead><tr><th>Company</th><th>Employees</th><th>OI / Employee</th><th>EBT / Employee</th></tr></thead>
+  <tbody>
+    <tr><td>Goldman Sachs</td><td>46,950</td><td>£921k</td><td>£346k</td></tr>
+    <tr><td>AmEx</td><td>75,950</td><td>£705k</td><td>£135k</td></tr>
+    <tr><td>JPMorgan</td><td>317,873</td><td>£424k</td><td>£173k</td></tr>
+    <tr><td>BofA</td><td>213,200</td><td>£394k</td><td>£131k</td></tr>
+    <tr><td>Lloyds</td><td>60,645</td><td>£327k</td><td>£110k</td></tr>
+    <tr class="hl"><td>Barclays</td><td>93,000</td><td>£313k</td><td>£101k</td></tr>
+    <tr><td>Deutsche Bank</td><td>89,816</td><td>£311k</td><td>£94k</td></tr>
+    <tr><td>Wells Fargo</td><td>211,350</td><td>£292k</td><td>£86k</td></tr>
+    <tr><td>HSBC</td><td>210,012</td><td>£257k</td><td>£127k</td></tr>
+    <tr><td>BNP Paribas</td><td>177,952</td><td>£253k</td><td>£85k</td></tr>
+  </tbody></table>
+</div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nb" id="prevBtn" onclick="go(-1)">&#8592; Previous</button>
+  <div><div class="nc" id="ctr">1 / 9</div><div class="nh">Use &#8592; &#8594; arrow keys</div></div>
+  <button class="nb pr" id="nextBtn" onclick="go(1)">Next &#8594;</button>
+</div>
+
+<script>
+var c=0,t=9;
+function go(d){var n=c+d;if(n<0||n>=t)return;document.getElementById('s'+c).classList.remove('active');c=n;document.getElementById('s'+c).classList.add('active');document.getElementById('ctr').textContent=(c+1)+' / '+t;document.getElementById('prevBtn').disabled=c===0;document.getElementById('nextBtn').disabled=c===t-1}
+document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1)});
+</script>
+</body>
+</html>

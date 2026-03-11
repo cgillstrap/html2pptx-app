@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Back office CIO capability taxonomy (draft for discussion)</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --paper:#ffffff;
+      --ink:#101828;
+      --muted:#475467;
+      --line:#eaecf0;
+      --accent:#155eef;
+      --accent2:#12b76a;
+      --warn:#f79009;
+    }
+
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--ink);
+      background:linear-gradient(180deg,var(--bg),#ffffff);
+    }
+
+    /* A “slide” is a printable page-sized canvas with generous whitespace */
+    .deck{padding:32px 16px 64px;}
+    .slide{
+      width:min(1120px, calc(100vw - 32px));
+      aspect-ratio: 16 / 9;
+      background:var(--paper);
+      border:1px solid var(--line);
+      border-radius:18px;
+      margin:0 auto 28px;
+      box-shadow:0 12px 30px rgba(16,24,40,.08);
+      padding:44px 56px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    /* subtle corner accent */
+    .slide:before{
+      content:"";
+      position:absolute;
+      inset:-140px -140px auto auto;
+      width:320px;
+      height:320px;
+      background:radial-gradient(circle at 30% 30%, rgba(21,94,239,.22), rgba(21,94,239,0));
+      transform:rotate(10deg);
+      pointer-events:none;
+    }
+
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 12px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:14px;
+      letter-spacing:.2px;
+      background:#fff;
+    }
+    .dot{width:9px;height:9px;border-radius:999px;background:var(--accent);display:inline-block;}
+
+    h1,h2,h3{margin:0;}
+
+    .title{
+      margin-top:18px;
+      font-weight:750;
+      letter-spacing:-.02em;
+      line-height:1.04;
+      font-size:52px;
+      max-width:18ch;
+    }
+    .subtitle{
+      margin-top:16px;
+      font-size:20px;
+      line-height:1.35;
+      color:var(--muted);
+      max-width:60ch;
+    }
+
+    .footer{
+      position:absolute;
+      left:56px;
+      right:56px;
+      bottom:26px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:12px;
+      color:#667085;
+    }
+    .footer b{color:var(--ink);}
+
+    .two{
+      margin-top:26px;
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:28px;
+      align-items:start;
+    }
+
+    .panel{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:18px 18px;
+      background:#fff;
+    }
+
+    .panel h3{
+      font-size:16px;
+      font-weight:700;
+      letter-spacing:-.01em;
+      margin-bottom:10px;
+    }
+
+    .bullets{
+      margin:0;
+      padding-left:18px;
+      color:var(--muted);
+      font-size:16px;
+      line-height:1.45;
+    }
+    .bullets li{margin:8px 0;}
+
+    .big-number{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    .metric{
+      padding:14px 16px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:linear-gradient(180deg,#ffffff,#fbfbff);
+    }
+    .metric .n{
+      font-size:34px;
+      font-weight:800;
+      letter-spacing:-.03em;
+      color:var(--accent);
+      line-height:1;
+    }
+    .metric .l{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.25;
+    }
+
+    .chapter{
+      background: linear-gradient(135deg, rgba(21,94,239,.10), rgba(18,183,106,.08));
+    }
+    .chapter:before{display:none;}
+
+    .grid{
+      margin-top:22px;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:16px;
+    }
+    .card{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px 14px;
+      background:#fff;
+    }
+    .card h4{
+      margin:0;
+      font-size:14px;
+      font-weight:750;
+      letter-spacing:-.01em;
+    }
+    .card p{
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .taxonomy{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:16px;
+      align-items:start;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:#344054;
+      font-size:12px;
+      margin:0 8px 8px 0;
+      white-space:nowrap;
+    }
+    .pill .b{width:8px;height:8px;border-radius:99px;background:var(--accent2);} 
+
+    .legend{
+      margin-top:10px;
+      display:flex;
+      gap:14px;
+      color:var(--muted);
+      font-size:13px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .legend span{display:inline-flex;align-items:center;gap:8px;}
+    .sw{width:14px;height:14px;border-radius:4px;display:inline-block;}
+
+    .cta{
+      margin-top:18px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#fff;
+      font-weight:650;
+      font-size:14px;
+      color:var(--ink);
+    }
+    .btn strong{color:var(--accent)}
+
+    /* Print as true “slides” */
+    @media print{
+      body{background:#fff;}
+      .deck{padding:0;}
+      .slide{
+        width: 100vw;
+        height: 100vh;
+        aspect-ratio: auto;
+        border:none;
+        border-radius:0;
+        box-shadow:none;
+        margin:0;
+        page-break-after: always;
+      }
+      .slide:last-child{page-break-after:auto;}
+    }
+
+    /* Small screens */
+    @media (max-width: 860px){
+      .slide{padding:28px 24px;}
+      .title{font-size:38px;}
+      .two{grid-template-columns:1fr;}
+      .grid{grid-template-columns:1fr;}
+      .taxonomy{grid-template-columns:1fr;}
+      .footer{left:24px;right:24px;}
+    }
+  </style>
+</head>
+<body>
+  <main class="deck">
+
+    <!-- Slide 1: Cover -->
+    <section class="slide" aria-label="Cover">
+      <div class="kicker"><span class="dot"></span> Draft for discussion • Back office technology</div>
+      <h1 class="title">A common capability taxonomy to unlock change capacity</h1>
+      <p class="subtitle">A simple, shared language for Risk, Finance, Treasury and Controls CIOs — designed to compare across towers and benchmark vs peers, and to identify where AI + engineering practice changes can create real capacity.</p>
+      <div class="cta">
+        <span class="btn"><strong>Outcome:</strong> agreement to run the taxonomy exercise</span>
+        <span class="btn"><strong>Focus:</strong> change, run and support</span>
+      </div>
+      <div class="footer">
+        <div><b>Back office CIO capability taxonomy</b> • proposed structure</div>
+        <div>Slide 1</div>
+      </div>
+    </section>
+
+    <!-- Slide 2: Why now -->
+    <section class="slide" aria-label="Why now">
+      <div class="kicker"><span class="dot"></span> Context</div>
+      <h2 class="title" style="font-size:46px;max-width:26ch;">Why this matters right now</h2>
+      <div class="two">
+        <div class="panel">
+          <h3>The pressure is structural</h3>
+          <ul class="bullets">
+            <li>Mandatory risk and compliance change continues to grow.</li>
+            <li>Run and resilience obligations remain non‑negotiable.</li>
+            <li>Delivery is shifting from waterfall toward tailored agile — while keeping strong controls.</li>
+          </ul>
+        </div>
+        <div class="big-number">
+          <div class="metric">
+            <div class="n">AI</div>
+            <div class="l">Tooling is moving from pilots to scale — but capacity only appears when operating practices change.</div>
+          </div>
+          <div class="metric">
+            <div class="n">One</div>
+            <div class="l">Shared taxonomy prevents local optimisation and enables meaningful peer comparison.</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer">
+        <div><b>Key point:</b> capacity is trapped in friction, handoffs and manual controls</div>
+        <div>Slide 2</div>
+      </div>
+    </section>
+
+    <!-- Slide 3: The decision -->
+    <section class="slide chapter" aria-label="The decision">
+      <div class="kicker"><span class="dot"></span> Decision</div>
+      <h2 class="title" style="font-size:54px;max-width:24ch;">Agree a common language — then target the biggest constraints</h2>
+      <p class="subtitle" style="max-width:62ch;">This is not an org redesign. It is a practical way to align CIOs on what capabilities exist, how mature they are, and where to invest to increase change throughput safely.</p>
+
+      <div class="grid">
+        <div class="card">
+          <h4>Step 1 — Define capabilities</h4>
+          <p>Agree a cross‑CIO capability map (tool‑agnostic, benchmarkable).</p>
+        </div>
+        <div class="card">
+          <h4>Step 2 — Baseline maturity</h4>
+          <p>Score the maturity and pain points consistently across towers.</p>
+        </div>
+        <div class="card">
+          <h4>Step 3 — Prioritise levers</h4>
+          <p>Target the few moves that unlock the most capacity (incl. AI).</p>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div><b>Call to action:</b> approve the taxonomy exercise and workshops</div>
+        <div>Slide 3</div>
+      </div>
+    </section>
+
+    <!-- Slide 4: What the taxonomy is -->
+    <section class="slide" aria-label="What the taxonomy is">
+      <div class="kicker"><span class="dot"></span> What it is</div>
+      <h2 class="title" style="font-size:46px;max-width:26ch;">A technology operating capability taxonomy</h2>
+      <p class="subtitle">It describes <b>how</b> technology is delivered, operated and governed — independent of org design, tooling or location.</p>
+
+      <div class="two">
+        <div class="panel">
+          <h3>What it gives you</h3>
+          <ul class="bullets">
+            <li>A common frame to compare Risk vs Finance vs Treasury vs Controls.</li>
+            <li>A basis to benchmark vs peers using observable signals.</li>
+            <li>A clean way to link AI adoption to measurable capacity outcomes.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>What it is not</h3>
+          <ul class="bullets">
+            <li>Not a SAFe implementation plan (it complements tailored agile).</li>
+            <li>Not a tool catalogue (tooling maps later).</li>
+            <li>Not a re‑org proposal (decision rights come after baseline).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div><b>Design intent:</b> simple enough for CIO alignment, detailed enough to act on</div>
+        <div>Slide 4</div>
+      </div>
+    </section>
+
+    <!-- Slide 5: L1 taxonomy (headline) -->
+    <section class="slide" aria-label="L1 taxonomy">
+      <div class="kicker"><span class="dot"></span> Proposed structure</div>
+      <h2 class="title" style="font-size:46px;max-width:22ch;">Level 1 capability groups</h2>
+      <p class="subtitle" style="max-width:70ch;">Twelve groups cover the full change‑run‑control lifecycle and work across all back office CIO towers.</p>
+
+      <div class="taxonomy">
+        <div class="panel">
+          <h3>Plan & govern</h3>
+          <div>
+            <span class="pill"><span class="b"></span>Strategy, governance & financial management</span>
+            <span class="pill"><span class="b"></span>Demand, product & delivery management</span>
+            <span class="pill"><span class="b"></span>Architecture & engineering design</span>
+          </div>
+          <h3 style="margin-top:14px;">Build & release</h3>
+          <div>
+            <span class="pill"><span class="b"></span>Software engineering build</span>
+            <span class="pill"><span class="b"></span>Quality engineering</span>
+            <span class="pill"><span class="b"></span>Release, environment & change enablement</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Run & assure</h3>
+          <div>
+            <span class="pill"><span class="b"></span>Service management & operations</span>
+            <span class="pill"><span class="b"></span>Reliability, observability & resilience</span>
+            <span class="pill"><span class="b"></span>Security, risk & controls in technology</span>
+          </div>
+          <h3 style="margin-top:14px;">Enable at scale</h3>
+          <div>
+            <span class="pill"><span class="b"></span>Data, reporting & data controls</span>
+            <span class="pill"><span class="b"></span>Platform & infrastructure services</span>
+            <span class="pill"><span class="b"></span>AI enablement & governance</span>
+            <span class="pill"><span class="b"></span>People, culture & ways of working</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div><b>Next:</b> confirm definitions, boundaries and owners per group</div>
+        <div>Slide 5</div>
+      </div>
+    </section>
+
+    <!-- Slide 6: Where capacity comes from -->
+    <section class="slide" aria-label="Capacity levers">
+      <div class="kicker"><span class="dot"></span> Insight</div>
+      <h2 class="title" style="font-size:46px;max-width:28ch;">Capacity comes from reducing friction and rework</h2>
+      <p class="subtitle">AI helps — but only when paired with standardised engineering practices, automation, and control-by-design.</p>
+
+      <div class="grid">
+        <div class="card">
+          <h4>Friction in delivery</h4>
+          <p>Handoffs, approvals, unclear requirements and dependency queues slow throughput.</p>
+        </div>
+        <div class="card">
+          <h4>Rework in quality</h4>
+          <p>Manual testing, unstable environments and late defects consume capacity twice.</p>
+        </div>
+        <div class="card">
+          <h4>Manual controls burden</h4>
+          <p>Evidence creation and audit support is essential — but can be automated.</p>
+        </div>
+        <div class="card">
+          <h4>Operational toil</h4>
+          <p>Repetitive incidents and ticket churn drain change capacity.</p>
+        </div>
+        <div class="card">
+          <h4>Data delays</h4>
+          <p>Data access, lineage and quality issues block delivery and reporting.</p>
+        </div>
+        <div class="card">
+          <h4>Toolchain fragmentation</h4>
+          <p>Multiple ways of working make scale hard across onshore/offshore/captives.</p>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div><b>Use the taxonomy to:</b> pinpoint where standardisation pays back fastest</div>
+        <div>Slide 6</div>
+      </div>
+    </section>
+
+    <!-- Slide 7: AI overlay (simple) -->
+    <section class="slide" aria-label="AI overlay">
+      <div class="kicker"><span class="dot"></span> AI overlay</div>
+      <h2 class="title" style="font-size:46px;max-width:26ch;">Where AI is most likely to create near-term capacity</h2>
+      <p class="subtitle">Start with assistive use cases in the SDLC and operations — then scale with governance and measurement.</p>
+
+      <div class="two">
+        <div class="panel">
+          <h3>High impact (12 months)</h3>
+          <ul class="bullets">
+            <li>Engineering productivity: code, tests, documentation and knowledge search.</li>
+            <li>Quality acceleration: test generation, coverage insights, defect triage support.</li>
+            <li>Operations assist: incident triage summaries, runbook suggestions, alert noise reduction.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Scale safely (governance)</h3>
+          <ul class="bullets">
+            <li>Approved tools, data boundaries, and secure deployment patterns.</li>
+            <li>Monitoring and evaluation: accuracy, drift, auditability, and human-in-the-loop controls.</li>
+            <li>Evidence-by-design: automate control evidence capture in the delivery flow.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div><b>Message for stakeholders:</b> we prioritise safety and measurable benefits</div>
+        <div>Slide 7</div>
+      </div>
+    </section>
+
+    <!-- Slide 8: Sourcing overlay -->
+    <section class="slide" aria-label="Sourcing overlay">
+      <div class="kicker"><span class="dot"></span> Delivery reality</div>
+      <h2 class="title" style="font-size:46px;max-width:24ch;">Designed for hybrid sourcing and captives</h2>
+      <p class="subtitle">The taxonomy separates <b>capabilities</b> from <b>where work happens</b>, enabling consistent delivery across internal, SI, offshore and nearshore teams.</p>
+
+      <div class="grid">
+        <div class="card">
+          <h4>Standardise the “how”</h4>
+          <p>Common engineering standards, quality gates, environments, and evidence patterns.</p>
+        </div>
+        <div class="card">
+          <h4>Keep decision rights clear</h4>
+          <p>Define what is enterprise‑standard vs tower‑local vs platform‑owned.</p>
+        </div>
+        <div class="card">
+          <h4>Make work portable</h4>
+          <p>Reusable patterns enable smooth movement of work across locations and partners.</p>
+        </div>
+        <div class="card">
+          <h4>Build capability, not dependency</h4>
+          <p>Use partners to accelerate maturity while growing internal and captive depth.</p>
+        </div>
+        <div class="card">
+          <h4>Measure consistently</h4>
+          <p>Flow, quality, resilience and controls metrics are comparable across towers.</p>
+        </div>
+        <div class="card">
+          <h4>Protect licence to operate</h4>
+          <p>Controls remain non‑negotiable — the goal is to automate and embed them.</p>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div><b>Key point:</b> hybrid sourcing works best with shared standards and platforms</div>
+        <div>Slide 8</div>
+      </div>
+    </section>
+
+    <!-- Slide 9: How we run the exercise -->
+    <section class="slide" aria-label="How we run the exercise">
+      <div class="kicker"><span class="dot"></span> Approach</div>
+      <h2 class="title" style="font-size:46px;max-width:28ch;">A short, practical exercise with clear outputs</h2>
+      <p class="subtitle">We keep it lightweight: agree definitions, baseline maturity, and identify the few moves that release the most capacity.</p>
+
+      <div class="two">
+        <div class="panel">
+          <h3>Workshops (2–3 sessions)</h3>
+          <ul class="bullets">
+            <li>Confirm L1/L2 capability definitions and boundaries.</li>
+            <li>Identify shared capabilities to standardise and platformise.</li>
+            <li>Pressure-test using real initiatives (regulatory, resilience, AI).</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Outputs</h3>
+          <ul class="bullets">
+            <li>Capability map + definitions (the “dictionary”).</li>
+            <li>Cross‑CIO maturity snapshot and key constraints.</li>
+            <li>Prioritised roadmap of capacity levers (12/36/60 months).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div><b>Principle:</b> one clear message per slide, with action at the end</div>
+        <div>Slide 9</div>
+      </div>
+    </section>
+
+    <!-- Slide 10: Close -->
+    <section class="slide chapter" aria-label="Close">
+      <div class="kicker"><span class="dot"></span> Next step</div>
+      <h2 class="title" style="font-size:56px;max-width:22ch;">Confirm sponsors and schedule the taxonomy workshops</h2>
+      <p class="subtitle" style="max-width:64ch;">Once we agree the common language, we can compare across CIO towers, benchmark externally, and focus AI + engineering change on the few areas that unlock the most capacity.</p>
+
+      <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-top:28px;">
+        <div class="card">
+          <h4>Participants</h4>
+          <p>CIO reps + architecture + security + controls + ops + data governance.</p>
+        </div>
+        <div class="card">
+          <h4>Inputs</h4>
+          <p>Existing SDLC/ITSM standards, tooling view, audit themes, portfolio mix.</p>
+        </div>
+        <div class="card">
+          <h4>Decision</h4>
+          <p>Agree the taxonomy and the shortlist of capacity levers to pursue first.</p>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div><b>Draft for discussion</b> • use as an opening conversation pack</div>
+        <div>Slide 10</div>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>
