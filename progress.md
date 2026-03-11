@@ -11,7 +11,8 @@ This is a **quick win** supporting a broader strategic initiative to get a consu
 This app is one piece of a larger initiative that includes:
 - **Presentation Design Principles** (doc2-design-principles.md) — medium-agnostic visual communication guidance for AI-assisted content creation
 - **Brand Token Layer** (doc3-brand-tokens.md) — brand-specific visual identity tokens (currently Accenture) with CSS class structure enabling brand reskinning
-- **Converter Capability Profile** (uc1-converter-capability-profile.md) — three-tier capability model documenting what converts faithfully, what degrades gracefully, and what is not supported. Replaces the original uc1-guardrails.md as the primary conversion reference.
+- **Converter Capability Profile** (converter-capability-profile.md) — three-tier capability model documenting what converts faithfully, what degrades gracefully, and what is not supported. Developer-facing reference.
+- **Technical Output Profile** (doc1-technical-output-profile.md) — Doc 1 of the design system. Defines what HTML/CSS the converter can handle. Replaces the original uc1-guardrails documents.
 
 ## Reference Documents
 
@@ -20,12 +21,14 @@ This app is one piece of a larger initiative that includes:
 | `progress.md` (this file) | Decision journal, session checkpoint, work tracker | Every session |
 | `PRINCIPLES.md` | Architectural principles and code standards | Rarely — only when principles are revised |
 | `LEARNINGS.md` | Key learnings and HTML pattern catalogue — stable reference | When new learnings are captured |
-| `uc1-converter-capability-profile.md` | Converter capability tiers, regression fixtures, engine-specific guidance | Updated when converter capabilities change |
-| `uc1-guardrails.md` | Original prescribed HTML structure for compliant output (superseded by capability profile) | Archived — retained for reference |
-| `doc2-design-principles.md` | Visual communication guidance | Stable reference |
-| `doc3-brand-tokens.md` | Brand identity tokens | Stable reference |
+| `docs/doc0-prompting-methodology.md` | Prompting methodology for AI-assisted visual content creation | v1.2 — stable reference |
+| `docs/doc1-technical-output-profile.md` | Technical output profile — what HTML/CSS the converter handles (replaces uc1-guardrails) | v2.0 — updated when converter capabilities change |
+| `docs/doc2-design-principles.md` | Visual communication guidance | v1.0 — stable reference |
+| `docs/doc3-brand-tokens.md` | Brand identity tokens | v1.0 — stable reference |
+| `docs/converter-capability-profile.md` | Converter capability tiers, regression fixtures, engine-specific guidance (developer-facing) | v2.0 — updated when converter capabilities change |
+| `test/fixtures/manifest.json` | Machine-readable fixture manifest with status and capability tags | Updated when fixtures change |
 
-**Session start checklist:** Paste `progress.md` and `PRINCIPLES.md`. Attach current source files per the File Status table below. Optionally attach `LEARNINGS.md` and `uc1-converter-capability-profile.md` if working on extraction or detection logic.
+**Session start checklist:** Paste `progress.md` and `PRINCIPLES.md`. Attach current source files per the File Status table below. Optionally attach `LEARNINGS.md` and `docs/converter-capability-profile.md` if working on extraction or detection logic.
 
 ## Source Repository
 
@@ -63,8 +66,8 @@ This app is one piece of a larger initiative that includes:
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 10 | Current | `fixViewportUnitHeights()` now derives height from original viewport dimensions (`minHeight` param) instead of hardcoding 16:9. Supports any aspect ratio. |
-| `src/generation/generator.js` | Session 10 | Current | Viewport normalization safety net removed. Generator trusts intermediate JSON as-is (Principle 2 restored). |
+| `src/extraction/extractor.js` | Session 13g | Current | `captureElementImages()`: try-direct-then-fallback capture; lifts ALL overflow clipping (container + descendants) before capture; batch re-queries SVG/gradient positions in DOM order after overflow lift. Diagnostic logging gated behind `CAPTURE_DIAGNOSTIC=1`. |
+| `src/generation/generator.js` | Session 10 | Current | Scale-to-fit with centering already implemented. Viewport normalization safety net removed. Generator trusts intermediate JSON as-is (Principle 2 restored). |
 | `src/main/main.js` | Session 2 | Current | |
 | `src/main/preload.js` | Session 2 | Current | |
 | `src/main/security.js` | Session 1 | Current | |
@@ -72,7 +75,14 @@ This app is one piece of a larger initiative that includes:
 | `src/renderer/index.html` | Session 2 | Current | |
 | `src/renderer/renderer.js` | Session 2 | Current | |
 | `PRINCIPLES.md` | Session 2 | Current | |
-| `LEARNINGS.md` | Session 9 | **New** | Extracted from progress.md — key learnings and HTML pattern catalogue |
+| `LEARNINGS.md` | Session 14 | Current | Cherry-picked from session-12b branch. Added learning #52. |
+| `docs/doc0-prompting-methodology.md` | Session 14 | Current | v1.2: Engine characterisations refined, task-engine table updated, filenames added |
+| `docs/doc1-technical-output-profile.md` | Session 14 | NEW | v2.0: Replaces uc1-guardrails. Capability-tier structure. Expanded creative range. |
+| `docs/doc2-design-principles.md` | Stable | Current | v1.0: No changes |
+| `docs/doc3-brand-tokens.md` | Stable | Current | v1.0: No changes |
+| `docs/converter-capability-profile.md` | Session 14 | Current | v2.0: Tables Tier 1, JS charts Tier 3, SVG expanded, fixtures updated |
+| `test/fixtures/manifest.json` | Session 14 | NEW | Machine-readable fixture manifest with status and capability tags |
+| `test/fixtures/manifest.md` | Session 14 | NEW | Human-readable fixture manifest |
 | `package.json` | Session 1 | Current | |
 
 ## Build Phases
@@ -112,11 +122,45 @@ This app is one piece of a larger initiative that includes:
 
 ## Key Decisions Log
 
+### Session 14 Decisions
+
+1. **Converter capability profile replaces restrictive guardrails as Doc 1** — The uc1-guardrails documents (v1.0, v1.1) constrained engines based on early converter limitations that no longer apply. The capability profile, structured around three tiers (faithful / graceful degradation / not supported), accurately reflects what the converter handles and gives engines maximum creative range. This is the convergence of the top-down design system and bottom-up converter development.
+
+2. **Document stack validated end-to-end across three engines** — Same prompting methodology (doc0), same constraint documents (new Doc 1 + doc2), three engines (Claude, ChatGPT, Copilot). All three produced converter-compatible output. Quality differences are attributable to engine analytical depth, not converter limitations.
+
+3. **Three new fixtures from real engine output** — engine-claude-financial-14s.html (Claude), engine-chatgpt-workshop-9s.html (ChatGPT), engine-copilot-overview-8s.html (Copilot). All convert successfully. These exercise CSS custom properties, rgba(), SVG charts, tables, and dark backgrounds.
+
+4. **Copilot guidance: usable but not recommended for substantive work** — Copilot produces converter-compatible HTML but thin content. Root cause is insufficient analytical engagement in the narrative stages, not a technical limitation. Doc 0 updated with guidance.
+
+5. **Intents file (v1.1) formally dropped** — Never implemented. Converter heuristic detection proven sufficient across 22 fixtures. The new Doc 1 removes the intents file section.
+
+6. **calc() and var() moved to Tier 1** — Chromium resolves CSS custom properties and calc() expressions before the extractor reads computed values. No issues encountered.
+
+7. **Session 13 branch: docs cherry-picked, code discarded** — JS chart capture code adds complexity for a Tier 3 case. LEARNINGS.md cherry-picked to main. Branch retained for reference, not merged.
+
+8. **Fixture rename and manifest completed** — All fixtures renamed to `{category}-{descriptor}.html` convention. Manifest (JSON + markdown) is the single source of truth. Fixtures consolidated to `test/fixtures/`.
+
+9. **Doc 0 updated to v1.2** — Engine characterisations refined based on empirical testing. ChatGPT compliance with strong constraints documented. Copilot depth limitation strengthened. Task-engine table updated.
+
 ### Session 10 Decisions
 
 1. **Use original viewport height, not computed aspect ratio** — `fixViewportUnitHeights()` now receives the `minHeight` parameter (the pre-inflation viewport height, default 540) and applies it directly to inflated containers. This is more robust than computing from aspect ratio because it restores the actual original dimension regardless of slide proportions (16:9, 4:3, portrait, etc.). Inflation detected when `rect.height > refHeight * 2`.
 
 2. **Generator viewport safety net removed** — The Session 9b "viewport normalization" loop in `generatePPTX()` violated Principle 2 (separation of concerns). The generator now consumes viewport dimensions from the intermediate JSON without modification. If extraction produces wrong values, the fix belongs in extraction.
+
+### Session 13/13d Decisions
+
+1. **Try-direct-then-fallback capture strategy** — `captureElementImages()` first attempts capture at absolute `captureRect` coordinates (the pre-Session-13 approach). Only if that returns an empty image does it reposition the slide to (0,0) and retry. This eliminates threshold tuning — the compositor tells us whether it worked.
+
+2. **Session 13c diagnostic revealed the threshold was wrong** — All three "near-origin" fixtures (modern-it-skills, hr-skills-slide, agile-slides) are actually at y≈4700 in the 7200px hidden window due to CSS layout in the oversized viewport. Direct capture at y=4700 works fine — the compositor handles it. The `y > viewport.h * 2` threshold incorrectly triggered reposition, which broke their layout.
+
+3. **Reposition breaks CSS layout context** — Setting `position: absolute; top: 0; left: 0` removes the container from its containing block, causing elements that rely on `inset: 0`, percentage sizing, or flexbox to lose dimensions. This is why repositioned captures produced grey boxes.
+
+4. **Scale-to-fit already implemented** — `computeScaleAndOffset()` and `applyScaling()` were already present in the generator. No changes needed.
+
+5. **LEARNINGS.md restored from Session 12b** — File was reverted along with Session 12b changes. Restored with all learnings #1-#51 intact.
+
+6. **`barclays-hybrid.html` fixture already in place** — Located at `tests/extraction/fixtures/`. All 13 SVG charts capture correctly via direct capture. Reference fixture for SVG chart pattern.
 
 ### Session 9b Decisions
 
@@ -217,32 +261,20 @@ This app is one piece of a larger initiative that includes:
 ## Testing Notes
 
 ### Test Fixtures
-| Fixture | Location | Purpose |
-|---------|----------|---------|
-| `sample-slide.html` | `test/extraction/fixtures/` | Single slide: div-text fallback, ul with inline spans, placeholder, rgba background |
-| `multi-slide-test.html` | `test/extraction/fixtures/` | 3 slides: data-slide-number detection, shapes, CSS Grid + Flexbox, gradient on slide 1 |
-| `lpm-slides-v1.html` | `test/extraction/fixtures/` | 12 slides: content-dense compliant deck. Scale-to-fit. Speaker notes. |
-| `agile-slides.html` | `test/extraction/fixtures/` | 3 slides: CSS slideshow (stacked layout). Gradient capture, interactive filtering, badges, CSS triangles. |
-| `hr-skills-slide.html` | `test/extraction/fixtures/` | Single slide: viewport-scaled, 1280x720, CSS grid, inline SVGs, gradient banner. |
-| `modern-it-skills.html` | `test/extraction/fixtures/` | Single slide: viewport-scaled, 1280x720, CSS grid tabular layout, inline SVGs. |
-| `conformant_sample.html` | `test/extraction/fixtures/` | 3 slides: guardrails-compliant. Known overlap on slide 3 (flex layout fidelity limit). |
-| `taxonomy-deck-html.html` | `tests/extraction/fixtures/` | 8 slides: display-none toggling. Gradient capture resolved Session 7d. |
-| `taxonomy-deck-v2.html` | `tests/extraction/fixtures/` | 12 slides: static heatmap grids. Shape text capture at scale. |
-| `taxonomy-deck-tables.html` | `test/extraction/fixtures/` | 12 slides: heatmap tables with rowspan, per-cell colours, vertical text. |
-| `barclays-static-presentation.html` | `test/extraction/fixtures/` | 10 slides: financial tables, tr.hl row highlighting, JS-generated charts, display-none, 100vh. |
-| `barclays_peer_story_draft_lite.html` | `test/extraction/fixtures/` | ~25 slides: simple tables, base64 image, section-based slides. |
 
-### Validation Status (Session 9b)
-- All 9 existing fixtures: no regressions
-- taxonomy-deck-tables.html: tables render with correct rowspan, coloured cells, vertical text warning
-- barclays-static-presentation.html: 100vh fixed, no repair errors, tables within bounds, JS charts extract as shapes/div-text
-- barclays_peer_story_draft_lite.html: tables render, base64 image handled
+All 22 fixtures consolidated to `test/fixtures/` with consistent naming. See `test/fixtures/manifest.md` for the full catalogue with slide counts, detection methods, dimensions, and capability tags. Machine-readable manifest at `test/fixtures/manifest.json`.
+
+**Summary:** 16 pass, 1 tier3-reference, 1 regression, 4 out-of-scope.
+
+### Validation Status (Session 14)
+- All 16 pass fixtures validated — extraction succeeds with correct slide/element counts
+- 3 new engine fixtures (Claude, ChatGPT, Copilot) all convert successfully
+- Session 13 branch assessed — no regressions on any fixture
 
 ### Known Gaps
 - No fixture with external file path `<img>` references
-- No fixture with deeply nested wrapper divs (ChatGPT/Copilot div-heavy patterns)
 - No fixture testing `uniform-divs` detection path
-- conformant_sample.html slide 3 has known overlap (flex layout fidelity limit)
+- `baseline-semantic-3s.html` slide 3 has known overlap (flex layout fidelity limit)
 
 ## Conversation History
 
@@ -260,11 +292,19 @@ This app is one piece of a larger initiative that includes:
 12. **Session 9b (Claude Code)** — Table extraction and generation implemented. Bugs found and fixed: rowspan (pptxgenjs lowercase properties + span tracker), 100vh viewport inflation (fixViewportUnitHeights), PPTX repair errors (defensive null checks). All fixtures validated. Two cleanup items flagged: hardcoded 16:9 in viewport fix, generator viewport safety net violates Principle 2.
 13. **Session 10 (Claude Code)** — Architecture cleanup: `fixViewportUnitHeights()` refactored to use original viewport height instead of hardcoded 16:9 ratio. Generator viewport safety net removed (Principle 2 restored). All 12 fixtures validated, no regressions.
 
+14. **Session 13–13g (Claude Code)** — SVG/gradient capture overhaul. 13: slide-reposition capture. 13c: diagnosed regressions (reposition disrupts CSS layout). 13d: try-direct-then-fallback. 13e: diagnosed double-nested overflow clipping. 13f: lift ALL overflow on container + descendants. 13g: batch re-query SVG/gradient positions in DOM order after overflow lift (replaces fragile per-element heuristic). All 13 SVGs in barclays-hybrid capture correctly. No regressions. Diagnostic tools at `test/diagnostic/`.
+
+15. **Session 14 (Chat)** — Strategic convergence session. Assessed top-down design system (docs 0–3) against bottom-up converter capability. Produced updated converter-capability-profile.md (v2.0) and new technical output profile (doc1 v2.0) replacing restrictive guardrails. Validated document stack across three engines with real analytical content. Three new fixtures added. Session 13 branch assessed — docs cherry-picked, code discarded. Fixture rename and manifest completed. Doc 0 updated to v1.2 with empirical engine guidance. Copilot depth limitation established.
+
 ### Next Session Priorities
 
-1. **Integration test harness** — Fixture-driven pipeline tests using electron-mocha. Baseline rendering quality before packaging.
+1. **Regression test harness** — Fixture-driven pipeline tests against `test/fixtures/manifest.json`. Use manifest status field to determine assertions per fixture. 22 fixtures, 16 expected to pass.
 
-2. **Packaging with electron-builder** (3d) — .exe installer for Windows 11.
+2. **Config persistence and versioning** — JSON file in user's app data directory. Settings UI panel.
+
+3. **Packaging with electron-builder** — .exe installer for Windows 11.
+
+4. **Beta documentation** — How consultants receive the document stack (docs 0–3) and the tool together. In-app guidance or companion README.
 
 ## Checkpoint Discipline
 
@@ -278,5 +318,5 @@ Progress.md is updated at three points:
 When starting a new conversation:
 1. Paste `progress.md` (this file) and `PRINCIPLES.md`
 2. Attach current source files per the File Status table
-3. Optionally attach `LEARNINGS.md` and `uc1-converter-capability-profile.md` if working on extraction or detection logic
+3. Optionally attach `LEARNINGS.md` and `docs/converter-capability-profile.md` if working on extraction or detection logic
 4. State which task to resume from (see Next Session Priorities above)
