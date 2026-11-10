@@ -66,8 +66,8 @@ This app is one piece of a larger initiative that includes:
 
 | File | Last Updated | Status | Key Changes |
 |------|-------------|--------|-------------|
-| `src/extraction/extractor.js` | Session 16 | Current | `captureElementImages()`: clone-based element gradient capture (replaces coordinate-matching `hideTargetContent`); SVG guard in shape-text processed-set; try-direct-then-fallback SVG capture; lifts ALL overflow clipping before capture; batch re-queries positions after overflow lift. Diagnostic logging gated behind `CAPTURE_DIAGNOSTIC=1`. |
-| `src/generation/generator.js` | Session 10 | Current | Scale-to-fit with centering already implemented. Viewport normalization safety net removed. Generator trusts intermediate JSON as-is (Principle 2 restored). |
+| `src/extraction/extractor.js` | Session 17 | Current | Session 17: table `colWidths`/`rowHeights` and per-cell `style.padding`; OL → PowerPoint auto-numbering; div-text fallback ignores text inside SVGs. Session 16: `captureElementImages()`: clone-based element gradient capture (replaces coordinate-matching `hideTargetContent`); SVG guard in shape-text processed-set; try-direct-then-fallback SVG capture; lifts ALL overflow clipping before capture; batch re-queries positions after overflow lift. Diagnostic logging gated behind `CAPTURE_DIAGNOSTIC=1`. |
+| `src/generation/generator.js` | Session 17 | Current | Session 17: tables use optional `colWidths`/`rowHeights`/padding (vertical margins trimmed to fit the row); short label shapes `wrap:false`. Session 10: Scale-to-fit with centering already implemented. Viewport normalization safety net removed. Generator trusts intermediate JSON as-is (Principle 2 restored). |
 | `src/main/main.js` | Session 15 | Current | Added `dialog` import, `initConfig()` call, `resolveOutputPath()` (replaces `computeOutputPath`), config/folder-picker/version IPC handlers, `showWarnings` gating, window icon |
 | `src/main/preload.js` | Session 15 | Current | Added `getConfig`, `updateConfig`, `resetConfig`, `selectFolder`, `getVersion` via `invoke`/`handle` |
 | `src/main/security.js` | Session 1 | Current | |
@@ -83,6 +83,7 @@ This app is one piece of a larger initiative that includes:
 | `docs/converter-capability-profile.md` | Session 14 | Current | v2.0: Tables Tier 1, JS charts Tier 3, SVG expanded, fixtures updated |
 | `test/fixtures/manifest.json` | Session 14 | NEW | Machine-readable fixture manifest with status and capability tags |
 | `test/fixtures/manifest.md` | Session 14 | NEW | Human-readable fixture manifest |
+| `test/diagnostic/convert-cli.js` | Session 17 | NEW | Headless HTML → PPTX runner (`npx electron test/diagnostic/convert-cli.js <in.html> [out.pptx] [--width 1280 --height 720]`). Disables hardware acceleration, keeps app alive on window-all-closed, defaults to 1280×720. |
 | `test/regression/pipeline.test.js` | Session 15 | NEW | Manifest-driven regression test harness — 16 pass, 6 skip |
 | `CLAUDE.md` | Session 15 | Current | Updated "How to Run" with `test:regression` command |
 | `package.json` | Session 16 | Current | v1.0.1, `build`/`build:win`/`dist` scripts, electron-builder config, `test:regression` script |
@@ -128,6 +129,16 @@ This app is one piece of a larger initiative that includes:
 - [ ] Template-based creation
 
 ## Key Decisions Log
+
+### Session 17 Decisions (Kiro, branch `fix/colwidths-ol-numbering`)
+Driven by converting a 12-slide, 1280×720 BT MBR pack (dense tables, numbered lists, inline SVG charts) to editable PPTX on macOS.
+1. **Headless CLI for repeat conversions** — `test/diagnostic/convert-cli.js` runs extractor + generator without the UI. Three non-obvious requirements: `app.disableHardwareAcceleration()` (tall multi-slide pages exceed the 16384px GPU max texture size; the GPU process crashes and SVG captures come back empty); a no-op `window-all-closed` handler (otherwise Electron quits when the hidden extraction window closes, before `writeFile` completes, with no error); explicit `width`/`minHeight` of 1280×720 (the 960 default clips captures on wider slides).
+2. **JSON contract — three optional fields added (needs chat review before merging to main)** — table elements gain `colWidths[]` and `rowHeights[]` (inches); table cells gain `style.padding` ([top, right, bottom, left] in points). All optional: the generator falls back to previous behaviour when absent. Without them pptxgenjs splits columns equally and PowerPoint grows rows, pushing dense tables off-slide.
+3. **pptxgenjs table cell margins use CSS order [top, right, bottom, left]** — unlike text boxes ([left, right, bottom, top], Learning #5). Vertical margins are trimmed when text + margins would exceed the extracted row height.
+4. **`<ol>` → PowerPoint auto-numbering** — `bullet: { type: 'number' }`. Also rescues CSS-counter lists (`list-style: none` + `::before` numbers), which are otherwise lost (Learning #35).
+5. **Div-text fallback ignores text inside SVGs** — a div whose only child is an SVG chart was emitting the chart's `<title>`/`<desc>` as a visible text box.
+6. **Short label shapes get `wrap: false`** — badge text ("WHAT") wrapped onto two lines when the target font was substituted with a wider one.
+7. **Validation** — regression suite unchanged at 16 passing, 6 pending. Output checked visually via PowerPoint for Mac (export to PDF). Keynote's PPTX import over-pads table rows, so it is not a reliable check for table fit.
 
 ### Session 16 Chat Decisions
 

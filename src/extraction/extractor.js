@@ -578,7 +578,11 @@ const EXTRACTION_SCRIPT = `
                   align: cellComputed.textAlign === 'start' ? 'left' : cellComputed.textAlign,
                   valign: cellComputed.verticalAlign === 'middle' ? 'middle' : 'top',
                   borderColor: cellBorderColor,
-                  borderWidth: cellBorderPt
+                  borderWidth: cellBorderPt,
+                  // CSS padding in points. Table cells in PptxGenJS take CSS order
+                  // [top, right, bottom, left] (unlike text boxes: [left, right, bottom, top]).
+                  padding: [pxToPoints(cellComputed.paddingTop), pxToPoints(cellComputed.paddingRight),
+                            pxToPoints(cellComputed.paddingBottom), pxToPoints(cellComputed.paddingLeft)]
                 }
               };
               cells.push(cellObj);
@@ -599,6 +603,23 @@ const EXTRACTION_SCRIPT = `
             tableRows.push(cells);
           }
 
+          // Column widths from the widest row with no colspans, so PPTX columns
+          // keep the HTML proportions instead of pptxgenjs' equal split.
+          var colWidths = null;
+          for (var cwi = 0; cwi < tableRowEls.length; cwi++) {
+            var cwCells = tableRowEls[cwi].querySelectorAll('td, th');
+            var hasSpan = false;
+            for (var cwj = 0; cwj < cwCells.length; cwj++) {
+              if ((cwCells[cwj].colSpan || 1) > 1) { hasSpan = true; break; }
+            }
+            if (!hasSpan && (!colWidths || cwCells.length > colWidths.length)) {
+              colWidths = [];
+              for (var cwk = 0; cwk < cwCells.length; cwk++) {
+                colWidths.push(pxToInch(cwCells[cwk].getBoundingClientRect().width));
+              }
+            }
+          }
+
           elements.push({
             type: 'table',
             position: {
@@ -607,7 +628,9 @@ const EXTRACTION_SCRIPT = `
               w: pxToInch(tableRect.width),
               h: pxToInch(tableRect.height)
             },
-            rows: tableRows
+            rows: tableRows,
+            colWidths: colWidths,
+            rowHeights: Array.prototype.map.call(tableRowEls, function(r) { return pxToInch(r.getBoundingClientRect().height); })
           });
 
           // Mark all descendants as processed to prevent re-extraction
@@ -825,7 +848,18 @@ const EXTRACTION_SCRIPT = `
             .filter(t => t.length > 0)
             .join(' ');
 
-          const fullText = el.textContent ? el.textContent.trim() : '';
+          // Text that lives inside an SVG (title/desc/labels) belongs to the SVG capture,
+          // not to the wrapping div — otherwise a div holding only a chart emits the
+          // chart's accessibility text as a visible text box.
+          var fullText = '';
+          var ftWalker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+          var ftNode;
+          while ((ftNode = ftWalker.nextNode())) {
+            var ftPar = ftNode.parentNode, inSvg = false;
+            while (ftPar && ftPar !== el) { if (ftPar instanceof SVGElement) { inSvg = true; break; } ftPar = ftPar.parentNode; }
+            if (!inSvg) fullText += ftNode.textContent;
+          }
+          fullText = fullText.trim();
           if (!hasBlockChild && fullText.length > 0) {
             // ── Skip if children have visual fills (Session 6b) ────
             // If child elements have backgrounds/gradients, they'll be
@@ -1225,7 +1259,13 @@ const EXTRACTION_SCRIPT = `
         const ulComputed = window.getComputedStyle(el);
         const ulPaddingLeftPt = pxToPoints(ulComputed.paddingLeft);
         const marginLeft = ulPaddingLeftPt * 0.5;
-        const textIndent = ulPaddingLeftPt * 0.5;
+        // OL renders as PowerPoint auto-numbering, including CSS-counter lists
+        // (list-style: none with ::before numbers), whose numbers are otherwise lost.
+        const isOrdered = el.tagName === 'OL';
+        const textIndent = isOrdered ? Math.max(ulPaddingLeftPt * 0.6, 14) : ulPaddingLeftPt * 0.5;
+        const bulletOpt = isOrdered ? { type: 'number', indent: textIndent } : { indent: textIndent };
+        const ulBullet = (!isOrdered && ulComputed.listStyleType === 'none' &&
+          !window.getComputedStyle(el.querySelector('li') || el, '::before').content.match(/^"/)) ? false : bulletOpt;
 
         liElements.forEach((li, idx) => {
           const isLast = idx === liElements.length - 1;
@@ -1235,7 +1275,7 @@ const EXTRACTION_SCRIPT = `
             const runs = parseInlineFormatting(li, { breakLine: false });
             if (runs.length > 0) {
               runs[0].text = runs[0].text.replace(/^[\\u2022\\-\\*\\u25AA\\u25B8]\\s*/, '');
-              runs[0].options.bullet = { indent: textIndent };
+              runs[0].options.bullet = ulBullet;
             }
             if (runs.length > 0 && !isLast) {
               runs[runs.length - 1].options.breakLine = true;
@@ -1243,7 +1283,7 @@ const EXTRACTION_SCRIPT = `
             items.push(...runs);
           } else {
             const liText = li.textContent.trim().replace(/^[\\u2022\\-\\*\\u25AA\\u25B8]\\s*/, '');
-            items.push({ text: liText, options: { bullet: { indent: textIndent }, breakLine: !isLast } });
+            items.push({ text: liText, options: { bullet: ulBullet, breakLine: !isLast } });
           }
         });
 

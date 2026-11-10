@@ -395,6 +395,14 @@ function addElements(slideData, targetSlide, pres, htmlDir) {
         shapeOpts.inset = 0;
       }
 
+      // Short single-line labels (badges, pills) must not wrap if the target
+      // machine substitutes a wider font; let them overflow sideways instead.
+      if (el.text && el.style && el.style.fontSize &&
+          el.position.h < (el.style.fontSize * 2) / 72 &&
+          (Array.isArray(el.text) ? el.text.map(r => r.text).join('') : String(el.text)).length <= 30) {
+        shapeOpts.wrap = false;
+      }
+
       targetSlide.addText(el.text || '', shapeOpts);
       continue;
     }
@@ -429,8 +437,9 @@ function addElements(slideData, targetSlide, pres, htmlDir) {
             italic: cell.style.italic,
             align: cell.style.align,
             valign: cell.style.valign,
-            // PptxGenJS margin order: [left, right, bottom, top]
-            margin: [4, 4, 4, 4]
+            // Table cell margin: [top, right, bottom, left] in points. Use the HTML cell padding when known.
+            margin: (Array.isArray(cell.style.padding) && cell.style.padding.every(n => typeof n === 'number'))
+              ? cell.style.padding : [4, 4, 4, 4]
           };
 
           // Bug 3: Only include fill if valid hex string
@@ -482,12 +491,38 @@ function addElements(slideData, targetSlide, pres, htmlDir) {
         }
       }
 
-      targetSlide.addTable(pptxRows, {
+      const tableOpts = {
         x: el.position.x,
         y: el.position.y,
         w: tableW,
         autoPage: false
-      });
+      };
+      // Optional colWidths (inches) from extraction: scale to the clamped table width.
+      if (Array.isArray(el.colWidths) && el.colWidths.length > 0 &&
+          pptxRows.length > 0 && el.colWidths.length === Math.max(...pptxRows.map(r => r.length))) {
+        const sum = el.colWidths.reduce((a, b) => a + b, 0);
+        if (sum > 0) tableOpts.colW = el.colWidths.map(w => w * tableW / sum);
+      }
+      // Optional rowHeights (inches) from extraction keep dense tables at their HTML height.
+      if (Array.isArray(el.rowHeights) && el.rowHeights.length === pptxRows.length) {
+        tableOpts.rowH = el.rowHeights;
+        // PowerPoint/Keynote grow a row to fit text + margins, so a tight HTML row
+        // pushes dense tables off the slide. Trim vertical margins to what the row allows.
+        pptxRows.forEach((row, ri) => {
+          const rowPt = el.rowHeights[ri] * 72;
+          for (const cell of row) {
+            const o = cell.options || {};
+            const fs = o.fontSize || 10;
+            const m = Array.isArray(o.margin) ? o.margin : [4, 4, 4, 4];
+            const spare = rowPt - fs * 1.25;
+            if (spare < m[0] + m[2]) {
+              const v = Math.max(0, spare / 2);
+              o.margin = [v, m[1], v, m[3]];
+            }
+          }
+        });
+      }
+      targetSlide.addTable(pptxRows, tableOpts);
       continue;
     }
 
